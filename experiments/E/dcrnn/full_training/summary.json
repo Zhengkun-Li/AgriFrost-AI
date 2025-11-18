@@ -1,0 +1,17 @@
+{
+  "model_type": "dcrnn",
+  "horizons": [
+    3,
+    6,
+    12,
+    24
+  ],
+  "frost_threshold": 0.0,
+  "start_time": "2025-11-17T12:38:14.234286",
+  "end_time": "2025-11-17T12:38:37.809533",
+  "duration_seconds": 23.575248956680298,
+  "duration_minutes": 0.39292081594467165,
+  "duration_hours": 0.006548680265744527,
+  "timestamp": "2025-11-17T12:38:37.809533",
+  "results": {}
+}

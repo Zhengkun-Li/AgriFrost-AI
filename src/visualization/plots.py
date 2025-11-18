@@ -375,9 +375,10 @@ class Plotter:
         
         # Calculate and display ECE
         ece = MetricsCalculator.calculate_ece(y_true, y_proba, n_bins)
-        ax.text(0.05, 0.95, f'ECE = {ece:.4f}', 
+        ax.text(0.95, 0.05, f'ECE = {ece:.4f}', 
                 transform=ax.transAxes, fontsize=12,
-                verticalalignment='top',
+                verticalalignment='bottom',
+                horizontalalignment='right',
                 bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
         
         plt.tight_layout()

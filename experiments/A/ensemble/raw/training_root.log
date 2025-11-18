@@ -1,0 +1,280 @@
+Output directory: experiments/A/ensemble/raw
+================================================================================
+🚀 Training Started
+   Start Time: 2025-11-15 20:49:54
+   Model Type: ensemble
+   Horizons: [3, 6, 12, 24]
+   Output Directory: experiments/A/ensemble/raw
+================================================================================
+
+============================================================
+Step 1: Loading Data
+[2025-11-15 20:49:54] Starting data loading...
+============================================================
+Loading 18 station files from /home/zhengkun-li/frost-risk-forecast-challenge/data/raw/frost-risk-forecast-challenge/stations...
+  Loaded 5/18 files...  Loaded 10/18 files...  Loaded 15/18 files...  Loaded 18/18 files...
+Combining 18 station DataFrames...
+Combined data: 2367360 rows, 26 columns
+Stations: 18
+Loaded 2367360 rows, 26 columns
+Optimizing data types to reduce memory...
+Memory usage after optimization: 1.50 GB
+[2025-11-15 20:49:57] Step 1 completed in 3.30 seconds
+
+============================================================
+Step 2: Cleaning Data
+[2025-11-15 20:49:57] Starting data cleaning...
+============================================================
+After cleaning: 2367360 rows
+[2025-11-15 20:50:01] Step 2 completed in 4.03 seconds
+
+============================================================
+Step 3: Feature Engineering
+[2025-11-15 20:50:01] Starting feature engineering...
+============================================================
+After feature engineering: 2367360 rows, 293 columns
+Optimizing data types after feature engineering...
+Memory usage after optimization: 3.84 GB
+[2025-11-15 20:50:14] Step 3 completed in 12.61 seconds
+
+============================================================
+Step 4: Creating Frost Labels
+============================================================
+Created frost labels for horizons: [3, 6, 12, 24]
+Final dataset: 2367360 rows, 301 columns
+
+Saved labeled data to experiments/A/ensemble/raw/labeled_data.parquet and experiments/A/ensemble/raw/full_training/labeled_data.parquet
+
+[2025-11-15 20:50:29] Starting model training for all horizons...
+
+============================================================
+Training models for 3h horizon
+[2025-11-15 20:50:29] Starting 3h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 612 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2367306
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2367306
+Frost events: 20579.0 (0.87%)
+Train: 1657114, Val: 355096, Test: 355096
+
+[2025-11-15 20:50:32] Training classification model for frost probability...
+[2025-11-15 20:50:42] Frost classification model training completed in 9.99 seconds (0.17 minutes)
+
+[2025-11-15 20:50:42] Training regression model for temperature...
+[2025-11-15 20:50:55] Temperature regression model training completed in 13.24 seconds (0.22 minutes)
+
+[2025-11-15 20:50:55] Evaluating on test set...
+
+Classification Metrics (Frost Probability):
+accuracy: 0.9972
+brier_score: 0.0020
+ece: 0.0004
+f1: 0.7305
+fn: 567
+fp: 423
+pr_auc: 0.8193
+precision: 0.7603
+recall: 0.7030
+roc_auc: 0.9984
+tn: 352764
+tp: 1342
+
+Regression Metrics (Temperature):
+mae: 0.8347
+mape: 9.2389
+r2: 0.9836
+rmse: 1.1340
+Model saved to experiments/A/ensemble/raw/full_training/horizon_3h/frost_classifier/lightgbm_model/model.pkl
+Config saved to experiments/A/ensemble/raw/full_training/horizon_3h/frost_classifier/lightgbm_model/config.json
+Model saved to experiments/A/ensemble/raw/full_training/horizon_3h/temp_regressor/lightgbm_model/model.pkl
+Config saved to experiments/A/ensemble/raw/full_training/horizon_3h/temp_regressor/lightgbm_model/config.json
+
+Generating reliability diagram...
+[2025-11-15 20:50:57] Evaluation completed in 1.68 seconds
+
+[2025-11-15 20:50:57] 3h horizon training completed in 28.15 seconds (0.47 minutes)
+
+============================================================
+Training models for 6h horizon
+[2025-11-15 20:50:57] Starting 6h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 450 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2367252
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2367252
+Frost events: 20579.0 (0.87%)
+Train: 1657076, Val: 355088, Test: 355088
+
+[2025-11-15 20:51:00] Training classification model for frost probability...
+[2025-11-15 20:51:10] Frost classification model training completed in 10.24 seconds (0.17 minutes)
+
+[2025-11-15 20:51:10] Training regression model for temperature...
+[2025-11-15 20:51:24] Temperature regression model training completed in 13.45 seconds (0.22 minutes)
+
+[2025-11-15 20:51:24] Evaluating on test set...
+
+Classification Metrics (Frost Probability):
+accuracy: 0.9966
+brier_score: 0.0025
+ece: 0.0008
+f1: 0.6774
+fn: 627
+fp: 594
+pr_auc: 0.7511
+precision: 0.6834
+recall: 0.6716
+roc_auc: 0.9977
+tn: 352585
+tp: 1282
+
+Regression Metrics (Temperature):
+mae: 1.0251
+mape: 11.1063
+r2: 0.9762
+rmse: 1.3637
+Model saved to experiments/A/ensemble/raw/full_training/horizon_6h/frost_classifier/lightgbm_model/model.pkl
+Config saved to experiments/A/ensemble/raw/full_training/horizon_6h/frost_classifier/lightgbm_model/config.json
+Model saved to experiments/A/ensemble/raw/full_training/horizon_6h/temp_regressor/lightgbm_model/model.pkl
+Config saved to experiments/A/ensemble/raw/full_training/horizon_6h/temp_regressor/lightgbm_model/config.json
+
+Generating reliability diagram...
+[2025-11-15 20:51:25] Evaluation completed in 1.56 seconds
+
+[2025-11-15 20:51:25] 6h horizon training completed in 27.94 seconds (0.47 minutes)
+
+============================================================
+Training models for 12h horizon
+[2025-11-15 20:51:25] Starting 12h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 234 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2367144
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2367144
+Frost events: 20579.0 (0.87%)
+Train: 1657000, Val: 355072, Test: 355072
+
+[2025-11-15 20:51:28] Training classification model for frost probability...
+[2025-11-15 20:51:39] Frost classification model training completed in 11.13 seconds (0.19 minutes)
+
+[2025-11-15 20:51:39] Training regression model for temperature...
+[2025-11-15 20:51:52] Temperature regression model training completed in 13.26 seconds (0.22 minutes)
+
+[2025-11-15 20:51:52] Evaluating on test set...
+
+Classification Metrics (Frost Probability):
+accuracy: 0.9951
+brier_score: 0.0036
+ece: 0.0022
+f1: 0.5520
+fn: 829
+fp: 924
+pr_auc: 0.5864
+precision: 0.5389
+recall: 0.5657
+roc_auc: 0.9944
+tn: 352239
+tp: 1080
+
+Regression Metrics (Temperature):
+mae: 1.6353
+mape: 17.3161
+r2: 0.9422
+rmse: 2.1262
+Model saved to experiments/A/ensemble/raw/full_training/horizon_12h/frost_classifier/lightgbm_model/model.pkl
+Config saved to experiments/A/ensemble/raw/full_training/horizon_12h/frost_classifier/lightgbm_model/config.json
+Model saved to experiments/A/ensemble/raw/full_training/horizon_12h/temp_regressor/lightgbm_model/model.pkl
+Config saved to experiments/A/ensemble/raw/full_training/horizon_12h/temp_regressor/lightgbm_model/config.json
+
+Generating reliability diagram...
+[2025-11-15 20:51:54] Evaluation completed in 1.59 seconds
+
+[2025-11-15 20:51:54] 12h horizon training completed in 28.63 seconds (0.48 minutes)
+
+============================================================
+Training models for 24h horizon
+[2025-11-15 20:51:54] Starting 24h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 18 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2366928
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2366928
+Frost events: 20579.0 (0.87%)
+Train: 1656849, Val: 355039, Test: 355040
+
+[2025-11-15 20:51:57] Training classification model for frost probability...
+[2025-11-15 20:52:08] Frost classification model training completed in 11.13 seconds (0.19 minutes)
+
+[2025-11-15 20:52:08] Training regression model for temperature...
+[2025-11-15 20:52:22] Temperature regression model training completed in 13.94 seconds (0.23 minutes)
+
+[2025-11-15 20:52:22] Evaluating on test set...
+
+Classification Metrics (Frost Probability):
+accuracy: 0.9932
+brier_score: 0.0049
+ece: 0.0045
+f1: 0.4033
+fn: 1092
+fp: 1326
+pr_auc: 0.3982
+precision: 0.3812
+recall: 0.4280
+roc_auc: 0.9882
+tn: 351805
+tp: 817
+
+Regression Metrics (Temperature):
+mae: 1.8576
+mape: 21.6633
+r2: 0.9251
+rmse: 2.4203
+Model saved to experiments/A/ensemble/raw/full_training/horizon_24h/frost_classifier/lightgbm_model/model.pkl
+Config saved to experiments/A/ensemble/raw/full_training/horizon_24h/frost_classifier/lightgbm_model/config.json
+Model saved to experiments/A/ensemble/raw/full_training/horizon_24h/temp_regressor/lightgbm_model/model.pkl
+Config saved to experiments/A/ensemble/raw/full_training/horizon_24h/temp_regressor/lightgbm_model/config.json
+
+Generating reliability diagram...
+[2025-11-15 20:52:23] Evaluation completed in 1.63 seconds
+
+[2025-11-15 20:52:23] 24h horizon training completed in 29.35 seconds (0.49 minutes)
+
+[2025-11-15 20:52:24] All horizons training completed in 114.47 seconds (1.91 minutes)
+
+============================================================
+Summary Report
+============================================================
+
+3h Horizon:
+  Frost - Brier: 0.0020, ECE: 0.0004, ROC-AUC: 0.9984
+  Temp  - MAE: 0.8347, RMSE: 1.1340, R²: 0.9836
+
+6h Horizon:
+  Frost - Brier: 0.0025, ECE: 0.0008, ROC-AUC: 0.9977
+  Temp  - MAE: 1.0251, RMSE: 1.3637, R²: 0.9762
+
+12h Horizon:
+  Frost - Brier: 0.0036, ECE: 0.0022, ROC-AUC: 0.9944
+  Temp  - MAE: 1.6353, RMSE: 2.1262, R²: 0.9422
+
+24h Horizon:
+  Frost - Brier: 0.0049, ECE: 0.0045, ROC-AUC: 0.9882
+  Temp  - MAE: 1.8576, RMSE: 2.4203, R²: 0.9251
+
+✅ Training completed!
+   Start Time: 2025-11-15 20:49:54
+   End Time: 2025-11-15 20:52:24
+   Duration: 2.49 minutes (0.04 hours)
+Results saved to: experiments/A/ensemble/raw

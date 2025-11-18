@@ -5,6 +5,7 @@ from .checkpoint_manager import CheckpointManager
 from .curve_plotter import TrainingCurvePlotter
 from .progress_logger import ProgressLogger
 from .config_validator import ConfigValidator
+from .graph_builder import GraphBuilder, get_graph_cache_path
 
 __all__ = [
     "TrainingHistory",
@@ -12,5 +13,7 @@ __all__ = [
     "TrainingCurvePlotter",
     "ProgressLogger",
     "ConfigValidator",
+    "GraphBuilder",
+    "get_graph_cache_path",
 ]
 

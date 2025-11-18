@@ -26,15 +26,16 @@ def get_resource_aware_config() -> Tuple[int, int]:
     """
     if not PSUTIL_AVAILABLE:
         # Default configuration if psutil is not available
-        return 64, 16
+        # Prefer larger capacity on modern machines
+        return 128, 128
     
     mem_gb = psutil.virtual_memory().total / (1024**3)
     if mem_gb >= 32:
         return 128, 128  # Increased batch size for better GPU utilization
     elif mem_gb >= 16:
-        return 128, 64
+        return 128, 128
     else:
-        return 64, 32  # Increased minimum batch size
+        return 64, 64  # Increased minimums
 
 
 def get_model_params(
@@ -56,8 +57,10 @@ def get_model_params(
     """
     # Validate model type
     supported_models = [
-        "lightgbm", "xgboost", "catboost", "random_forest", 
-        "ensemble", "lstm", "lstm_multitask", "prophet"
+        "lightgbm", "xgboost", "catboost", "random_forest",
+        "ensemble", "lstm", "lstm_multitask", "prophet",
+        "extratrees", "linear_regression", "ridge", "elasticnet", "logreg", "gru", "tcn", "persistence",
+        "dcrnn", "st_gcn", "gat_lstm", "graphwavenet"  # Graph neural network models
     ]
     if model_type not in supported_models:
         raise ValueError(
@@ -148,6 +151,15 @@ def get_model_params(
             "l2_leaf_reg": 0.1,
             "verbose": False,
         }
+    elif model_type == "extratrees":
+        return {
+            "n_estimators": n_estimators,
+            "max_depth": None if not for_loso else max_depth,
+            "min_samples_split": 2,
+            "min_samples_leaf": 1,
+            "random_state": 42,
+            "n_jobs": max_workers,
+        }
     
     elif model_type == "random_forest":
         return {
@@ -197,7 +209,38 @@ def get_model_params(
             "hidden_size": hidden_size,
             "num_layers": 2,
             "dropout": 0.2,
-            "learning_rate": 0.0001,  # Reduced from 0.001 to prevent NaN
+            "learning_rate": 0.0003,  # Faster convergence with scaling
+            "batch_size": batch_size,
+            "epochs": 120,
+            "early_stopping": True,
+            "patience": 20,  # Increased from 10 to allow more training for small datasets
+            "min_delta": 1e-6,
+            "lr_scheduler": True,
+            "lr_scheduler_patience": 5,
+            "lr_scheduler_factor": 0.5,
+            "gradient_clip": 1.0,  # Gradient clipping to prevent explosion
+            "save_best_model": True,
+            "use_amp": True,  # Enable mixed precision training for 1.5-2x speedup
+            "use_weighted_sampler": True,
+            "val_frequency": 1,  # Validate every epoch for better monitoring and threshold selection
+            "checkpoint_frequency": 10,  # Save checkpoint every 10 epochs (0 = disabled)
+            # Advanced options for imbalanced data
+            "use_focal_loss": False,  # Use Focal Loss instead of BCEWithLogitsLoss (better for extreme imbalance)
+            "focal_alpha": 0.25,  # Focal Loss alpha parameter (weight for rare class)
+            "focal_gamma": 2.0,  # Focal Loss gamma parameter (focusing parameter, higher = more focus on hard examples)
+            "use_class_balanced_batch": False,  # Further boost positive sample sampling (for <5% positive)
+            "use_pr_auc_threshold": False,  # Use PR-AUC optimization for threshold selection (better for imbalanced data)
+            # Probability calibration options (improves Brier Score and ECE)
+            "use_probability_calibration": True,  # Enable probability calibration (Platt scaling or Isotonic regression)
+            "calibration_method": "platt",  # "platt" (logistic regression) or "isotonic" (isotonic regression)
+        }
+    elif model_type == "gru":
+        return {
+            "sequence_length": 24,
+            "hidden_size": hidden_size,
+            "num_layers": 2,
+            "dropout": 0.2,
+            "learning_rate": 0.0001,
             "batch_size": batch_size,
             "epochs": epochs,
             "early_stopping": True,
@@ -206,12 +249,136 @@ def get_model_params(
             "lr_scheduler": True,
             "lr_scheduler_patience": 5,
             "lr_scheduler_factor": 0.5,
-            "gradient_clip": 1.0,  # Gradient clipping to prevent explosion
             "save_best_model": True,
-            "use_amp": True,  # Enable mixed precision training for 1.5-2x speedup
-            "val_frequency": 5,  # Validate every 5 epochs instead of every epoch (faster training)
-            "checkpoint_frequency": 10,  # Save checkpoint every 10 epochs (0 = disabled)
+            "use_amp": True,
+            "val_frequency": 5,
+            "checkpoint_frequency": 10,
         }
+    elif model_type == "tcn":
+        return {
+            "sequence_length": 24,
+            "num_channels": [32, 32, 32],
+            "kernel_size": 3,
+            "dropout": 0.1,
+            "learning_rate": 0.0005,
+            "batch_size": max(32, batch_size),
+            "epochs": epochs,
+            "early_stopping": True,
+            "patience": patience,
+            "min_delta": 1e-6,
+            "lr_scheduler": True,
+            "lr_scheduler_patience": 5,
+            "checkpoint_frequency": 10,
+            "use_amp": True,
+        }
+    elif model_type == "dcrnn":
+        # Optimized batch size for graph models (larger for better GPU utilization)
+        graph_batch_size = min(batch_size * 2, 128) if not for_loso else batch_size
+        return {
+            "sequence_length": 24,
+            "hidden_size": hidden_size,
+            "num_layers": 2,
+            "num_diffusion_steps": 1,  # Reduced from 2 to 1 for faster training
+            "dropout": 0.2,
+            "learning_rate": 0.0003,
+            "batch_size": graph_batch_size,  # Increased batch size
+            "epochs": epochs,
+            "early_stopping": True,
+            "patience": patience,
+            "min_delta": 1e-6,
+            "lr_scheduler": True,
+            "lr_scheduler_patience": 5,
+            "gradient_clip": 1.0,
+            "use_amp": True,
+            "use_probability_calibration": True,
+            "calibration_method": "platt",
+            # Graph-specific parameters
+            "graph_type": "radius",  # 'radius' or 'knn'
+            "graph_param": 50.0,  # Radius in km or k for kNN
+            "edge_weight": "gaussian",  # 'gaussian', 'distance', 'binary', 'learnable'
+        }
+    elif model_type == "st_gcn":
+        return {
+            "sequence_length": 24,
+            "hidden_channels": hidden_size,
+            "num_blocks": 2,
+            "kernel_size": 3,
+            "dropout": 0.2,
+            "learning_rate": 0.0003,
+            "batch_size": batch_size,
+            "epochs": epochs,
+            "early_stopping": True,
+            "patience": patience,
+            "min_delta": 1e-6,
+            "lr_scheduler": True,
+            "lr_scheduler_patience": 5,
+            "gradient_clip": 1.0,
+            "use_amp": True,
+            "use_probability_calibration": True,
+            "calibration_method": "platt",
+            # Graph-specific parameters
+            "graph_type": "radius",
+            "graph_param": 50.0,
+            "edge_weight": "gaussian",
+        }
+    elif model_type == "gat_lstm":
+        return {
+            "sequence_length": 24,
+            "hidden_size": hidden_size,
+            "num_gat_layers": 2,
+            "num_lstm_layers": 2,
+            "num_heads": 4,
+            "dropout": 0.2,
+            "learning_rate": 0.0003,
+            "batch_size": batch_size,
+            "epochs": epochs,
+            "early_stopping": True,
+            "patience": patience,
+            "min_delta": 1e-6,
+            "lr_scheduler": True,
+            "lr_scheduler_patience": 5,
+            "gradient_clip": 1.0,
+            "use_amp": True,
+            "use_probability_calibration": True,
+            "calibration_method": "platt",
+            # Graph-specific parameters
+            "graph_type": "radius",
+            "graph_param": 50.0,
+            "edge_weight": "gaussian",
+        }
+    elif model_type == "graphwavenet":
+        return {
+            "sequence_length": 24,
+            "hidden_channels": hidden_size,
+            "num_blocks": 4,
+            "kernel_size": 2,
+            "dropout": 0.2,
+            "learning_rate": 0.0003,
+            "batch_size": batch_size,
+            "epochs": epochs,
+            "early_stopping": True,
+            "patience": patience,
+            "min_delta": 1e-6,
+            "lr_scheduler": True,
+            "lr_scheduler_patience": 5,
+            "gradient_clip": 1.0,
+            "use_amp": True,
+            "use_probability_calibration": True,
+            "calibration_method": "platt",
+            # Graph-specific parameters
+            "graph_type": "radius",
+            "graph_param": 50.0,
+            "edge_weight": "gaussian",
+        }
+    elif model_type in ["linear_regression", "ridge", "elasticnet", "logreg"]:
+        # base params for linear models; classification vs regression handled in class
+        base = {
+            "n_jobs": max_workers,
+            "alpha": 1.0,
+            "l1_ratio": 0.5,
+            "max_iter": 200
+        }
+        return base
     
     elif model_type == "lstm_multitask":
         return {
@@ -219,11 +386,11 @@ def get_model_params(
             "hidden_size": hidden_size,
             "num_layers": 2,
             "dropout": 0.2,
-            "learning_rate": 0.0001,  # Reduced from 0.001 to prevent NaN
+            "learning_rate": 0.0003,
             "batch_size": batch_size,
-            "epochs": epochs,
+            "epochs": 120,
             "early_stopping": True,
-            "patience": patience,
+            "patience": 10,
             "min_delta": 1e-6,
             "lr_scheduler": True,
             "lr_scheduler_patience": 5,
@@ -233,6 +400,7 @@ def get_model_params(
             "loss_weight_temp": 1.0,
             "loss_weight_frost": 1.0,
             "use_amp": True,  # Enable mixed precision training for 1.5-2x speedup
+            "use_weighted_sampler": True,
             "val_frequency": 5,  # Validate every 5 epochs instead of every epoch (faster training)
         }
     
@@ -242,6 +410,13 @@ def get_model_params(
             "weekly_seasonality": True,
             "daily_seasonality": True,
             "seasonality_mode": "multiplicative",
+        }
+    elif model_type == "persistence":
+        # only needs threshold/scale; temp column name handled in model
+        return {
+            "frost_threshold": 0.0,
+            "scale": 2.0,
+            "temp_column": "Air Temp (C)",
         }
     
     else:
@@ -281,6 +456,31 @@ def get_model_class(model_type: str):
     elif model_type == "prophet":
         from src.models.traditional.prophet_model import ProphetModel
         return ProphetModel
+    elif model_type == "extratrees":
+        from src.models.ml.extratrees_model import ExtraTreesModel
+        return ExtraTreesModel
+    elif model_type in ["linear_regression", "ridge", "elasticnet", "logreg"]:
+        from src.models.ml.lightgbm_model import LightGBMModel  # placeholder for import order
+        from src.models.ml.linear_model import LinearModel
+        return LinearModel
+    elif model_type == "gru":
+        from src.models.deep.gru_model import GRUForecastModel
+        return GRUForecastModel
+    elif model_type == "tcn":
+        from src.models.deep.tcn_model import TCNForecastModel
+        return TCNForecastModel
+    elif model_type == "dcrnn":
+        from src.models.graph.dcrnn_model import DCRNNForecastModel
+        return DCRNNForecastModel
+    elif model_type == "st_gcn":
+        from src.models.graph.st_gcn_model import STGCNForecastModel
+        return STGCNForecastModel
+    elif model_type == "gat_lstm":
+        from src.models.graph.gat_lstm_model import GATLSTMForecastModel
+        return GATLSTMForecastModel
+    elif model_type == "graphwavenet":
+        from src.models.graph.graphwavenet_model import GraphWaveNetForecastModel
+        return GraphWaveNetForecastModel
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -327,6 +527,13 @@ def get_model_config(
         config["ensemble_method"] = "mean"
     elif model_type in ["lstm", "lstm_multitask"]:
         config["date_column"] = "Date"
+        # Horizon-specific sequence length mapping
+        try:
+            seq_map = {3: 24, 6: 48, 12: 72, 24: 168}
+            seq_len = seq_map.get(int(horizon), int(config["model_params"].get("sequence_length", 24)))
+            config["model_params"]["sequence_length"] = seq_len
+        except Exception:
+            pass
         if model_type == "lstm_multitask":
             config["task_type"] = "multitask"
     elif model_type == "prophet":

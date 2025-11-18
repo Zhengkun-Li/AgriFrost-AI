@@ -80,7 +80,7 @@ experiments/*/top175_features/**/checkpoint_epoch_*.pth
 
 # Keep experiment summaries, logs, and metrics
 !experiments/*/top175_features/**/*.json
-!experiments/*/top175_features/**/*.log
+!experiments/*/top175_features/**/training.log
 !experiments/*/top175_features/**/*.txt
 !experiments/*/top175_features/**/summary.json
 !experiments/*/top175_features/**/metrics.json
@@ -88,6 +88,10 @@ experiments/*/top175_features/**/checkpoint_epoch_*.pth
 !experiments/*/top175_features/**/training_curves.png
 !experiments/*/top175_features/**/reliability_diagram.png
 !experiments/*/top175_features/**/calibration_curve.png
+
+# Exclude detailed logs (epoch-level details)
+experiments/*/top175_features/**/training_detailed.log
+experiments/*/top175_features/**/*_detailed.log
 
 # Exclude large predictions.json files (>10MB)
 experiments/*/top175_features/**/predictions.json
@@ -135,9 +139,15 @@ experiments/*/top175_features/loso/**/*.cbm
 
 # Keep experiment structure and important files
 !experiments/*/top175_features/full_training/**/*.json
-!experiments/*/top175_features/full_training/**/*.log
+!experiments/*/top175_features/full_training/**/training.log
 !experiments/*/top175_features/loso/**/*.json
-!experiments/*/top175_features/loso/**/*.log
+!experiments/*/top175_features/loso/**/training.log
+
+# Exclude detailed logs
+experiments/*/top175_features/full_training/**/training_detailed.log
+experiments/*/top175_features/loso/**/training_detailed.log
+experiments/*/top175_features/full_training/**/*_detailed.log
+experiments/*/top175_features/loso/**/*_detailed.log
 
 # Feature importance files (can be large)
 experiments/*/top175_features/**/feature_importance*.csv
@@ -145,4 +155,128 @@ experiments/*/top175_features/**/feature_importance*.parquet
 
 # Keep feature importance summaries
 !experiments/*/top175_features/**/feature_importance_summary.json
+
+# New experiment tracks (A, B, C, D, E)
+# Ignore model files and large outputs, keep summaries and metrics
+experiments/A/**/*.pkl
+experiments/A/**/*.pth
+experiments/A/**/*.pt
+experiments/A/**/*.cbm
+experiments/A/**/*.model
+experiments/A/**/*.parquet
+experiments/A/**/checkpoints/
+experiments/A/**/best_model.pth
+experiments/A/**/checkpoint_epoch_*.pth
+experiments/A/**/model_weights/
+experiments/A/**/graph.pkl
+experiments/A/**/metadata.pkl
+
+experiments/B/**/*.pkl
+experiments/B/**/*.pth
+experiments/B/**/*.pt
+experiments/B/**/*.cbm
+experiments/B/**/*.model
+experiments/B/**/*.parquet
+experiments/B/**/checkpoints/
+experiments/B/**/best_model.pth
+experiments/B/**/checkpoint_epoch_*.pth
+experiments/B/**/model_weights/
+experiments/B/**/graph.pkl
+experiments/B/**/metadata.pkl
+
+experiments/C/**/*.pkl
+experiments/C/**/*.pth
+experiments/C/**/*.pt
+experiments/C/**/*.cbm
+experiments/C/**/*.model
+experiments/C/**/*.parquet
+experiments/C/**/checkpoints/
+experiments/C/**/best_model.pth
+experiments/C/**/checkpoint_epoch_*.pth
+experiments/C/**/model_weights/
+experiments/C/**/graph.pkl
+experiments/C/**/metadata.pkl
+
+experiments/D/**/*.pkl
+experiments/D/**/*.pth
+experiments/D/**/*.pt
+experiments/D/**/*.cbm
+experiments/D/**/*.model
+experiments/D/**/*.parquet
+experiments/D/**/checkpoints/
+experiments/D/**/best_model.pth
+experiments/D/**/checkpoint_epoch_*.pth
+experiments/D/**/model_weights/
+experiments/D/**/graph.pkl
+experiments/D/**/metadata.pkl
+
+experiments/E/**/*.pkl
+experiments/E/**/*.pth
+experiments/E/**/*.pt
+experiments/E/**/*.cbm
+experiments/E/**/*.model
+experiments/E/**/*.parquet
+experiments/E/**/checkpoints/
+experiments/E/**/best_model.pth
+experiments/E/**/checkpoint_epoch_*.pth
+experiments/E/**/model_weights/
+experiments/E/**/graph.pkl
+experiments/E/**/metadata.pkl
+
+# Keep experiment summaries, metrics, and important logs for new tracks
+!experiments/A/**/*.json
+!experiments/A/**/training_root.log
+!experiments/A/**/*.png
+!experiments/A/**/summary.json
+!experiments/A/**/metrics.json
+
+!experiments/B/**/*.json
+!experiments/B/**/training_root.log
+!experiments/B/**/*.png
+!experiments/B/**/summary.json
+!experiments/B/**/metrics.json
+
+!experiments/C/**/*.json
+!experiments/C/**/training_root.log
+!experiments/C/**/*.png
+!experiments/C/**/summary.json
+!experiments/C/**/metrics.json
+
+!experiments/D/**/*.json
+!experiments/D/**/training_root.log
+!experiments/D/**/*.png
+!experiments/D/**/summary.json
+!experiments/D/**/metrics.json
+
+!experiments/E/**/*.json
+!experiments/E/**/training_root.log
+!experiments/E/**/*.png
+!experiments/E/**/summary.json
+!experiments/E/**/metrics.json
+
+# CatBoost info directory
+catboost_info/
+
+# Training logs (detailed)
+experiments/**/training_detailed.log
+experiments/**/*_detailed.log
+experiments/**/*.log.*
+experiments/**/run_*.log
+
+# Graph model cache files
+data/interim/graph/**/*.pkl
+data/interim/graph/**/*.json
+
+# Keep graph structure files
+!data/interim/graph/**/graph_structure.json
+
+# Large data files in interim
+data/interim/**/*.parquet
+data/interim/**/*.h5
+data/interim/**/*.hdf5
+data/interim/**/*.feather
+
+# Keep cleaned data summaries
+!data/interim/**/summary.json
+!data/interim/**/metadata.json
 

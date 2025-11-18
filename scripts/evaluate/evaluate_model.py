@@ -81,6 +81,32 @@ def main():
         default=None,
         help="Output directory for evaluation results"
     )
+    parser.add_argument(
+        "--matrix-cell",
+        type=str,
+        default=None,
+        choices=["A", "B", "C", "D"],
+        help="Matrix cell label in 2x2 framework: A/B/C/D"
+    )
+    parser.add_argument(
+        "--track",
+        type=str,
+        default=None,
+        choices=["raw", "top175_features"],
+        help="Track of the run: raw or top175_features"
+    )
+    parser.add_argument(
+        "--radius-km",
+        type=float,
+        default=None,
+        help="Spatial radius in km (for multi-station experiments C/D)"
+    )
+    parser.add_argument(
+        "--knn-k",
+        type=int,
+        default=None,
+        help="k for kNN neighbors (for multi-station experiments C/D)"
+    )
     
     args = parser.parse_args()
     
@@ -130,10 +156,42 @@ def main():
         output_dir = Path(args.output)
         ensure_dir(output_dir)
         
-        # Save metrics
+        # Save metrics (+ framework metadata)
+        framework_meta = {
+            "matrix_cell": args.matrix_cell,
+            "track": args.track,
+            "radius_km": args.radius_km,
+            "knn_k": args.knn_k,
+        }
+        metrics_with_meta = dict(metrics)
+        # Also mirror in top-level for convenience
+        for k, v in framework_meta.items():
+            if v is not None:
+                metrics_with_meta[f"framework_{k}"] = v
+        
         metrics_path = output_dir / "evaluation_metrics.json"
         with open(metrics_path, "w") as f:
-            json.dump(metrics, f, indent=2, default=str)
+            json.dump(metrics_with_meta, f, indent=2, default=str)
+        
+        # Save separate run metadata for robust parsing
+        meta_path = output_dir / "run_metadata.json"
+        with open(meta_path, "w") as f:
+            json.dump(
+                {
+                    "model_dir": str(model_dir),
+                    "output_dir": str(output_dir),
+                    "matrix_cell": args.matrix_cell,
+                    "track": args.track,
+                    "radius_km": args.radius_km,
+                    "knn_k": args.knn_k,
+                    "n_samples": int(len(X)),
+                    "n_features": int(len(feature_cols)),
+                    "task_type": config.get("task_type", "regression"),
+                },
+                f,
+                indent=2,
+                default=str,
+            )
         
         # Save predictions
         pred_df = pd.DataFrame({

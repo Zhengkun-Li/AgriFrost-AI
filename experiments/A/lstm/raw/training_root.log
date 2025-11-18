@@ -1,0 +1,977 @@
+Output directory: experiments/A/lstm/raw
+
+CUDA Runtime Info: device=NVIDIA GeForce RTX 5090, cuDNN=91300
+================================================================================
+🚀 Training Started
+   Start Time: 2025-11-16 16:05:42
+   Model Type: lstm
+   Horizons: [3, 6, 12, 24]
+   Output Directory: experiments/A/lstm/raw
+================================================================================
+
+============================================================
+Step 1: Loading Data
+[2025-11-16 16:05:42] Starting data loading...
+============================================================
+Loading 18 station files from /home/zhengkun-li/frost-risk-forecast-challenge/data/raw/frost-risk-forecast-challenge/stations...
+  Loaded 5/18 files...  Loaded 10/18 files...  Loaded 15/18 files...  Loaded 18/18 files...
+Combining 18 station DataFrames...
+Combined data: 2367360 rows, 26 columns
+Stations: 18
+Loaded 2367360 rows, 26 columns
+Optimizing data types to reduce memory...
+Memory usage after optimization: 1.50 GB
+[2025-11-16 16:05:46] Step 1 completed in 3.33 seconds
+
+============================================================
+Step 2: Cleaning Data
+[2025-11-16 16:05:46] Starting data cleaning...
+============================================================
+After cleaning: 2367360 rows
+[2025-11-16 16:05:50] Step 2 completed in 4.11 seconds
+
+============================================================
+Step 3: Feature Engineering
+[2025-11-16 16:05:50] Starting feature engineering...
+============================================================
+After feature engineering: 2367360 rows, 293 columns
+Optimizing data types after feature engineering...
+Memory usage after optimization: 3.84 GB
+[2025-11-16 16:06:02] Step 3 completed in 12.59 seconds
+
+============================================================
+Step 4: Creating Frost Labels
+============================================================
+Created frost labels for horizons: [3, 6, 12, 24]
+Final dataset: 2367360 rows, 301 columns
+
+Saved labeled data to experiments/A/lstm/raw/labeled_data.parquet and experiments/A/lstm/raw/full_training/labeled_data.parquet
+
+[2025-11-16 16:06:18] Starting model training for all horizons...
+
+============================================================
+Training models for 3h horizon
+[2025-11-16 16:06:18] Starting 3h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 612 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2367306
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2367306
+Frost events: 20579.0 (0.87%)
+Train: 1657114, Val: 355096, Test: 355096
+
+[2025-11-16 16:06:24] Training classification model for frost probability...
+
+  🚀 Starting LSTM training
+     Device: cuda
+     input_size: 27
+     hidden_size: 128
+     batch_size: 128
+     epochs: 120
+     sequence_length: 24
+
+  🚀 Starting LSTM training
+     Device: cuda
+     Input size: 27
+     Hidden size: 128
+     Batch size: 128
+     Num workers: 16
+     Epochs: 120
+     Sequence length: 24
+     Total sequences: 1,656,700
+     Train sequences: 1,656,700 (12,942 batches)
+     Val sequences: 354,682 (2,771 batches)
+     Pos weight: 10.39
+  Epoch 1/120 - train_loss=0.054864, val_loss=0.031461, lr=3.000000e-04 - Time: 22.7s, ETA: 45.1m
+  ✅ Improved! val_loss: 0.031461 (Best: 0.031461)
+  Epoch 2/120 - train_loss=0.037379, val_loss=0.027363, lr=3.000000e-04 - Time: 21.5s, ETA: 43.5m
+  ✅ Improved! val_loss: 0.027363 (Best: 0.027363)
+  Epoch 3/120 - train_loss=0.032273, val_loss=0.026040, lr=3.000000e-04 - Time: 21.5s, ETA: 42.7m
+  ✅ Improved! val_loss: 0.026040 (Best: 0.026040)
+  Epoch 4/120 - train_loss=0.028910, val_loss=0.027168, lr=3.000000e-04 - Time: 21.8s, ETA: 42.3m
+  Epoch 5/120 - train_loss=0.026267, val_loss=0.030171, lr=3.000000e-04 - Time: 21.7s, ETA: 41.9m
+  Epoch 6/120 - train_loss=0.024441, val_loss=0.031064, lr=3.000000e-04 - Time: 21.4s, ETA: 41.4m
+  Epoch 7/120 - train_loss=0.021967, val_loss=0.033827, lr=3.000000e-04 - Time: 21.5s, ETA: 40.9m
+  Epoch 8/120 - train_loss=0.020299, val_loss=0.039267, lr=3.000000e-04 - Time: 21.4s, ETA: 40.5m
+  Epoch 9/120 - train_loss=0.018588, val_loss=0.039149, lr=3.000000e-04 - Time: 21.4s, ETA: 40.1m
+  Epoch 10/120 - train_loss=0.014370, val_loss=0.057673, lr=1.500000e-04 - Time: 21.6s, ETA: 39.7m
+  💾 Checkpoint saved: epoch 10
+  Epoch 11/120 - train_loss=0.013037, val_loss=0.063423, lr=1.500000e-04 - Time: 21.4s, ETA: 39.3m
+  Epoch 12/120 - train_loss=0.011912, val_loss=0.069490, lr=1.500000e-04 - Time: 21.5s, ETA: 38.9m
+  Epoch 13/120 - train_loss=0.011225, val_loss=0.065979, lr=1.500000e-04 - Time: 21.4s, ETA: 38.5m
+  Epoch 14/120 - train_loss=0.010713, val_loss=0.084276, lr=1.500000e-04 - Time: 21.5s, ETA: 38.2m
+  Epoch 15/120 - train_loss=0.009750, val_loss=0.085595, lr=1.500000e-04 - Time: 21.5s, ETA: 37.8m
+  Epoch 16/120 - train_loss=0.007602, val_loss=0.096119, lr=7.500000e-05 - Time: 21.5s, ETA: 37.4m
+  Epoch 17/120 - train_loss=0.006655, val_loss=0.103858, lr=7.500000e-05 - Time: 21.5s, ETA: 37.0m
+  Epoch 18/120 - train_loss=0.006520, val_loss=0.118549, lr=7.500000e-05 - Time: 21.5s, ETA: 36.7m
+  Epoch 19/120 - train_loss=0.006064, val_loss=0.121723, lr=7.500000e-05 - Time: 21.6s, ETA: 36.3m
+  Epoch 20/120 - train_loss=0.005630, val_loss=0.136358, lr=7.500000e-05 - Time: 21.5s, ETA: 35.9m
+  💾 Checkpoint saved: epoch 20
+  Epoch 21/120 - train_loss=0.005178, val_loss=0.143108, lr=7.500000e-05 - Time: 21.5s, ETA: 35.6m
+  Epoch 22/120 - train_loss=0.004374, val_loss=0.149124, lr=3.750000e-05 - Time: 21.6s, ETA: 35.2m
+  Epoch 23/120 - train_loss=0.003883, val_loss=0.147960, lr=3.750000e-05 - Time: 21.4s, ETA: 34.9m
+  Early stopping at epoch 23 (patience=20)
+  Selected threshold=0.010 maximizing F1*recall=0.8206*0.8931=0.7329 (P=0.759, R=0.893) on validation set
+[2025-11-16 16:14:43] Frost classification model training completed in 498.94 seconds (8.32 minutes)
+
+[2025-11-16 16:14:43] Training regression model for temperature...
+
+  🚀 Starting LSTM training
+     Device: cuda
+     input_size: 27
+     hidden_size: 128
+     batch_size: 128
+     epochs: 120
+     sequence_length: 24
+
+  🚀 Starting LSTM training
+     Device: cuda
+     Input size: 27
+     Hidden size: 128
+     Batch size: 128
+     Num workers: 16
+     Epochs: 120
+     Sequence length: 24
+     Total sequences: 1,656,700
+     Train sequences: 1,325,360 (10,354 batches)
+     Val sequences: 331,340 (2,589 batches)
+  Epoch 1/120 - train_loss=0.027498, val_loss=0.013376, lr=3.000000e-04 - Time: 17.8s, ETA: 35.4m
+  ✅ Improved! val_loss: 0.013376 (Best: 0.013376)
+  Epoch 2/120 - train_loss=0.016096, val_loss=0.011012, lr=3.000000e-04 - Time: 16.5s, ETA: 33.8m
+  ✅ Improved! val_loss: 0.011012 (Best: 0.011012)
+  Epoch 3/120 - train_loss=0.014068, val_loss=0.009608, lr=3.000000e-04 - Time: 16.4s, ETA: 33.0m
+  ✅ Improved! val_loss: 0.009608 (Best: 0.009608)
+  Epoch 4/120 - train_loss=0.012909, val_loss=0.008787, lr=3.000000e-04 - Time: 16.5s, ETA: 32.5m
+  ✅ Improved! val_loss: 0.008787 (Best: 0.008787)
+  Epoch 5/120 - train_loss=0.012048, val_loss=0.008324, lr=3.000000e-04 - Time: 16.4s, ETA: 32.1m
+  ✅ Improved! val_loss: 0.008324 (Best: 0.008324)
+  Epoch 6/120 - train_loss=0.011441, val_loss=0.007652, lr=3.000000e-04 - Time: 16.5s, ETA: 31.7m
+  ✅ Improved! val_loss: 0.007652 (Best: 0.007652)
+  Epoch 7/120 - train_loss=0.010975, val_loss=0.007362, lr=3.000000e-04 - Time: 16.4s, ETA: 31.4m
+  ✅ Improved! val_loss: 0.007362 (Best: 0.007362)
+  Epoch 8/120 - train_loss=0.010579, val_loss=0.007185, lr=3.000000e-04 - Time: 16.4s, ETA: 31.1m
+  ✅ Improved! val_loss: 0.007185 (Best: 0.007185)
+  Epoch 9/120 - train_loss=0.010332, val_loss=0.007371, lr=3.000000e-04 - Time: 16.6s, ETA: 30.8m
+  Epoch 10/120 - train_loss=0.010116, val_loss=0.006873, lr=3.000000e-04 - Time: 16.5s, ETA: 30.5m
+  ✅ Improved! val_loss: 0.006873 (Best: 0.006873)
+  Epoch 11/120 - train_loss=0.009927, val_loss=0.006625, lr=3.000000e-04 - Time: 16.7s, ETA: 30.2m
+  ✅ Improved! val_loss: 0.006625 (Best: 0.006625)
+  Epoch 12/120 - train_loss=0.009754, val_loss=0.006476, lr=3.000000e-04 - Time: 16.6s, ETA: 29.9m
+  ✅ Improved! val_loss: 0.006476 (Best: 0.006476)
+  Epoch 13/120 - train_loss=0.009625, val_loss=0.006435, lr=3.000000e-04 - Time: 16.8s, ETA: 29.7m
+  ✅ Improved! val_loss: 0.006435 (Best: 0.006435)
+  Epoch 14/120 - train_loss=0.009513, val_loss=0.006361, lr=3.000000e-04 - Time: 16.5s, ETA: 29.4m
+  ✅ Improved! val_loss: 0.006361 (Best: 0.006361)
+  Epoch 15/120 - train_loss=0.009382, val_loss=0.006386, lr=3.000000e-04 - Time: 16.3s, ETA: 29.1m
+  Epoch 16/120 - train_loss=0.009295, val_loss=0.006206, lr=3.000000e-04 - Time: 16.4s, ETA: 28.8m
+  ✅ Improved! val_loss: 0.006206 (Best: 0.006206)
+  Epoch 17/120 - train_loss=0.009208, val_loss=0.006195, lr=3.000000e-04 - Time: 16.5s, ETA: 28.5m
+  ✅ Improved! val_loss: 0.006195 (Best: 0.006195)
+  Epoch 18/120 - train_loss=0.009109, val_loss=0.006037, lr=3.000000e-04 - Time: 16.5s, ETA: 28.2m
+  ✅ Improved! val_loss: 0.006037 (Best: 0.006037)
+  Epoch 19/120 - train_loss=0.009062, val_loss=0.006027, lr=3.000000e-04 - Time: 16.3s, ETA: 27.9m
+  ✅ Improved! val_loss: 0.006027 (Best: 0.006027)
+  Epoch 20/120 - train_loss=0.008996, val_loss=0.006025, lr=3.000000e-04 - Time: 16.5s, ETA: 27.6m
+  ✅ Improved! val_loss: 0.006025 (Best: 0.006025)
+  Epoch 21/120 - train_loss=0.008944, val_loss=0.005901, lr=3.000000e-04 - Time: 16.7s, ETA: 27.4m
+  ✅ Improved! val_loss: 0.005901 (Best: 0.005901)
+  Epoch 22/120 - train_loss=0.008865, val_loss=0.005995, lr=3.000000e-04 - Time: 16.5s, ETA: 27.1m
+  Epoch 23/120 - train_loss=0.008814, val_loss=0.005842, lr=3.000000e-04 - Time: 16.5s, ETA: 26.8m
+  ✅ Improved! val_loss: 0.005842 (Best: 0.005842)
+  Epoch 24/120 - train_loss=0.008772, val_loss=0.006002, lr=3.000000e-04 - Time: 16.4s, ETA: 26.5m
+  Epoch 25/120 - train_loss=0.008723, val_loss=0.006035, lr=3.000000e-04 - Time: 16.5s, ETA: 26.2m
+  Epoch 26/120 - train_loss=0.008692, val_loss=0.005772, lr=3.000000e-04 - Time: 16.6s, ETA: 25.9m
+  ✅ Improved! val_loss: 0.005772 (Best: 0.005772)
+  Epoch 27/120 - train_loss=0.008643, val_loss=0.005712, lr=3.000000e-04 - Time: 16.4s, ETA: 25.7m
+  ✅ Improved! val_loss: 0.005712 (Best: 0.005712)
+  Epoch 28/120 - train_loss=0.008589, val_loss=0.005725, lr=3.000000e-04 - Time: 16.6s, ETA: 25.4m
+  Epoch 29/120 - train_loss=0.008564, val_loss=0.005723, lr=3.000000e-04 - Time: 16.4s, ETA: 25.1m
+  Epoch 30/120 - train_loss=0.008520, val_loss=0.005820, lr=3.000000e-04 - Time: 16.6s, ETA: 24.8m
+  Epoch 31/120 - train_loss=0.008486, val_loss=0.005655, lr=3.000000e-04 - Time: 16.4s, ETA: 24.5m
+  ✅ Improved! val_loss: 0.005655 (Best: 0.005655)
+  Epoch 32/120 - train_loss=0.008467, val_loss=0.005644, lr=3.000000e-04 - Time: 16.5s, ETA: 24.3m
+  ✅ Improved! val_loss: 0.005644 (Best: 0.005644)
+  Epoch 33/120 - train_loss=0.008427, val_loss=0.005567, lr=3.000000e-04 - Time: 16.3s, ETA: 24.0m
+  ✅ Improved! val_loss: 0.005567 (Best: 0.005567)
+  Epoch 34/120 - train_loss=0.008394, val_loss=0.005728, lr=3.000000e-04 - Time: 16.4s, ETA: 23.7m
+  Epoch 35/120 - train_loss=0.008358, val_loss=0.005592, lr=3.000000e-04 - Time: 16.5s, ETA: 23.4m
+  Epoch 36/120 - train_loss=0.008342, val_loss=0.005648, lr=3.000000e-04 - Time: 16.5s, ETA: 23.1m
+  Epoch 37/120 - train_loss=0.008312, val_loss=0.005498, lr=3.000000e-04 - Time: 16.5s, ETA: 22.9m
+  ✅ Improved! val_loss: 0.005498 (Best: 0.005498)
+  Epoch 38/120 - train_loss=0.008289, val_loss=0.005595, lr=3.000000e-04 - Time: 16.5s, ETA: 22.6m
+  Epoch 39/120 - train_loss=0.008258, val_loss=0.005586, lr=3.000000e-04 - Time: 16.6s, ETA: 22.3m
+  Epoch 40/120 - train_loss=0.008248, val_loss=0.005501, lr=3.000000e-04 - Time: 16.4s, ETA: 22.0m
+  Epoch 41/120 - train_loss=0.008215, val_loss=0.005488, lr=3.000000e-04 - Time: 16.6s, ETA: 21.8m
+  ✅ Improved! val_loss: 0.005488 (Best: 0.005488)
+  Epoch 42/120 - train_loss=0.008169, val_loss=0.005508, lr=3.000000e-04 - Time: 16.5s, ETA: 21.5m
+  Epoch 43/120 - train_loss=0.008172, val_loss=0.005687, lr=3.000000e-04 - Time: 16.5s, ETA: 21.2m
+  Epoch 44/120 - train_loss=0.008141, val_loss=0.005457, lr=3.000000e-04 - Time: 16.5s, ETA: 20.9m
+  ✅ Improved! val_loss: 0.005457 (Best: 0.005457)
+  Epoch 45/120 - train_loss=0.008128, val_loss=0.005454, lr=3.000000e-04 - Time: 16.5s, ETA: 20.7m
+  ✅ Improved! val_loss: 0.005454 (Best: 0.005454)
+  Epoch 46/120 - train_loss=0.008079, val_loss=0.005455, lr=3.000000e-04 - Time: 16.6s, ETA: 20.4m
+  Epoch 47/120 - train_loss=0.008103, val_loss=0.005393, lr=3.000000e-04 - Time: 16.5s, ETA: 20.1m
+  ✅ Improved! val_loss: 0.005393 (Best: 0.005393)
+  Epoch 48/120 - train_loss=0.008083, val_loss=0.005605, lr=3.000000e-04 - Time: 16.3s, ETA: 19.8m
+  Epoch 49/120 - train_loss=0.008068, val_loss=0.005402, lr=3.000000e-04 - Time: 16.5s, ETA: 19.5m
+  Epoch 50/120 - train_loss=0.008039, val_loss=0.005450, lr=3.000000e-04 - Time: 16.5s, ETA: 19.3m
+  Epoch 51/120 - train_loss=0.008010, val_loss=0.005401, lr=3.000000e-04 - Time: 16.5s, ETA: 19.0m
+  Epoch 52/120 - train_loss=0.008006, val_loss=0.005419, lr=3.000000e-04 - Time: 16.5s, ETA: 18.7m
+  Epoch 53/120 - train_loss=0.007996, val_loss=0.005371, lr=3.000000e-04 - Time: 16.6s, ETA: 18.4m
+  ✅ Improved! val_loss: 0.005371 (Best: 0.005371)
+  Epoch 54/120 - train_loss=0.007956, val_loss=0.005438, lr=3.000000e-04 - Time: 16.5s, ETA: 18.2m
+  Epoch 55/120 - train_loss=0.007952, val_loss=0.005427, lr=3.000000e-04 - Time: 16.5s, ETA: 17.9m
+  Epoch 56/120 - train_loss=0.007958, val_loss=0.005510, lr=3.000000e-04 - Time: 16.5s, ETA: 17.6m
+  Epoch 57/120 - train_loss=0.007927, val_loss=0.005328, lr=3.000000e-04 - Time: 16.6s, ETA: 17.3m
+  ✅ Improved! val_loss: 0.005328 (Best: 0.005328)
+  Epoch 58/120 - train_loss=0.007890, val_loss=0.005368, lr=3.000000e-04 - Time: 16.4s, ETA: 17.1m
+  Epoch 59/120 - train_loss=0.007891, val_loss=0.005352, lr=3.000000e-04 - Time: 16.6s, ETA: 16.8m
+  Epoch 60/120 - train_loss=0.007889, val_loss=0.005440, lr=3.000000e-04 - Time: 16.5s, ETA: 16.5m
+  Epoch 61/120 - train_loss=0.007881, val_loss=0.005324, lr=3.000000e-04 - Time: 16.4s, ETA: 16.2m
+  ✅ Improved! val_loss: 0.005324 (Best: 0.005324)
+  Epoch 62/120 - train_loss=0.007844, val_loss=0.005380, lr=3.000000e-04 - Time: 16.6s, ETA: 16.0m
+  Epoch 63/120 - train_loss=0.007852, val_loss=0.005449, lr=3.000000e-04 - Time: 16.6s, ETA: 15.7m
+  Epoch 64/120 - train_loss=0.007803, val_loss=0.005413, lr=3.000000e-04 - Time: 16.5s, ETA: 15.4m
+  Epoch 65/120 - train_loss=0.007799, val_loss=0.005367, lr=3.000000e-04 - Time: 16.5s, ETA: 15.1m
+  Epoch 66/120 - train_loss=0.007816, val_loss=0.005351, lr=3.000000e-04 - Time: 16.5s, ETA: 14.9m
+  Epoch 67/120 - train_loss=0.007791, val_loss=0.005359, lr=3.000000e-04 - Time: 16.5s, ETA: 14.6m
+  Epoch 68/120 - train_loss=0.007587, val_loss=0.005263, lr=1.500000e-04 - Time: 16.5s, ETA: 14.3m
+  ✅ Improved! val_loss: 0.005263 (Best: 0.005263)
+  Epoch 69/120 - train_loss=0.007553, val_loss=0.005242, lr=1.500000e-04 - Time: 16.5s, ETA: 14.0m
+  ✅ Improved! val_loss: 0.005242 (Best: 0.005242)
+  Epoch 70/120 - train_loss=0.007549, val_loss=0.005170, lr=1.500000e-04 - Time: 16.6s, ETA: 13.8m
+  ✅ Improved! val_loss: 0.005170 (Best: 0.005170)
+  Epoch 71/120 - train_loss=0.007541, val_loss=0.005212, lr=1.500000e-04 - Time: 16.6s, ETA: 13.5m
+  Epoch 72/120 - train_loss=0.007521, val_loss=0.005514, lr=1.500000e-04 - Time: 16.5s, ETA: 13.2m
+  Epoch 73/120 - train_loss=0.007539, val_loss=0.005240, lr=1.500000e-04 - Time: 16.5s, ETA: 12.9m
+  Epoch 74/120 - train_loss=0.007504, val_loss=0.005238, lr=1.500000e-04 - Time: 16.5s, ETA: 12.7m
+  Epoch 75/120 - train_loss=0.007511, val_loss=0.005267, lr=1.500000e-04 - Time: 16.6s, ETA: 12.4m
+  Epoch 76/120 - train_loss=0.007498, val_loss=0.005241, lr=1.500000e-04 - Time: 16.5s, ETA: 12.1m
+  Epoch 77/120 - train_loss=0.007407, val_loss=0.005133, lr=7.500000e-05 - Time: 16.6s, ETA: 11.8m
+  ✅ Improved! val_loss: 0.005133 (Best: 0.005133)
+  Epoch 78/120 - train_loss=0.007394, val_loss=0.005159, lr=7.500000e-05 - Time: 16.5s, ETA: 11.6m
+  Epoch 79/120 - train_loss=0.007370, val_loss=0.005112, lr=7.500000e-05 - Time: 16.5s, ETA: 11.3m
+  ✅ Improved! val_loss: 0.005112 (Best: 0.005112)
+  Epoch 80/120 - train_loss=0.007362, val_loss=0.005140, lr=7.500000e-05 - Time: 16.5s, ETA: 11.0m
+  Epoch 81/120 - train_loss=0.007340, val_loss=0.005137, lr=7.500000e-05 - Time: 16.5s, ETA: 10.7m
+  Epoch 82/120 - train_loss=0.007352, val_loss=0.005145, lr=7.500000e-05 - Time: 16.6s, ETA: 10.5m
+  Epoch 83/120 - train_loss=0.007348, val_loss=0.005129, lr=7.500000e-05 - Time: 16.6s, ETA: 10.2m
+  Epoch 84/120 - train_loss=0.007343, val_loss=0.005143, lr=7.500000e-05 - Time: 16.5s, ETA: 9.9m
+  Epoch 85/120 - train_loss=0.007344, val_loss=0.005128, lr=7.500000e-05 - Time: 16.5s, ETA: 9.6m
+  Epoch 86/120 - train_loss=0.007294, val_loss=0.005097, lr=3.750000e-05 - Time: 16.6s, ETA: 9.4m
+  ✅ Improved! val_loss: 0.005097 (Best: 0.005097)
+  Epoch 87/120 - train_loss=0.007285, val_loss=0.005095, lr=3.750000e-05 - Time: 16.6s, ETA: 9.1m
+  ✅ Improved! val_loss: 0.005095 (Best: 0.005095)
+  Epoch 88/120 - train_loss=0.007284, val_loss=0.005101, lr=3.750000e-05 - Time: 16.5s, ETA: 8.8m
+  Epoch 89/120 - train_loss=0.007291, val_loss=0.005102, lr=3.750000e-05 - Time: 16.5s, ETA: 8.5m
+  Epoch 90/120 - train_loss=0.007278, val_loss=0.005088, lr=3.750000e-05 - Time: 16.5s, ETA: 8.3m
+  ✅ Improved! val_loss: 0.005088 (Best: 0.005088)
+  Epoch 91/120 - train_loss=0.007281, val_loss=0.005093, lr=3.750000e-05 - Time: 16.5s, ETA: 8.0m
+  Epoch 92/120 - train_loss=0.007284, val_loss=0.005090, lr=3.750000e-05 - Time: 16.5s, ETA: 7.7m
+  Epoch 93/120 - train_loss=0.007274, val_loss=0.005085, lr=3.750000e-05 - Time: 16.6s, ETA: 7.4m
+  ✅ Improved! val_loss: 0.005085 (Best: 0.005085)
+  Epoch 94/120 - train_loss=0.007271, val_loss=0.005081, lr=3.750000e-05 - Time: 16.5s, ETA: 7.2m
+  ✅ Improved! val_loss: 0.005081 (Best: 0.005081)
+  Epoch 95/120 - train_loss=0.007273, val_loss=0.005107, lr=3.750000e-05 - Time: 16.6s, ETA: 6.9m
+  Epoch 96/120 - train_loss=0.007269, val_loss=0.005121, lr=3.750000e-05 - Time: 16.5s, ETA: 6.6m
+  Epoch 97/120 - train_loss=0.007266, val_loss=0.005112, lr=3.750000e-05 - Time: 16.6s, ETA: 6.3m
+  Epoch 98/120 - train_loss=0.007283, val_loss=0.005116, lr=3.750000e-05 - Time: 16.5s, ETA: 6.1m
+  Epoch 99/120 - train_loss=0.007266, val_loss=0.005083, lr=3.750000e-05 - Time: 16.5s, ETA: 5.8m
+  Epoch 100/120 - train_loss=0.007250, val_loss=0.005094, lr=3.750000e-05 - Time: 16.7s, ETA: 5.5m
+  Epoch 101/120 - train_loss=0.007226, val_loss=0.005082, lr=1.875000e-05 - Time: 16.5s, ETA: 5.2m
+  Epoch 102/120 - train_loss=0.007227, val_loss=0.005069, lr=1.875000e-05 - Time: 16.5s, ETA: 5.0m
+  ✅ Improved! val_loss: 0.005069 (Best: 0.005069)
+  Epoch 103/120 - train_loss=0.007220, val_loss=0.005065, lr=1.875000e-05 - Time: 16.6s, ETA: 4.7m
+  ✅ Improved! val_loss: 0.005065 (Best: 0.005065)
+  Epoch 104/120 - train_loss=0.007219, val_loss=0.005078, lr=1.875000e-05 - Time: 16.5s, ETA: 4.4m
+  Epoch 105/120 - train_loss=0.007212, val_loss=0.005073, lr=1.875000e-05 - Time: 16.5s, ETA: 4.1m
+  Epoch 106/120 - train_loss=0.007226, val_loss=0.005085, lr=1.875000e-05 - Time: 16.5s, ETA: 3.9m
+  Epoch 107/120 - train_loss=0.007234, val_loss=0.005067, lr=1.875000e-05 - Time: 16.6s, ETA: 3.6m
+  Epoch 108/120 - train_loss=0.007217, val_loss=0.005076, lr=1.875000e-05 - Time: 16.5s, ETA: 3.3m
+  Epoch 109/120 - train_loss=0.007224, val_loss=0.005073, lr=1.875000e-05 - Time: 16.5s, ETA: 3.0m
+  Epoch 110/120 - train_loss=0.007212, val_loss=0.005067, lr=9.375000e-06 - Time: 16.5s, ETA: 2.8m
+  Epoch 111/120 - train_loss=0.007212, val_loss=0.005062, lr=9.375000e-06 - Time: 16.5s, ETA: 2.5m
+  ✅ Improved! val_loss: 0.005062 (Best: 0.005062)
+  Epoch 112/120 - train_loss=0.007209, val_loss=0.005063, lr=9.375000e-06 - Time: 16.6s, ETA: 2.2m
+  Epoch 113/120 - train_loss=0.007207, val_loss=0.005060, lr=9.375000e-06 - Time: 16.4s, ETA: 1.9m
+  ✅ Improved! val_loss: 0.005060 (Best: 0.005060)
+  Epoch 114/120 - train_loss=0.007220, val_loss=0.005064, lr=9.375000e-06 - Time: 16.5s, ETA: 1.7m
+  Epoch 115/120 - train_loss=0.007204, val_loss=0.005066, lr=9.375000e-06 - Time: 16.5s, ETA: 1.4m
+  Epoch 116/120 - train_loss=0.007176, val_loss=0.005062, lr=9.375000e-06 - Time: 16.5s, ETA: 1.1m
+  Epoch 117/120 - train_loss=0.007214, val_loss=0.005062, lr=9.375000e-06 - Time: 16.5s, ETA: 0.8m
+  Epoch 118/120 - train_loss=0.007194, val_loss=0.005064, lr=9.375000e-06 - Time: 16.7s, ETA: 0.6m
+  Epoch 119/120 - train_loss=0.007194, val_loss=0.005064, lr=9.375000e-06 - Time: 16.5s, ETA: 0.3m
+  Epoch 120/120 - train_loss=0.007191, val_loss=0.005074, lr=4.687500e-06 - Time: 16.5s, ETA: 0.0m
+[2025-11-16 16:50:28] Temperature regression model training completed in 2144.16 seconds (35.74 minutes)
+
+[2025-11-16 16:50:28] Evaluating on test set...
+
+Classification Metrics (Frost Probability):
+accuracy: 0.9968
+brier_score: 0.0024
+ece: 0.0023
+f1: 0.7422
+fn: 274
+fp: 862
+pr_auc: 0.8194
+precision: 0.6548
+recall: 0.8565
+roc_auc: 0.9971
+tn: 352325
+tp: 1635
+
+Regression Metrics (Temperature):
+mae: 0.4325
+mape: 5.168091773986816
+r2: 0.9924
+rmse: 0.7692
+
+Generating reliability diagram...
+[2025-11-16 16:54:19] Evaluation completed in 231.22 seconds
+
+[2025-11-16 16:54:19] 3h horizon training completed in 2880.85 seconds (48.01 minutes)
+
+============================================================
+Training models for 6h horizon
+[2025-11-16 16:54:19] Starting 6h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 450 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2367252
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2367252
+Frost events: 20579.0 (0.87%)
+Train: 1657076, Val: 355088, Test: 355088
+
+[2025-11-16 16:54:26] Training classification model for frost probability...
+
+  🚀 Starting LSTM training
+     Device: cuda
+     input_size: 27
+     hidden_size: 128
+     batch_size: 128
+     epochs: 120
+     sequence_length: 48
+
+  🚀 Starting LSTM training
+     Device: cuda
+     Input size: 27
+     Hidden size: 128
+     Batch size: 128
+     Num workers: 16
+     Epochs: 120
+     Sequence length: 48
+     Total sequences: 1,656,230
+     Train sequences: 1,656,230 (12,939 batches)
+     Val sequences: 354,242 (2,768 batches)
+     Pos weight: 10.39
+  Epoch 1/120 - train_loss=0.083985, val_loss=0.047075, lr=3.000000e-04 - Time: 24.2s, ETA: 48.0m
+  ✅ Improved! val_loss: 0.047075 (Best: 0.047075)
+  Epoch 2/120 - train_loss=0.057765, val_loss=0.048899, lr=3.000000e-04 - Time: 23.1s, ETA: 46.5m
+  Epoch 3/120 - train_loss=0.051178, val_loss=0.042201, lr=3.000000e-04 - Time: 22.9s, ETA: 45.6m
+  ✅ Improved! val_loss: 0.042201 (Best: 0.042201)
+  Epoch 4/120 - train_loss=0.044423, val_loss=0.041598, lr=3.000000e-04 - Time: 23.1s, ETA: 45.1m
+  ✅ Improved! val_loss: 0.041598 (Best: 0.041598)
+  Epoch 5/120 - train_loss=0.040908, val_loss=0.044582, lr=3.000000e-04 - Time: 23.0s, ETA: 44.6m
+  Epoch 6/120 - train_loss=0.037554, val_loss=0.049258, lr=3.000000e-04 - Time: 23.1s, ETA: 44.1m
+  Epoch 7/120 - train_loss=0.035127, val_loss=0.052105, lr=3.000000e-04 - Time: 23.1s, ETA: 43.7m
+  Epoch 8/120 - train_loss=0.032697, val_loss=0.061485, lr=3.000000e-04 - Time: 23.0s, ETA: 43.3m
+  Epoch 9/120 - train_loss=0.031028, val_loss=0.064334, lr=3.000000e-04 - Time: 23.1s, ETA: 42.9m
+  Epoch 10/120 - train_loss=0.027944, val_loss=0.068579, lr=3.000000e-04 - Time: 23.0s, ETA: 42.5m
+  💾 Checkpoint saved: epoch 10
+  Epoch 11/120 - train_loss=0.022261, val_loss=0.075939, lr=1.500000e-04 - Time: 23.1s, ETA: 42.1m
+  Epoch 12/120 - train_loss=0.020877, val_loss=0.084996, lr=1.500000e-04 - Time: 23.1s, ETA: 41.7m
+  Epoch 13/120 - train_loss=0.019119, val_loss=0.087758, lr=1.500000e-04 - Time: 23.0s, ETA: 41.3m
+  Epoch 14/120 - train_loss=0.018350, val_loss=0.099549, lr=1.500000e-04 - Time: 23.0s, ETA: 40.9m
+  Epoch 15/120 - train_loss=0.016210, val_loss=0.101867, lr=1.500000e-04 - Time: 23.0s, ETA: 40.5m
+  Epoch 16/120 - train_loss=0.016168, val_loss=0.120713, lr=1.500000e-04 - Time: 23.0s, ETA: 40.1m
+  Epoch 17/120 - train_loss=0.012219, val_loss=0.129897, lr=7.500000e-05 - Time: 23.0s, ETA: 39.7m
+  Epoch 18/120 - train_loss=0.010723, val_loss=0.157137, lr=7.500000e-05 - Time: 23.0s, ETA: 39.3m
+  Epoch 19/120 - train_loss=0.010837, val_loss=0.157967, lr=7.500000e-05 - Time: 23.1s, ETA: 38.9m
+  Epoch 20/120 - train_loss=0.009065, val_loss=0.188149, lr=7.500000e-05 - Time: 23.2s, ETA: 38.5m
+  💾 Checkpoint saved: epoch 20
+  Epoch 21/120 - train_loss=0.008851, val_loss=0.168134, lr=7.500000e-05 - Time: 23.5s, ETA: 38.2m
+  Epoch 22/120 - train_loss=0.008750, val_loss=0.183205, lr=7.500000e-05 - Time: 23.4s, ETA: 37.8m
+  Epoch 23/120 - train_loss=0.006464, val_loss=0.198512, lr=3.750000e-05 - Time: 23.3s, ETA: 37.4m
+  Epoch 24/120 - train_loss=0.006165, val_loss=0.203716, lr=3.750000e-05 - Time: 23.4s, ETA: 37.0m
+  Early stopping at epoch 24 (patience=20)
+  Selected threshold=0.030 maximizing F1*recall=0.7420*0.8568=0.6358 (P=0.654, R=0.857) on validation set
+[2025-11-16 17:03:44] Frost classification model training completed in 558.46 seconds (9.31 minutes)
+
+[2025-11-16 17:03:44] Training regression model for temperature...
+
+  🚀 Starting LSTM training
+     Device: cuda
+     input_size: 27
+     hidden_size: 128
+     batch_size: 128
+     epochs: 120
+     sequence_length: 48
+
+  🚀 Starting LSTM training
+     Device: cuda
+     Input size: 27
+     Hidden size: 128
+     Batch size: 128
+     Num workers: 16
+     Epochs: 120
+     Sequence length: 48
+     Total sequences: 1,656,230
+     Train sequences: 1,324,984 (10,351 batches)
+     Val sequences: 331,246 (2,588 batches)
+  Epoch 1/120 - train_loss=0.044335, val_loss=0.022034, lr=3.000000e-04 - Time: 19.0s, ETA: 37.8m
+  ✅ Improved! val_loss: 0.022034 (Best: 0.022034)
+  Epoch 2/120 - train_loss=0.024183, val_loss=0.017504, lr=3.000000e-04 - Time: 18.2s, ETA: 36.7m
+  ✅ Improved! val_loss: 0.017504 (Best: 0.017504)
+  Epoch 3/120 - train_loss=0.021105, val_loss=0.016446, lr=3.000000e-04 - Time: 18.2s, ETA: 36.1m
+  ✅ Improved! val_loss: 0.016446 (Best: 0.016446)
+  Epoch 4/120 - train_loss=0.019659, val_loss=0.014910, lr=3.000000e-04 - Time: 18.2s, ETA: 35.6m
+  ✅ Improved! val_loss: 0.014910 (Best: 0.014910)
+  Epoch 5/120 - train_loss=0.018691, val_loss=0.014453, lr=3.000000e-04 - Time: 18.2s, ETA: 35.2m
+  ✅ Improved! val_loss: 0.014453 (Best: 0.014453)
+  Epoch 6/120 - train_loss=0.018012, val_loss=0.013972, lr=3.000000e-04 - Time: 18.2s, ETA: 34.8m
+  ✅ Improved! val_loss: 0.013972 (Best: 0.013972)
+  Epoch 7/120 - train_loss=0.017468, val_loss=0.014075, lr=3.000000e-04 - Time: 18.1s, ETA: 34.5m
+  Epoch 8/120 - train_loss=0.017029, val_loss=0.013410, lr=3.000000e-04 - Time: 18.4s, ETA: 34.2m
+  ✅ Improved! val_loss: 0.013410 (Best: 0.013410)
+  Epoch 9/120 - train_loss=0.016636, val_loss=0.013417, lr=3.000000e-04 - Time: 18.2s, ETA: 33.9m
+  Epoch 10/120 - train_loss=0.016287, val_loss=0.012833, lr=3.000000e-04 - Time: 18.3s, ETA: 33.6m
+  ✅ Improved! val_loss: 0.012833 (Best: 0.012833)
+  Epoch 11/120 - train_loss=0.016024, val_loss=0.012478, lr=3.000000e-04 - Time: 18.4s, ETA: 33.3m
+  ✅ Improved! val_loss: 0.012478 (Best: 0.012478)
+  Epoch 12/120 - train_loss=0.015789, val_loss=0.012400, lr=3.000000e-04 - Time: 18.0s, ETA: 32.9m
+  ✅ Improved! val_loss: 0.012400 (Best: 0.012400)
+  Epoch 13/120 - train_loss=0.015582, val_loss=0.012188, lr=3.000000e-04 - Time: 18.0s, ETA: 32.6m
+  ✅ Improved! val_loss: 0.012188 (Best: 0.012188)
+  Epoch 14/120 - train_loss=0.015407, val_loss=0.012120, lr=3.000000e-04 - Time: 18.1s, ETA: 32.2m
+  ✅ Improved! val_loss: 0.012120 (Best: 0.012120)
+  Epoch 15/120 - train_loss=0.015242, val_loss=0.011880, lr=3.000000e-04 - Time: 18.1s, ETA: 31.9m
+  ✅ Improved! val_loss: 0.011880 (Best: 0.011880)
+  Epoch 16/120 - train_loss=0.015076, val_loss=0.011902, lr=3.000000e-04 - Time: 18.0s, ETA: 31.6m
+  Epoch 17/120 - train_loss=0.014957, val_loss=0.011795, lr=3.000000e-04 - Time: 18.2s, ETA: 31.3m
+  ✅ Improved! val_loss: 0.011795 (Best: 0.011795)
+  Epoch 18/120 - train_loss=0.014838, val_loss=0.011778, lr=3.000000e-04 - Time: 18.2s, ETA: 31.0m
+  ✅ Improved! val_loss: 0.011778 (Best: 0.011778)
+  Epoch 19/120 - train_loss=0.014704, val_loss=0.011674, lr=3.000000e-04 - Time: 18.2s, ETA: 30.7m
+  ✅ Improved! val_loss: 0.011674 (Best: 0.011674)
+  Epoch 20/120 - train_loss=0.014600, val_loss=0.011819, lr=3.000000e-04 - Time: 18.3s, ETA: 30.4m
+  Epoch 21/120 - train_loss=0.014508, val_loss=0.011909, lr=3.000000e-04 - Time: 18.4s, ETA: 30.1m
+  Epoch 22/120 - train_loss=0.014393, val_loss=0.011612, lr=3.000000e-04 - Time: 18.4s, ETA: 29.8m
+  ✅ Improved! val_loss: 0.011612 (Best: 0.011612)
+  Epoch 23/120 - train_loss=0.014327, val_loss=0.011317, lr=3.000000e-04 - Time: 18.2s, ETA: 29.5m
+  ✅ Improved! val_loss: 0.011317 (Best: 0.011317)
+  Epoch 24/120 - train_loss=0.014239, val_loss=0.011449, lr=3.000000e-04 - Time: 18.1s, ETA: 29.2m
+  Epoch 25/120 - train_loss=0.014172, val_loss=0.011372, lr=3.000000e-04 - Time: 18.3s, ETA: 28.9m
+  Epoch 26/120 - train_loss=0.014090, val_loss=0.011363, lr=3.000000e-04 - Time: 18.3s, ETA: 28.6m
+  Epoch 27/120 - train_loss=0.014001, val_loss=0.011311, lr=3.000000e-04 - Time: 18.3s, ETA: 28.3m
+  ✅ Improved! val_loss: 0.011311 (Best: 0.011311)
+  Epoch 28/120 - train_loss=0.013962, val_loss=0.011322, lr=3.000000e-04 - Time: 18.0s, ETA: 28.0m
+  Epoch 29/120 - train_loss=0.013898, val_loss=0.011161, lr=3.000000e-04 - Time: 17.9s, ETA: 27.6m
+  ✅ Improved! val_loss: 0.011161 (Best: 0.011161)
+  Epoch 30/120 - train_loss=0.013817, val_loss=0.011166, lr=3.000000e-04 - Time: 18.1s, ETA: 27.3m
+  Epoch 31/120 - train_loss=0.013788, val_loss=0.010979, lr=3.000000e-04 - Time: 18.0s, ETA: 27.0m
+  ✅ Improved! val_loss: 0.010979 (Best: 0.010979)
+  Epoch 32/120 - train_loss=0.013725, val_loss=0.011180, lr=3.000000e-04 - Time: 18.0s, ETA: 26.7m
+  Epoch 33/120 - train_loss=0.013665, val_loss=0.011564, lr=3.000000e-04 - Time: 17.9s, ETA: 26.4m
+  Epoch 34/120 - train_loss=0.013600, val_loss=0.011200, lr=3.000000e-04 - Time: 17.9s, ETA: 26.1m
+  Epoch 35/120 - train_loss=0.013553, val_loss=0.011062, lr=3.000000e-04 - Time: 18.0s, ETA: 25.8m
+  Epoch 36/120 - train_loss=0.013514, val_loss=0.011039, lr=3.000000e-04 - Time: 17.9s, ETA: 25.4m
+  Epoch 37/120 - train_loss=0.013465, val_loss=0.010931, lr=3.000000e-04 - Time: 18.0s, ETA: 25.1m
+  ✅ Improved! val_loss: 0.010931 (Best: 0.010931)
+  Epoch 38/120 - train_loss=0.013418, val_loss=0.011110, lr=3.000000e-04 - Time: 17.9s, ETA: 24.8m
+  Epoch 39/120 - train_loss=0.013380, val_loss=0.010894, lr=3.000000e-04 - Time: 17.9s, ETA: 24.5m
+  ✅ Improved! val_loss: 0.010894 (Best: 0.010894)
+  Epoch 40/120 - train_loss=0.013331, val_loss=0.011228, lr=3.000000e-04 - Time: 18.3s, ETA: 24.2m
+  Epoch 41/120 - train_loss=0.013308, val_loss=0.011049, lr=3.000000e-04 - Time: 18.1s, ETA: 23.9m
+  Epoch 42/120 - train_loss=0.013237, val_loss=0.011017, lr=3.000000e-04 - Time: 18.1s, ETA: 23.6m
+  Epoch 43/120 - train_loss=0.013205, val_loss=0.010893, lr=3.000000e-04 - Time: 18.5s, ETA: 23.3m
+  Epoch 44/120 - train_loss=0.013174, val_loss=0.010923, lr=3.000000e-04 - Time: 18.1s, ETA: 23.0m
+  Epoch 45/120 - train_loss=0.013134, val_loss=0.010958, lr=3.000000e-04 - Time: 18.3s, ETA: 22.7m
+  Epoch 46/120 - train_loss=0.012746, val_loss=0.010700, lr=1.500000e-04 - Time: 18.2s, ETA: 22.4m
+  ✅ Improved! val_loss: 0.010700 (Best: 0.010700)
+  Epoch 47/120 - train_loss=0.012716, val_loss=0.010677, lr=1.500000e-04 - Time: 18.4s, ETA: 22.1m
+  ✅ Improved! val_loss: 0.010677 (Best: 0.010677)
+  Epoch 48/120 - train_loss=0.012690, val_loss=0.010664, lr=1.500000e-04 - Time: 18.3s, ETA: 21.8m
+  ✅ Improved! val_loss: 0.010664 (Best: 0.010664)
+  Epoch 49/120 - train_loss=0.012661, val_loss=0.010631, lr=1.500000e-04 - Time: 18.3s, ETA: 21.5m
+  ✅ Improved! val_loss: 0.010631 (Best: 0.010631)
+  Epoch 50/120 - train_loss=0.012619, val_loss=0.010721, lr=1.500000e-04 - Time: 18.3s, ETA: 21.2m
+  Epoch 51/120 - train_loss=0.012619, val_loss=0.010672, lr=1.500000e-04 - Time: 18.1s, ETA: 20.9m
+  Epoch 52/120 - train_loss=0.012593, val_loss=0.010615, lr=1.500000e-04 - Time: 18.1s, ETA: 20.6m
+  ✅ Improved! val_loss: 0.010615 (Best: 0.010615)
+  Epoch 53/120 - train_loss=0.012591, val_loss=0.010664, lr=1.500000e-04 - Time: 18.0s, ETA: 20.3m
+  Epoch 54/120 - train_loss=0.012563, val_loss=0.010613, lr=1.500000e-04 - Time: 18.0s, ETA: 20.0m
+  ✅ Improved! val_loss: 0.010613 (Best: 0.010613)
+  Epoch 55/120 - train_loss=0.012546, val_loss=0.010725, lr=1.500000e-04 - Time: 18.1s, ETA: 19.7m
+  Epoch 56/120 - train_loss=0.012539, val_loss=0.010721, lr=1.500000e-04 - Time: 18.0s, ETA: 19.4m
+  Epoch 57/120 - train_loss=0.012500, val_loss=0.010669, lr=1.500000e-04 - Time: 18.2s, ETA: 19.1m
+  Epoch 58/120 - train_loss=0.012493, val_loss=0.010650, lr=1.500000e-04 - Time: 18.5s, ETA: 18.8m
+  Epoch 59/120 - train_loss=0.012453, val_loss=0.010683, lr=1.500000e-04 - Time: 18.7s, ETA: 18.5m
+  Epoch 60/120 - train_loss=0.012437, val_loss=0.010650, lr=1.500000e-04 - Time: 19.0s, ETA: 18.2m
+  Epoch 61/120 - train_loss=0.012266, val_loss=0.010602, lr=7.500000e-05 - Time: 19.0s, ETA: 17.9m
+  ✅ Improved! val_loss: 0.010602 (Best: 0.010602)
+  Epoch 62/120 - train_loss=0.012250, val_loss=0.010523, lr=7.500000e-05 - Time: 18.8s, ETA: 17.6m
+  ✅ Improved! val_loss: 0.010523 (Best: 0.010523)
+  Epoch 63/120 - train_loss=0.012233, val_loss=0.010561, lr=7.500000e-05 - Time: 18.4s, ETA: 17.3m
+  Epoch 64/120 - train_loss=0.012225, val_loss=0.010530, lr=7.500000e-05 - Time: 18.9s, ETA: 17.0m
+  Epoch 65/120 - train_loss=0.012203, val_loss=0.010541, lr=7.500000e-05 - Time: 18.4s, ETA: 16.7m
+  Epoch 66/120 - train_loss=0.012190, val_loss=0.010503, lr=7.500000e-05 - Time: 18.7s, ETA: 16.4m
+  ✅ Improved! val_loss: 0.010503 (Best: 0.010503)
+  Epoch 67/120 - train_loss=0.012187, val_loss=0.010516, lr=7.500000e-05 - Time: 18.2s, ETA: 16.1m
+  Epoch 68/120 - train_loss=0.012179, val_loss=0.010514, lr=7.500000e-05 - Time: 18.2s, ETA: 15.8m
+  Epoch 69/120 - train_loss=0.012161, val_loss=0.010511, lr=7.500000e-05 - Time: 18.1s, ETA: 15.5m
+  Epoch 70/120 - train_loss=0.012164, val_loss=0.010597, lr=7.500000e-05 - Time: 18.1s, ETA: 15.2m
+  Epoch 71/120 - train_loss=0.012155, val_loss=0.010539, lr=7.500000e-05 - Time: 17.9s, ETA: 14.9m
+  Epoch 72/120 - train_loss=0.012136, val_loss=0.010587, lr=7.500000e-05 - Time: 17.8s, ETA: 14.6m
+  Epoch 73/120 - train_loss=0.012034, val_loss=0.010480, lr=3.750000e-05 - Time: 17.8s, ETA: 14.3m
+  ✅ Improved! val_loss: 0.010480 (Best: 0.010480)
+  Epoch 74/120 - train_loss=0.012015, val_loss=0.010472, lr=3.750000e-05 - Time: 17.9s, ETA: 14.0m
+  ✅ Improved! val_loss: 0.010472 (Best: 0.010472)
+  Epoch 75/120 - train_loss=0.012021, val_loss=0.010467, lr=3.750000e-05 - Time: 17.9s, ETA: 13.7m
+  ✅ Improved! val_loss: 0.010467 (Best: 0.010467)
+  Epoch 76/120 - train_loss=0.012016, val_loss=0.010455, lr=3.750000e-05 - Time: 17.9s, ETA: 13.4m
+  ✅ Improved! val_loss: 0.010455 (Best: 0.010455)
+  Epoch 77/120 - train_loss=0.012022, val_loss=0.010483, lr=3.750000e-05 - Time: 17.8s, ETA: 13.0m
+  Epoch 78/120 - train_loss=0.012006, val_loss=0.010456, lr=3.750000e-05 - Time: 17.9s, ETA: 12.7m
+  Epoch 79/120 - train_loss=0.012010, val_loss=0.010492, lr=3.750000e-05 - Time: 17.9s, ETA: 12.4m
+  Epoch 80/120 - train_loss=0.012005, val_loss=0.010468, lr=3.750000e-05 - Time: 17.9s, ETA: 12.1m
+  Epoch 81/120 - train_loss=0.011990, val_loss=0.010509, lr=3.750000e-05 - Time: 17.9s, ETA: 11.8m
+  Epoch 82/120 - train_loss=0.011993, val_loss=0.010475, lr=3.750000e-05 - Time: 17.9s, ETA: 11.5m
+  Epoch 83/120 - train_loss=0.011943, val_loss=0.010455, lr=1.875000e-05 - Time: 17.9s, ETA: 11.2m
+  Epoch 84/120 - train_loss=0.011927, val_loss=0.010451, lr=1.875000e-05 - Time: 17.9s, ETA: 10.9m
+  ✅ Improved! val_loss: 0.010451 (Best: 0.010451)
+  Epoch 85/120 - train_loss=0.011912, val_loss=0.010443, lr=1.875000e-05 - Time: 17.9s, ETA: 10.6m
+  ✅ Improved! val_loss: 0.010443 (Best: 0.010443)
+  Epoch 86/120 - train_loss=0.011928, val_loss=0.010495, lr=1.875000e-05 - Time: 17.9s, ETA: 10.3m
+  Epoch 87/120 - train_loss=0.011948, val_loss=0.010487, lr=1.875000e-05 - Time: 17.9s, ETA: 10.0m
+  Epoch 88/120 - train_loss=0.011921, val_loss=0.010451, lr=1.875000e-05 - Time: 18.0s, ETA: 9.7m
+  Epoch 89/120 - train_loss=0.011934, val_loss=0.010454, lr=1.875000e-05 - Time: 17.9s, ETA: 9.4m
+  Epoch 90/120 - train_loss=0.011914, val_loss=0.010463, lr=1.875000e-05 - Time: 17.9s, ETA: 9.1m
+  Epoch 91/120 - train_loss=0.011910, val_loss=0.010453, lr=1.875000e-05 - Time: 17.9s, ETA: 8.8m
+  Epoch 92/120 - train_loss=0.011896, val_loss=0.010446, lr=9.375000e-06 - Time: 17.9s, ETA: 8.5m
+  Epoch 93/120 - train_loss=0.011879, val_loss=0.010444, lr=9.375000e-06 - Time: 17.8s, ETA: 8.2m
+  Epoch 94/120 - train_loss=0.011871, val_loss=0.010450, lr=9.375000e-06 - Time: 17.9s, ETA: 7.9m
+  Epoch 95/120 - train_loss=0.011882, val_loss=0.010446, lr=9.375000e-06 - Time: 18.0s, ETA: 7.6m
+  Epoch 96/120 - train_loss=0.011882, val_loss=0.010443, lr=9.375000e-06 - Time: 17.9s, ETA: 7.3m
+  Epoch 97/120 - train_loss=0.011877, val_loss=0.010442, lr=9.375000e-06 - Time: 17.9s, ETA: 7.0m
+  ✅ Improved! val_loss: 0.010442 (Best: 0.010442)
+  Epoch 98/120 - train_loss=0.011881, val_loss=0.010449, lr=9.375000e-06 - Time: 18.0s, ETA: 6.7m
+  Epoch 99/120 - train_loss=0.011864, val_loss=0.010446, lr=9.375000e-06 - Time: 17.9s, ETA: 6.3m
+  Epoch 100/120 - train_loss=0.011878, val_loss=0.010451, lr=9.375000e-06 - Time: 17.9s, ETA: 6.0m
+  Epoch 101/120 - train_loss=0.011887, val_loss=0.010439, lr=9.375000e-06 - Time: 17.9s, ETA: 5.7m
+  ✅ Improved! val_loss: 0.010439 (Best: 0.010439)
+  Epoch 102/120 - train_loss=0.011881, val_loss=0.010442, lr=9.375000e-06 - Time: 17.8s, ETA: 5.4m
+  Epoch 103/120 - train_loss=0.011851, val_loss=0.010447, lr=9.375000e-06 - Time: 17.9s, ETA: 5.1m
+  Epoch 104/120 - train_loss=0.011867, val_loss=0.010441, lr=9.375000e-06 - Time: 17.9s, ETA: 4.8m
+  Epoch 105/120 - train_loss=0.011861, val_loss=0.010462, lr=9.375000e-06 - Time: 18.0s, ETA: 4.5m
+  Epoch 106/120 - train_loss=0.011869, val_loss=0.010461, lr=9.375000e-06 - Time: 17.9s, ETA: 4.2m
+  Epoch 107/120 - train_loss=0.011854, val_loss=0.010449, lr=9.375000e-06 - Time: 17.9s, ETA: 3.9m
+  Epoch 108/120 - train_loss=0.011879, val_loss=0.010446, lr=4.687500e-06 - Time: 18.0s, ETA: 3.6m
+  Epoch 109/120 - train_loss=0.011861, val_loss=0.010441, lr=4.687500e-06 - Time: 17.9s, ETA: 3.3m
+  Epoch 110/120 - train_loss=0.011837, val_loss=0.010443, lr=4.687500e-06 - Time: 17.9s, ETA: 3.0m
+  Epoch 111/120 - train_loss=0.011843, val_loss=0.010441, lr=4.687500e-06 - Time: 18.0s, ETA: 2.7m
+  Epoch 112/120 - train_loss=0.011827, val_loss=0.010442, lr=4.687500e-06 - Time: 17.8s, ETA: 2.4m
+  Epoch 113/120 - train_loss=0.011846, val_loss=0.010440, lr=4.687500e-06 - Time: 17.9s, ETA: 2.1m
+  Epoch 114/120 - train_loss=0.011837, val_loss=0.010443, lr=2.343750e-06 - Time: 17.9s, ETA: 1.8m
+  Epoch 115/120 - train_loss=0.011850, val_loss=0.010443, lr=2.343750e-06 - Time: 18.0s, ETA: 1.5m
+  Epoch 116/120 - train_loss=0.011858, val_loss=0.010438, lr=2.343750e-06 - Time: 17.9s, ETA: 1.2m
+  ✅ Improved! val_loss: 0.010438 (Best: 0.010438)
+  Epoch 117/120 - train_loss=0.011844, val_loss=0.010441, lr=2.343750e-06 - Time: 17.9s, ETA: 0.9m
+  Epoch 118/120 - train_loss=0.011847, val_loss=0.010441, lr=2.343750e-06 - Time: 18.0s, ETA: 0.6m
+  Epoch 119/120 - train_loss=0.011828, val_loss=0.010440, lr=2.343750e-06 - Time: 17.9s, ETA: 0.3m
+  Epoch 120/120 - train_loss=0.011845, val_loss=0.010440, lr=2.343750e-06 - Time: 17.9s, ETA: 0.0m
+[2025-11-16 17:42:37] Temperature regression model training completed in 2333.11 seconds (38.89 minutes)
+
+[2025-11-16 17:42:37] Evaluating on test set...
+
+Classification Metrics (Frost Probability):
+accuracy: 0.9961
+brier_score: 0.0031
+ece: 0.0030
+f1: 0.6840
+fn: 394
+fp: 1006
+pr_auc: 0.7269
+precision: 0.6010
+recall: 0.7936
+roc_auc: 0.9960
+tn: 352173
+tp: 1515
+
+Regression Metrics (Temperature):
+mae: 0.7334
+mape: 8.139561653137207
+r2: 0.9837
+rmse: 1.1297
+
+Generating reliability diagram...
+[2025-11-16 17:47:58] Evaluation completed in 321.27 seconds
+
+[2025-11-16 17:47:58] 6h horizon training completed in 3219.42 seconds (53.66 minutes)
+
+============================================================
+Training models for 12h horizon
+[2025-11-16 17:47:59] Starting 12h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 234 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2367144
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2367144
+Frost events: 20579.0 (0.87%)
+Train: 1657000, Val: 355072, Test: 355072
+
+[2025-11-16 17:48:05] Training classification model for frost probability...
+
+  🚀 Starting LSTM training
+     Device: cuda
+     input_size: 27
+     hidden_size: 128
+     batch_size: 128
+     epochs: 120
+     sequence_length: 72
+
+  🚀 Starting LSTM training
+     Device: cuda
+     Input size: 27
+     Hidden size: 128
+     Batch size: 128
+     Num workers: 16
+     Epochs: 120
+     Sequence length: 72
+     Total sequences: 1,655,722
+     Train sequences: 1,655,722 (12,935 batches)
+     Val sequences: 353,794 (2,765 batches)
+     Pos weight: 10.39
+  Epoch 1/120 - train_loss=0.104113, val_loss=0.091883, lr=3.000000e-04 - Time: 23.9s, ETA: 47.5m
+  ✅ Improved! val_loss: 0.091883 (Best: 0.091883)
+  Epoch 2/120 - train_loss=0.072773, val_loss=0.100601, lr=3.000000e-04 - Time: 22.6s, ETA: 45.8m
+  Epoch 3/120 - train_loss=0.064365, val_loss=0.089804, lr=3.000000e-04 - Time: 22.8s, ETA: 45.1m
+  ✅ Improved! val_loss: 0.089804 (Best: 0.089804)
+  Epoch 4/120 - train_loss=0.059300, val_loss=0.088683, lr=3.000000e-04 - Time: 22.7s, ETA: 44.5m
+  ✅ Improved! val_loss: 0.088683 (Best: 0.088683)
+  Epoch 5/120 - train_loss=0.053922, val_loss=0.090319, lr=3.000000e-04 - Time: 22.8s, ETA: 44.0m
+  Epoch 6/120 - train_loss=0.050758, val_loss=0.115428, lr=3.000000e-04 - Time: 22.7s, ETA: 43.6m
+  Epoch 7/120 - train_loss=0.046799, val_loss=0.101298, lr=3.000000e-04 - Time: 22.7s, ETA: 43.1m
+  Epoch 8/120 - train_loss=0.042611, val_loss=0.123597, lr=3.000000e-04 - Time: 22.8s, ETA: 42.7m
+  Epoch 9/120 - train_loss=0.039033, val_loss=0.117491, lr=3.000000e-04 - Time: 22.8s, ETA: 42.3m
+  Epoch 10/120 - train_loss=0.037327, val_loss=0.138798, lr=3.000000e-04 - Time: 22.7s, ETA: 41.9m
+  💾 Checkpoint saved: epoch 10
+  Epoch 11/120 - train_loss=0.028418, val_loss=0.163661, lr=1.500000e-04 - Time: 22.7s, ETA: 41.5m
+  Epoch 12/120 - train_loss=0.026770, val_loss=0.195756, lr=1.500000e-04 - Time: 22.7s, ETA: 41.1m
+  Epoch 13/120 - train_loss=0.025478, val_loss=0.210492, lr=1.500000e-04 - Time: 22.8s, ETA: 40.7m
+  Epoch 14/120 - train_loss=0.023808, val_loss=0.224139, lr=1.500000e-04 - Time: 22.7s, ETA: 40.3m
+  Epoch 15/120 - train_loss=0.022668, val_loss=0.249875, lr=1.500000e-04 - Time: 22.6s, ETA: 39.9m
+  Epoch 16/120 - train_loss=0.020621, val_loss=0.258976, lr=1.500000e-04 - Time: 22.7s, ETA: 39.5m
+  Epoch 17/120 - train_loss=0.015936, val_loss=0.282221, lr=7.500000e-05 - Time: 22.7s, ETA: 39.1m
+  Epoch 18/120 - train_loss=0.015567, val_loss=0.308593, lr=7.500000e-05 - Time: 22.8s, ETA: 38.7m
+  Epoch 19/120 - train_loss=0.014323, val_loss=0.318145, lr=7.500000e-05 - Time: 22.8s, ETA: 38.4m
+  Epoch 20/120 - train_loss=0.014177, val_loss=0.335297, lr=7.500000e-05 - Time: 22.8s, ETA: 38.0m
+  💾 Checkpoint saved: epoch 20
+  Epoch 21/120 - train_loss=0.013398, val_loss=0.351144, lr=7.500000e-05 - Time: 22.8s, ETA: 37.6m
+  Epoch 22/120 - train_loss=0.012727, val_loss=0.368884, lr=7.500000e-05 - Time: 22.8s, ETA: 37.2m
+  Epoch 23/120 - train_loss=0.010479, val_loss=0.402065, lr=3.750000e-05 - Time: 22.8s, ETA: 36.8m
+  Epoch 24/120 - train_loss=0.009554, val_loss=0.420378, lr=3.750000e-05 - Time: 22.8s, ETA: 36.5m
+  Early stopping at epoch 24 (patience=20)
+  Selected threshold=0.010 maximizing F1*recall=0.6087*0.7286=0.4435 (P=0.523, R=0.729) on validation set
+[2025-11-16 17:57:15] Frost classification model training completed in 549.90 seconds (9.16 minutes)
+
+[2025-11-16 17:57:15] Training regression model for temperature...
+
+  🚀 Starting LSTM training
+     Device: cuda
+     input_size: 27
+     hidden_size: 128
+     batch_size: 128
+     epochs: 120
+     sequence_length: 72
+
+  🚀 Starting LSTM training
+     Device: cuda
+     Input size: 27
+     Hidden size: 128
+     Batch size: 128
+     Num workers: 16
+     Epochs: 120
+     Sequence length: 72
+     Total sequences: 1,655,722
+     Train sequences: 1,324,577 (10,348 batches)
+     Val sequences: 331,145 (2,588 batches)
+  Epoch 1/120 - train_loss=0.072533, val_loss=0.041139, lr=3.000000e-04 - Time: 19.0s, ETA: 37.7m
+  ✅ Improved! val_loss: 0.041139 (Best: 0.041139)
+  Epoch 2/120 - train_loss=0.044020, val_loss=0.035372, lr=3.000000e-04 - Time: 17.8s, ETA: 36.2m
+  ✅ Improved! val_loss: 0.035372 (Best: 0.035372)
+  Epoch 3/120 - train_loss=0.039772, val_loss=0.034480, lr=3.000000e-04 - Time: 17.8s, ETA: 35.5m
+  ✅ Improved! val_loss: 0.034480 (Best: 0.034480)
+  Epoch 4/120 - train_loss=0.037648, val_loss=0.032652, lr=3.000000e-04 - Time: 17.9s, ETA: 35.0m
+  ✅ Improved! val_loss: 0.032652 (Best: 0.032652)
+  Epoch 5/120 - train_loss=0.036213, val_loss=0.031308, lr=3.000000e-04 - Time: 17.8s, ETA: 34.6m
+  ✅ Improved! val_loss: 0.031308 (Best: 0.031308)
+  Epoch 6/120 - train_loss=0.035191, val_loss=0.030482, lr=3.000000e-04 - Time: 17.8s, ETA: 34.2m
+  ✅ Improved! val_loss: 0.030482 (Best: 0.030482)
+  Epoch 7/120 - train_loss=0.034326, val_loss=0.030134, lr=3.000000e-04 - Time: 17.8s, ETA: 33.9m
+  ✅ Improved! val_loss: 0.030134 (Best: 0.030134)
+  Epoch 8/120 - train_loss=0.033597, val_loss=0.030006, lr=3.000000e-04 - Time: 18.2s, ETA: 33.6m
+  ✅ Improved! val_loss: 0.030006 (Best: 0.030006)
+  Epoch 9/120 - train_loss=0.033041, val_loss=0.029526, lr=3.000000e-04 - Time: 18.2s, ETA: 33.4m
+  ✅ Improved! val_loss: 0.029526 (Best: 0.029526)
+  Epoch 10/120 - train_loss=0.032495, val_loss=0.029359, lr=3.000000e-04 - Time: 17.9s, ETA: 33.0m
+  ✅ Improved! val_loss: 0.029359 (Best: 0.029359)
+  Epoch 11/120 - train_loss=0.032024, val_loss=0.029143, lr=3.000000e-04 - Time: 17.8s, ETA: 32.7m
+  ✅ Improved! val_loss: 0.029143 (Best: 0.029143)
+  Epoch 12/120 - train_loss=0.031575, val_loss=0.028791, lr=3.000000e-04 - Time: 17.9s, ETA: 32.4m
+  ✅ Improved! val_loss: 0.028791 (Best: 0.028791)
+  Epoch 13/120 - train_loss=0.031199, val_loss=0.028577, lr=3.000000e-04 - Time: 18.1s, ETA: 32.1m
+  ✅ Improved! val_loss: 0.028577 (Best: 0.028577)
+  Epoch 14/120 - train_loss=0.030867, val_loss=0.028338, lr=3.000000e-04 - Time: 18.2s, ETA: 31.8m
+  ✅ Improved! val_loss: 0.028338 (Best: 0.028338)
+  Epoch 15/120 - train_loss=0.030513, val_loss=0.028268, lr=3.000000e-04 - Time: 18.1s, ETA: 31.5m
+  ✅ Improved! val_loss: 0.028268 (Best: 0.028268)
+  Epoch 16/120 - train_loss=0.030197, val_loss=0.028190, lr=3.000000e-04 - Time: 18.0s, ETA: 31.2m
+  ✅ Improved! val_loss: 0.028190 (Best: 0.028190)
+  Epoch 17/120 - train_loss=0.029910, val_loss=0.028313, lr=3.000000e-04 - Time: 18.3s, ETA: 31.0m
+  Epoch 18/120 - train_loss=0.029635, val_loss=0.028121, lr=3.000000e-04 - Time: 18.3s, ETA: 30.7m
+  ✅ Improved! val_loss: 0.028121 (Best: 0.028121)
+  Epoch 19/120 - train_loss=0.029378, val_loss=0.028339, lr=3.000000e-04 - Time: 18.0s, ETA: 30.4m
+  Epoch 20/120 - train_loss=0.029148, val_loss=0.027946, lr=3.000000e-04 - Time: 17.9s, ETA: 30.1m
+  ✅ Improved! val_loss: 0.027946 (Best: 0.027946)
+  Epoch 21/120 - train_loss=0.028891, val_loss=0.028056, lr=3.000000e-04 - Time: 17.9s, ETA: 29.8m
+  Epoch 22/120 - train_loss=0.028662, val_loss=0.027988, lr=3.000000e-04 - Time: 18.2s, ETA: 29.5m
+  Epoch 23/120 - train_loss=0.028447, val_loss=0.027951, lr=3.000000e-04 - Time: 18.1s, ETA: 29.2m
+  Epoch 24/120 - train_loss=0.028240, val_loss=0.027993, lr=3.000000e-04 - Time: 18.4s, ETA: 28.9m
+  Epoch 25/120 - train_loss=0.028035, val_loss=0.028158, lr=3.000000e-04 - Time: 18.1s, ETA: 28.6m
+  Epoch 26/120 - train_loss=0.027816, val_loss=0.028037, lr=3.000000e-04 - Time: 18.1s, ETA: 28.3m
+  Epoch 27/120 - train_loss=0.026931, val_loss=0.027661, lr=1.500000e-04 - Time: 18.3s, ETA: 28.0m
+  ✅ Improved! val_loss: 0.027661 (Best: 0.027661)
+  Epoch 28/120 - train_loss=0.026790, val_loss=0.027817, lr=1.500000e-04 - Time: 18.4s, ETA: 27.7m
+  Epoch 29/120 - train_loss=0.026618, val_loss=0.027684, lr=1.500000e-04 - Time: 18.1s, ETA: 27.4m
+  Epoch 30/120 - train_loss=0.026546, val_loss=0.027689, lr=1.500000e-04 - Time: 18.0s, ETA: 27.1m
+  Epoch 31/120 - train_loss=0.026436, val_loss=0.027924, lr=1.500000e-04 - Time: 17.9s, ETA: 26.8m
+  Epoch 32/120 - train_loss=0.026339, val_loss=0.027852, lr=1.500000e-04 - Time: 17.9s, ETA: 26.5m
+  Epoch 33/120 - train_loss=0.026215, val_loss=0.027840, lr=1.500000e-04 - Time: 17.8s, ETA: 26.2m
+  Epoch 34/120 - train_loss=0.025819, val_loss=0.027834, lr=7.500000e-05 - Time: 17.9s, ETA: 25.9m
+  Epoch 35/120 - train_loss=0.025698, val_loss=0.027871, lr=7.500000e-05 - Time: 18.0s, ETA: 25.6m
+  Epoch 36/120 - train_loss=0.025635, val_loss=0.027956, lr=7.500000e-05 - Time: 18.0s, ETA: 25.3m
+  Epoch 37/120 - train_loss=0.025546, val_loss=0.028031, lr=7.500000e-05 - Time: 17.9s, ETA: 25.0m
+  Epoch 38/120 - train_loss=0.025530, val_loss=0.028003, lr=7.500000e-05 - Time: 17.9s, ETA: 24.7m
+  Epoch 39/120 - train_loss=0.025507, val_loss=0.028094, lr=7.500000e-05 - Time: 17.9s, ETA: 24.4m
+  Epoch 40/120 - train_loss=0.025257, val_loss=0.027961, lr=3.750000e-05 - Time: 17.9s, ETA: 24.1m
+  Epoch 41/120 - train_loss=0.025193, val_loss=0.027910, lr=3.750000e-05 - Time: 18.0s, ETA: 23.7m
+  Epoch 42/120 - train_loss=0.025183, val_loss=0.028018, lr=3.750000e-05 - Time: 17.9s, ETA: 23.4m
+  Epoch 43/120 - train_loss=0.025161, val_loss=0.027990, lr=3.750000e-05 - Time: 17.9s, ETA: 23.1m
+  Epoch 44/120 - train_loss=0.025126, val_loss=0.028004, lr=3.750000e-05 - Time: 17.8s, ETA: 22.8m
+  Epoch 45/120 - train_loss=0.025090, val_loss=0.028054, lr=3.750000e-05 - Time: 17.8s, ETA: 22.5m
+  Epoch 46/120 - train_loss=0.024945, val_loss=0.028013, lr=1.875000e-05 - Time: 17.9s, ETA: 22.2m
+  Epoch 47/120 - train_loss=0.024967, val_loss=0.028079, lr=1.875000e-05 - Time: 18.4s, ETA: 21.9m
+  Early stopping at epoch 47 (patience=20)
+[2025-11-16 18:14:03] Temperature regression model training completed in 1008.54 seconds (16.81 minutes)
+
+[2025-11-16 18:14:03] Evaluating on test set...
+
+Classification Metrics (Frost Probability):
+accuracy: 0.9932
+brier_score: 0.0051
+ece: 0.0051
+f1: 0.5145
+fn: 633
+fp: 1775
+pr_auc: 0.4915
+precision: 0.4182
+recall: 0.6684
+roc_auc: 0.9898
+tn: 351388
+tp: 1276
+
+Regression Metrics (Temperature):
+mae: 1.4142
+mape: 15.102110862731934
+r2: 0.9516
+rmse: 1.9456
+
+Generating reliability diagram...
+[2025-11-16 18:21:01] Evaluation completed in 417.64 seconds
+
+[2025-11-16 18:21:01] 12h horizon training completed in 1982.53 seconds (33.04 minutes)
+
+============================================================
+Training models for 24h horizon
+[2025-11-16 18:21:01] Starting 24h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 18 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2366928
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2366928
+Frost events: 20579.0 (0.87%)
+Train: 1656849, Val: 355039, Test: 355040
+
+[2025-11-16 18:21:08] Training classification model for frost probability...
+
+  🚀 Starting LSTM training
+     Device: cuda
+     input_size: 27
+     hidden_size: 128
+     batch_size: 128
+     epochs: 120
+     sequence_length: 168
+
+  🚀 Starting LSTM training
+     Device: cuda
+     Input size: 27
+     Hidden size: 128
+     Batch size: 128
+     Num workers: 16
+     Epochs: 120
+     Sequence length: 168
+     Total sequences: 1,653,843
+     Train sequences: 1,653,843 (12,920 batches)
+     Val sequences: 352,033 (2,751 batches)
+     Pos weight: 10.38
+  Epoch 1/120 - train_loss=0.124212, val_loss=0.105284, lr=3.000000e-04 - Time: 33.0s, ETA: 65.5m
+  ✅ Improved! val_loss: 0.105284 (Best: 0.105284)
+  Epoch 2/120 - train_loss=0.104082, val_loss=0.106002, lr=3.000000e-04 - Time: 31.6s, ETA: 63.5m
+  Epoch 3/120 - train_loss=0.094003, val_loss=0.122365, lr=3.000000e-04 - Time: 31.8s, ETA: 62.6m
+  Epoch 4/120 - train_loss=0.085073, val_loss=0.123385, lr=3.000000e-04 - Time: 31.7s, ETA: 61.9m
+  Epoch 5/120 - train_loss=0.077136, val_loss=0.140384, lr=3.000000e-04 - Time: 31.7s, ETA: 61.3m
+  Epoch 6/120 - train_loss=0.070506, val_loss=0.147522, lr=3.000000e-04 - Time: 31.9s, ETA: 60.7m
+  Epoch 7/120 - train_loss=0.064251, val_loss=0.185461, lr=3.000000e-04 - Time: 31.7s, ETA: 60.1m
+  Epoch 8/120 - train_loss=0.052848, val_loss=0.205848, lr=1.500000e-04 - Time: 31.8s, ETA: 59.6m
+  Epoch 9/120 - train_loss=0.049111, val_loss=0.231662, lr=1.500000e-04 - Time: 31.9s, ETA: 59.0m
+  Epoch 10/120 - train_loss=0.045905, val_loss=0.246773, lr=1.500000e-04 - Time: 31.8s, ETA: 58.5m
+  💾 Checkpoint saved: epoch 10
+  Epoch 11/120 - train_loss=0.043114, val_loss=0.288670, lr=1.500000e-04 - Time: 31.8s, ETA: 57.9m
+  Epoch 12/120 - train_loss=0.039936, val_loss=0.289805, lr=1.500000e-04 - Time: 31.8s, ETA: 57.4m
+  Epoch 13/120 - train_loss=0.036928, val_loss=0.342501, lr=1.500000e-04 - Time: 31.8s, ETA: 56.8m
+  Epoch 14/120 - train_loss=0.030956, val_loss=0.370131, lr=7.500000e-05 - Time: 31.8s, ETA: 56.3m
+  Epoch 15/120 - train_loss=0.028293, val_loss=0.401852, lr=7.500000e-05 - Time: 31.7s, ETA: 55.8m
+  Epoch 16/120 - train_loss=0.027107, val_loss=0.444683, lr=7.500000e-05 - Time: 31.8s, ETA: 55.2m
+  Epoch 17/120 - train_loss=0.025783, val_loss=0.459152, lr=7.500000e-05 - Time: 32.0s, ETA: 54.7m
+  Epoch 18/120 - train_loss=0.024755, val_loss=0.464391, lr=7.500000e-05 - Time: 32.2s, ETA: 54.2m
+  Epoch 19/120 - train_loss=0.023585, val_loss=0.497675, lr=7.500000e-05 - Time: 31.9s, ETA: 53.7m
+  Epoch 20/120 - train_loss=0.020378, val_loss=0.532228, lr=3.750000e-05 - Time: 32.2s, ETA: 53.2m
+  💾 Checkpoint saved: epoch 20
+  Epoch 21/120 - train_loss=0.018552, val_loss=0.527523, lr=3.750000e-05 - Time: 32.4s, ETA: 52.7m
+  Early stopping at epoch 21 (patience=20)
+  Selected threshold=0.010 maximizing F1*recall=0.4384*0.5900=0.2586 (P=0.349, R=0.590) on validation set
+[2025-11-16 18:32:22] Frost classification model training completed in 674.58 seconds (11.24 minutes)
+
+[2025-11-16 18:32:22] Training regression model for temperature...
+
+  🚀 Starting LSTM training
+     Device: cuda
+     input_size: 27
+     hidden_size: 128
+     batch_size: 128
+     epochs: 120
+     sequence_length: 168
+
+  🚀 Starting LSTM training
+     Device: cuda
+     Input size: 27
+     Hidden size: 128
+     Batch size: 128
+     Num workers: 16
+     Epochs: 120
+     Sequence length: 168
+     Total sequences: 1,653,843
+     Train sequences: 1,323,074 (10,336 batches)
+     Val sequences: 330,769 (2,585 batches)
+  Epoch 1/120 - train_loss=0.081321, val_loss=0.068347, lr=3.000000e-04 - Time: 27.0s, ETA: 53.6m
+  ✅ Improved! val_loss: 0.068347 (Best: 0.068347)
+  Epoch 2/120 - train_loss=0.068946, val_loss=0.063796, lr=3.000000e-04 - Time: 25.6s, ETA: 51.8m
+  ✅ Improved! val_loss: 0.063796 (Best: 0.063796)
+  Epoch 3/120 - train_loss=0.065518, val_loss=0.061640, lr=3.000000e-04 - Time: 25.7s, ETA: 50.9m
+  ✅ Improved! val_loss: 0.061640 (Best: 0.061640)
+  Epoch 4/120 - train_loss=0.063226, val_loss=0.060265, lr=3.000000e-04 - Time: 25.6s, ETA: 50.2m
+  ✅ Improved! val_loss: 0.060265 (Best: 0.060265)
+  Epoch 5/120 - train_loss=0.061428, val_loss=0.059145, lr=3.000000e-04 - Time: 25.4s, ETA: 49.6m
+  ✅ Improved! val_loss: 0.059145 (Best: 0.059145)
+  Epoch 6/120 - train_loss=0.059963, val_loss=0.059691, lr=3.000000e-04 - Time: 25.5s, ETA: 49.0m
+  Epoch 7/120 - train_loss=0.058699, val_loss=0.057899, lr=3.000000e-04 - Time: 25.5s, ETA: 48.5m
+  ✅ Improved! val_loss: 0.057899 (Best: 0.057899)
+  Epoch 8/120 - train_loss=0.057440, val_loss=0.058468, lr=3.000000e-04 - Time: 25.4s, ETA: 48.0m
+  Epoch 9/120 - train_loss=0.056306, val_loss=0.058032, lr=3.000000e-04 - Time: 25.4s, ETA: 47.5m
+  Epoch 10/120 - train_loss=0.055226, val_loss=0.059479, lr=3.000000e-04 - Time: 25.5s, ETA: 47.1m
+  Epoch 11/120 - train_loss=0.054145, val_loss=0.059086, lr=3.000000e-04 - Time: 25.5s, ETA: 46.6m
+  Epoch 12/120 - train_loss=0.053117, val_loss=0.059681, lr=3.000000e-04 - Time: 25.4s, ETA: 46.1m
+  Epoch 13/120 - train_loss=0.052053, val_loss=0.059732, lr=3.000000e-04 - Time: 25.5s, ETA: 45.7m
+  Epoch 14/120 - train_loss=0.049997, val_loss=0.059718, lr=1.500000e-04 - Time: 25.5s, ETA: 45.2m
+  Epoch 15/120 - train_loss=0.049324, val_loss=0.060127, lr=1.500000e-04 - Time: 25.4s, ETA: 44.8m
+  Epoch 16/120 - train_loss=0.048726, val_loss=0.059967, lr=1.500000e-04 - Time: 25.5s, ETA: 44.3m
+  Epoch 17/120 - train_loss=0.048175, val_loss=0.061124, lr=1.500000e-04 - Time: 25.5s, ETA: 43.9m
+  Epoch 18/120 - train_loss=0.047656, val_loss=0.061143, lr=1.500000e-04 - Time: 25.5s, ETA: 43.5m
+  Epoch 19/120 - train_loss=0.047220, val_loss=0.061266, lr=1.500000e-04 - Time: 25.4s, ETA: 43.0m
+  Epoch 20/120 - train_loss=0.046005, val_loss=0.061409, lr=7.500000e-05 - Time: 25.5s, ETA: 42.6m
+  Epoch 21/120 - train_loss=0.045661, val_loss=0.062041, lr=7.500000e-05 - Time: 25.5s, ETA: 42.2m
+  Epoch 22/120 - train_loss=0.045421, val_loss=0.062488, lr=7.500000e-05 - Time: 25.4s, ETA: 41.7m
+  Epoch 23/120 - train_loss=0.045156, val_loss=0.062480, lr=7.500000e-05 - Time: 25.5s, ETA: 41.3m
+  Epoch 24/120 - train_loss=0.044876, val_loss=0.063004, lr=7.500000e-05 - Time: 25.5s, ETA: 40.9m
+  Epoch 25/120 - train_loss=0.044613, val_loss=0.062773, lr=7.500000e-05 - Time: 25.5s, ETA: 40.4m
+  Epoch 26/120 - train_loss=0.043975, val_loss=0.063268, lr=3.750000e-05 - Time: 25.5s, ETA: 40.0m
+  Epoch 27/120 - train_loss=0.043818, val_loss=0.063933, lr=3.750000e-05 - Time: 25.4s, ETA: 39.6m
+  Early stopping at epoch 27 (patience=20)
+[2025-11-16 18:46:33] Temperature regression model training completed in 850.83 seconds (14.18 minutes)
+
+[2025-11-16 18:46:33] Evaluating on test set...
+
+Classification Metrics (Frost Probability):
+accuracy: 0.9843
+brier_score: 0.0104
+ece: 0.0107
+f1: 0.2849
+fn: 798
+fp: 4780
+pr_auc: 0.2185
+precision: 0.1886
+recall: 0.5820
+roc_auc: 0.9668
+tn: 348351
+tp: 1111
+
+Regression Metrics (Temperature):
+mae: 2.1375
+mape: 25.389286041259766
+r2: 0.8905
+rmse: 2.9275
+
+Generating reliability diagram...
+[2025-11-16 18:59:47] Evaluation completed in 794.28 seconds
+
+[2025-11-16 18:59:47] 24h horizon training completed in 2326.17 seconds (38.77 minutes)
+
+[2025-11-16 18:59:48] All horizons training completed in 10409.58 seconds (173.49 minutes)
+
+============================================================
+Summary Report
+============================================================
+
+3h Horizon:
+  Frost - Brier: 0.0024, ECE: 0.0023, ROC-AUC: 0.9971
+  Temp  - MAE: 0.4325, RMSE: 0.7692, R²: 0.9924
+
+6h Horizon:
+  Frost - Brier: 0.0031, ECE: 0.0030, ROC-AUC: 0.9960
+  Temp  - MAE: 0.7334, RMSE: 1.1297, R²: 0.9837
+
+12h Horizon:
+  Frost - Brier: 0.0051, ECE: 0.0051, ROC-AUC: 0.9898
+  Temp  - MAE: 1.4142, RMSE: 1.9456, R²: 0.9516
+
+24h Horizon:
+  Frost - Brier: 0.0104, ECE: 0.0107, ROC-AUC: 0.9668
+  Temp  - MAE: 2.1375, RMSE: 2.9275, R²: 0.8905
+
+✅ Training completed!
+   Start Time: 2025-11-16 16:05:42
+   End Time: 2025-11-16 18:59:48
+   Duration: 174.09 minutes (2.90 hours)
+Results saved to: experiments/A/lstm/raw

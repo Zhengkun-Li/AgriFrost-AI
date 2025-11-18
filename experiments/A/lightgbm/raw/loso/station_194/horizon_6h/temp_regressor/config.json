@@ -1,0 +1,19 @@
+{
+  "model_name": "regression_6h_station_194",
+  "model_type": "lightgbm",
+  "task_type": "regression",
+  "model_params": {
+    "n_estimators": 50,
+    "learning_rate": 0.05,
+    "max_depth": 6,
+    "num_leaves": 31,
+    "random_state": 42,
+    "verbose": -1,
+    "n_jobs": 8,
+    "force_col_wise": true,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.1
+  }
+}

@@ -107,7 +107,8 @@ def train_frost_model(
     y_frost_train: pd.Series,
     X_val: pd.DataFrame,
     y_frost_val: pd.Series,
-    station_ids_train: Optional[np.ndarray] = None
+    station_ids_train: Optional[np.ndarray] = None,
+    **fit_kwargs
 ):
     """Train frost classification model.
     
@@ -137,11 +138,19 @@ def train_frost_model(
         # Get checkpoint directory from config or kwargs
         checkpoint_dir = fit_kwargs.get('checkpoint_dir', frost_config.get("checkpoint_dir", None))
         fit_kwargs_lstm = {'station_ids': station_ids_train}
+        # CRITICAL FIX: Pass external validation set to avoid double-split
+        # Get validation station IDs if available
+        station_ids_val = fit_kwargs.get('station_ids_val', None)
+        if station_ids_val is not None:
+            fit_kwargs_lstm['station_ids_val'] = station_ids_val
+        # Pass eval_set (external validation from time split)
+        eval_set = [(X_val, y_frost_val)] if 'X_val' in locals() and 'y_frost_val' in locals() else None
         if checkpoint_dir:
             fit_kwargs_lstm['checkpoint_dir'] = checkpoint_dir
         if 'resume_from_checkpoint' in fit_kwargs:
             fit_kwargs_lstm['resume_from_checkpoint'] = fit_kwargs['resume_from_checkpoint']
-        model_frost.fit(X_train, y_frost_train, **fit_kwargs_lstm)
+        # Pass kwargs directly to model.fit(), not to train_frost_model()
+        model_frost.fit(X_train, y_frost_train, eval_set=eval_set, **fit_kwargs_lstm)
     elif model_type == "lstm_multitask":
         # Multi-task LSTM needs both y_temp and y_frost
         # This will be handled in train_models_for_horizon
@@ -161,7 +170,8 @@ def train_temp_model(
     y_temp_train: pd.Series,
     X_val: pd.DataFrame,
     y_temp_val: pd.Series,
-    station_ids_train: Optional[np.ndarray] = None
+    station_ids_train: Optional[np.ndarray] = None,
+    **fit_kwargs
 ):
     """Train temperature regression model.
     
@@ -204,6 +214,7 @@ def train_temp_model(
             fit_kwargs_lstm['checkpoint_dir'] = checkpoint_dir
         if 'resume_from_checkpoint' in fit_kwargs:
             fit_kwargs_lstm['resume_from_checkpoint'] = fit_kwargs['resume_from_checkpoint']
+        # Pass kwargs directly to model.fit(), not to train_temp_model()
         model_temp.fit(X_train, y_temp_train, **fit_kwargs_lstm)
     else:
         # Random Forest and Ensemble don't use eval_set
@@ -219,7 +230,8 @@ def train_multitask_model(
     X_train: pd.DataFrame,
     y_temp_train: pd.Series,
     y_frost_train: pd.Series,
-    station_ids_train: Optional[np.ndarray] = None
+    station_ids_train: Optional[np.ndarray] = None,
+    **fit_kwargs
 ):
     """Train multi-task model (for lstm_multitask).
     
@@ -256,7 +268,8 @@ def evaluate_models(
     model_temp,
     X_test: pd.DataFrame,
     y_frost_test: pd.Series,
-    y_temp_test: pd.Series
+    y_temp_test: pd.Series,
+    station_ids_test: Optional[np.ndarray] = None
 ) -> Tuple[Dict, Dict, np.ndarray, np.ndarray, np.ndarray]:
     """Evaluate models on test set.
     
@@ -273,23 +286,35 @@ def evaluate_models(
     """
     # For multi-task models, use specific prediction methods
     if model_type == "lstm_multitask":
-        y_temp_pred = model_frost.predict_temp(X_test)
-        y_frost_proba = model_frost.predict_frost_proba(X_test)
+        y_temp_pred = model_frost.predict_temp(X_test, station_ids=station_ids_test)
+        y_frost_proba = model_frost.predict_frost_proba(X_test, station_ids=station_ids_test)
         y_frost_pred = (y_frost_proba >= 0.5).astype(int)
     else:
-        y_frost_pred = model_frost.predict(X_test)
+        # For LSTM single-task, pass station ids for boundary-safe windowing when available
+        if model_type == "lstm":
+            y_frost_pred = model_frost.predict(X_test, station_ids=station_ids_test)
+        else:
+            y_frost_pred = model_frost.predict(X_test)
         y_frost_proba = model_frost.predict_proba(X_test)
         
         # Handle models that don't support predict_proba (LSTM, Prophet)
         if y_frost_proba is None:
             print("  ⚠️  Model doesn't support predict_proba. Using temperature regression for frost probability.")
-            y_temp_pred = model_temp.predict(X_test)
+            if model_type == "lstm":
+                y_temp_pred = model_temp.predict(X_test, station_ids=station_ids_test)
+            elif model_type == "lstm_multitask":
+                y_temp_pred = model_frost.predict_temp(X_test, station_ids=station_ids_test)
+            else:
+                y_temp_pred = model_temp.predict(X_test)
             frost_threshold = 0.0
             scale = 2.0
             y_frost_proba = 1.0 / (1.0 + np.exp((y_temp_pred - frost_threshold) / scale))
             y_frost_pred = (y_temp_pred < frost_threshold).astype(int)
         else:
-            y_temp_pred = model_temp.predict(X_test)
+            if model_type == "lstm":
+                y_temp_pred = model_temp.predict(X_test, station_ids=station_ids_test)
+            else:
+                y_temp_pred = model_temp.predict(X_test)
     
     # Calculate metrics
     frost_metrics = MetricsCalculator.calculate_classification_metrics(
@@ -390,7 +415,9 @@ def train_models_for_horizon(
     train_ratio: float = 0.7,
     val_ratio: float = 0.15,
     skip_if_exists: bool = True,
-    feature_selection: Optional[Dict] = None
+    feature_selection: Optional[Dict] = None,
+    track: Optional[str] = None,
+    matrix_cell: Optional[str] = None
 ) -> Dict:
     """Train classification and regression models for a specific horizon.
     
@@ -416,8 +443,22 @@ def train_models_for_horizon(
     sys.stdout.flush()
     print("="*60)
     
+    # Infer track/matrix_cell from output_dir if not provided
+    parts = [p for p in output_dir.parts]
+    if track is None:
+        track = "raw" if "raw" in parts else ("top175_features" if "top175_features" in parts else "top175_features")
+    if matrix_cell is None:
+        # Look for A-E in path parts
+        candidates = {"A","B","C","D","E"}
+        found = [p for p in parts if p in candidates]
+        matrix_cell = found[0] if found else ("B" if track == "top175_features" else "A")
+    
+    # Resolve base dir: add matrix_cell only if not already present in output_dir
+    out_parts = set(output_dir.parts)
+    base_dir = output_dir if matrix_cell in out_parts else (output_dir / matrix_cell)
+    
     # Check if models already exist
-    horizon_dir = output_dir / "full_training" / f"horizon_{horizon}h"
+    horizon_dir = base_dir / "full_training" / f"horizon_{horizon}h"
     
     if skip_if_exists and check_models_exist(horizon_dir, model_type):
         print(f"✅ Models for {horizon}h already exist, loading results...")
@@ -427,8 +468,15 @@ def train_models_for_horizon(
         else:
             print(f"⚠️  Models exist but metrics not found, retraining...")
     
+    # Ensure horizon directory exists (for logs and outputs)
+    ensure_dir(horizon_dir)
+    # Prepare per-horizon brief log file (detailed log will be derived automatically)
+    horizon_log_file = str(horizon_dir / "training.log")
+    
     # Prepare data
-    X, y_frost, y_temp = prepare_features_and_targets(df, horizon, feature_selection=feature_selection)
+    X, y_frost, y_temp = prepare_features_and_targets(
+        df, horizon, feature_selection=feature_selection, track=track, model_type=model_type
+    )
     print(f"Features: {len(X.columns)}")
     print(f"Samples: {len(X)}")
     print(f"Frost events: {y_frost.sum()} ({y_frost.mean()*100:.2f}%)")
@@ -448,40 +496,142 @@ def train_models_for_horizon(
     val_orig_idx = df_split.index[val_df.index]
     test_orig_idx = df_split.index[test_df.index]
     
-    # Use original indices to get data
-    train_idx = train_orig_idx.intersection(X.index)
-    val_idx = val_orig_idx.intersection(X.index)
-    test_idx = test_orig_idx.intersection(X.index)
-    
-    X_train = X.loc[train_idx]
-    X_val = X.loc[val_idx]
-    X_test = X.loc[test_idx]
-    y_frost_train = y_frost.loc[train_idx]
-    y_frost_val = y_frost.loc[val_idx]
-    y_frost_test = y_frost.loc[test_idx]
-    y_temp_train = y_temp.loc[train_idx]
-    y_temp_val = y_temp.loc[val_idx]
-    y_temp_test = y_temp.loc[test_idx]
-    
-    # Get station IDs for LSTM models (from train_df, val_df, test_df which have Stn Id)
-    station_ids_train = None
-    station_ids_val = None
-    station_ids_test = None
+    # CRITICAL FIX for LSTM: Group by station first, then sort by time within each station
+    # This ensures temporal continuity within each station for sequence building
+    # Without this, interleaved stations cause huge gaps in station indices, preventing sequence generation
     if model_type in ["lstm", "lstm_multitask"]:
-        # Map station IDs from train_df/val_df/test_df to match X_train/X_val/X_test order
-        if len(train_df) > 0 and "Stn Id" in train_df.columns:
-            # Create mapping: original index -> station ID
-            train_station_map = dict(zip(train_orig_idx, train_df["Stn Id"].values))
-            station_ids_train = [train_station_map.get(idx) for idx in train_idx if idx in train_station_map]
-            station_ids_train = np.array(station_ids_train) if station_ids_train else None
-        if len(val_df) > 0 and "Stn Id" in val_df.columns:
-            val_station_map = dict(zip(val_orig_idx, val_df["Stn Id"].values))
-            station_ids_val = [val_station_map.get(idx) for idx in val_idx if idx in val_station_map]
-            station_ids_val = np.array(station_ids_val) if station_ids_val else None
-        if len(test_df) > 0 and "Stn Id" in test_df.columns:
-            test_station_map = dict(zip(test_orig_idx, test_df["Stn Id"].values))
-            station_ids_test = [test_station_map.get(idx) for idx in test_idx if idx in test_station_map]
-            station_ids_test = np.array(station_ids_test) if station_ids_test else None
+        # Strategy: Group by station, then sort by time within each station
+        # This maximizes sequence generation by ensuring station-level temporal continuity
+        
+        def reorganize_by_station(df_split_subset, orig_idx_subset, X_subset, y_frost_subset, y_temp_subset):
+            """Reorganize data: group by station, then sort by time within each station."""
+            if len(df_split_subset) == 0:
+                return None, None, None, None, None
+            
+            # Create a DataFrame with original indices and station IDs
+            reorg_data = {'orig_idx': orig_idx_subset}
+            
+            if "Stn Id" in df_split_subset.columns:
+                reorg_data['stn_id'] = df_split_subset["Stn Id"].values
+            else:
+                return None, None, None, None, None
+            
+            # Get Date from df_split (original dataframe) using orig_idx
+            if "Date" in df_split.columns:
+                date_map = dict(zip(df_split.index, df_split["Date"].values))
+                reorg_data['date'] = [date_map.get(idx) for idx in orig_idx_subset]
+            
+            reorg_df = pd.DataFrame(reorg_data)
+            
+            if "Date" in df_split.columns:
+                # Group by station, then sort by Date within each station
+                # This ensures temporal continuity within each station
+                reorg_df = reorg_df.sort_values(['stn_id', 'date'], kind='stable')
+            else:
+                # If no Date, just group by station
+                reorg_df = reorg_df.sort_values('stn_id', kind='stable')
+            
+            # Get reordered indices
+            reordered_idx = reorg_df['orig_idx'].values
+            
+            # Filter to only indices that exist in X
+            reordered_idx = [idx for idx in reordered_idx if idx in X_subset.index]
+            
+            if len(reordered_idx) == 0:
+                return None, None, None, None, None
+            
+            # Extract data in new order
+            X_reordered = X_subset.loc[reordered_idx].reset_index(drop=True)
+            y_frost_reordered = y_frost_subset.loc[reordered_idx].reset_index(drop=True)
+            y_temp_reordered = y_temp_subset.loc[reordered_idx].reset_index(drop=True)
+            
+            # Get station IDs in the same order
+            if "Stn Id" in df_split_subset.columns:
+                station_map = dict(zip(orig_idx_subset, df_split_subset["Stn Id"].values))
+                station_ids_reordered = np.array([station_map.get(idx) for idx in reordered_idx])
+            else:
+                station_ids_reordered = None
+            
+            return X_reordered, y_frost_reordered, y_temp_reordered, station_ids_reordered, reordered_idx
+        
+        # Reorganize train/val/test data by station, then time
+        train_result = reorganize_by_station(train_df, train_orig_idx, X, y_frost, y_temp)
+        if train_result[0] is not None:
+            X_train, y_frost_train, y_temp_train, station_ids_train, _ = train_result
+        else:
+            # Fallback to original order
+            train_idx = train_orig_idx.intersection(X.index)
+            train_idx_ordered = [idx for idx in train_orig_idx if idx in train_idx]
+            X_train = X.loc[train_idx_ordered].reset_index(drop=True)
+            y_frost_train = y_frost.loc[train_idx_ordered].reset_index(drop=True)
+            y_temp_train = y_temp.loc[train_idx_ordered].reset_index(drop=True)
+            if len(train_df) > 0 and "Stn Id" in train_df.columns:
+                train_station_map = dict(zip(train_orig_idx, train_df["Stn Id"].values))
+                station_ids_train = np.array([train_station_map.get(idx) for idx in train_idx_ordered])
+            else:
+                station_ids_train = None
+        
+        val_result = reorganize_by_station(val_df, val_orig_idx, X, y_frost, y_temp)
+        if val_result[0] is not None:
+            X_val, y_frost_val, y_temp_val, station_ids_val, _ = val_result
+        else:
+            # Fallback to original order
+            val_idx = val_orig_idx.intersection(X.index)
+            val_idx_ordered = [idx for idx in val_orig_idx if idx in val_idx]
+            X_val = X.loc[val_idx_ordered].reset_index(drop=True)
+            y_frost_val = y_frost.loc[val_idx_ordered].reset_index(drop=True)
+            y_temp_val = y_temp.loc[val_idx_ordered].reset_index(drop=True)
+            if len(val_df) > 0 and "Stn Id" in val_df.columns:
+                val_station_map = dict(zip(val_orig_idx, val_df["Stn Id"].values))
+                station_ids_val = np.array([val_station_map.get(idx) for idx in val_idx_ordered])
+            else:
+                station_ids_val = None
+        
+        test_result = reorganize_by_station(test_df, test_orig_idx, X, y_frost, y_temp)
+        if test_result[0] is not None:
+            X_test, y_frost_test, y_temp_test, station_ids_test, _ = test_result
+        else:
+            # Fallback to original order
+            test_idx = test_orig_idx.intersection(X.index)
+            test_idx_ordered = [idx for idx in test_orig_idx if idx in test_idx]
+            X_test = X.loc[test_idx_ordered].reset_index(drop=True)
+            y_frost_test = y_frost.loc[test_idx_ordered].reset_index(drop=True)
+            y_temp_test = y_temp.loc[test_idx_ordered].reset_index(drop=True)
+            if len(test_df) > 0 and "Stn Id" in test_df.columns:
+                test_station_map = dict(zip(test_orig_idx, test_df["Stn Id"].values))
+                station_ids_test = np.array([test_station_map.get(idx) for idx in test_idx_ordered])
+            else:
+                station_ids_test = None
+    else:
+        # For non-LSTM models, use simple intersection (order doesn't matter)
+        train_idx = train_orig_idx.intersection(X.index)
+        val_idx = val_orig_idx.intersection(X.index)
+        test_idx = test_orig_idx.intersection(X.index)
+        
+        X_train = X.loc[train_idx]
+        X_val = X.loc[val_idx]
+        X_test = X.loc[test_idx]
+        y_frost_train = y_frost.loc[train_idx]
+        y_frost_val = y_frost.loc[val_idx]
+        y_frost_test = y_frost.loc[test_idx]
+        y_temp_train = y_temp.loc[train_idx]
+        y_temp_val = y_temp.loc[val_idx]
+        y_temp_test = y_temp.loc[test_idx]
+        
+        # Initialize station_ids for non-LSTM models (set to None)
+        station_ids_train = None
+        station_ids_val = None
+        station_ids_test = None
+        # Try to extract station IDs if available (for compatibility)
+        if "Stn Id" in df.columns:
+            try:
+                station_ids_train = df.loc[train_idx, "Stn Id"].values if train_idx.intersection(df.index).size > 0 else None
+                station_ids_val = df.loc[val_idx, "Stn Id"].values if val_idx.intersection(df.index).size > 0 else None
+                station_ids_test = df.loc[test_idx, "Stn Id"].values if test_idx.intersection(df.index).size > 0 else None
+            except Exception:
+                station_ids_train = None
+                station_ids_val = None
+                station_ids_test = None
     
     print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
     
@@ -492,9 +642,9 @@ def train_models_for_horizon(
     # Train classification model (frost probability)
     task_start_time = time.time()
     task_start_datetime = datetime.now()
-        print(f"\n[{task_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Training classification model for frost probability...", flush=True)
-        import sys
-        sys.stdout.flush()
+    print(f"\n[{task_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Training classification model for frost probability...", flush=True)
+    import sys
+    sys.stdout.flush()
     
     frost_config = get_model_config(model_type, horizon, "classification", max_workers, for_loso=False)
     
@@ -502,7 +652,8 @@ def train_models_for_horizon(
         # Multi-task model needs both y_temp and y_frost
         model_frost = train_multitask_model(
             model_type, model_class, frost_config,
-            X_train, y_temp_train, y_frost_train, station_ids_train
+            X_train, y_temp_train, y_frost_train, station_ids_train,
+            log_file=horizon_log_file
         )
         model_temp = model_frost  # Same instance for consistency
         print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Multi-task model already trained both temperature and frost prediction tasks together.")
@@ -514,12 +665,16 @@ def train_models_for_horizon(
             frost_config["checkpoint_dir"] = str(frost_checkpoint_dir)
         
         # Pass checkpoint_dir and resume_from_checkpoint to fit method
-        fit_kwargs = {}
+        fit_kwargs = {"log_file": horizon_log_file}
         if model_type in ["lstm", "lstm_multitask"]:
             fit_kwargs['checkpoint_dir'] = str(frost_checkpoint_dir)
-            if resume_from_checkpoint is not None:
-                fit_kwargs['resume_from_checkpoint'] = resume_from_checkpoint
+            # resume_from_checkpoint is optional, only pass if provided
+            # (not used in standard training, only for resume scenarios)
         
+        # Pass fit_kwargs to train_frost_model (for LSTM checkpoint_dir, etc.)
+        # CRITICAL FIX: Pass station_ids_val for LSTM to use external validation
+        if model_type == "lstm" and station_ids_val is not None:
+            fit_kwargs['station_ids_val'] = station_ids_val
         model_frost = train_frost_model(
             model_type, model_class, frost_config,
             X_train, y_frost_train, X_val, y_frost_val, station_ids_train,
@@ -541,7 +696,8 @@ def train_models_for_horizon(
         temp_config = get_model_config(model_type, horizon, "regression", max_workers, for_loso=False)
         model_temp = train_temp_model(
             model_type, model_class, temp_config,
-            X_train, y_temp_train, X_val, y_temp_val, station_ids_train
+            X_train, y_temp_train, X_val, y_temp_val, station_ids_train,
+            log_file=horizon_log_file
         )
         
         task_elapsed = time.time() - task_start_time
@@ -555,7 +711,7 @@ def train_models_for_horizon(
     print(f"\n[{eval_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Evaluating on test set...")
     
     frost_metrics, temp_metrics, y_frost_pred, y_frost_proba, y_temp_pred = evaluate_models(
-        model_type, model_frost, model_temp, X_test, y_frost_test, y_temp_test
+        model_type, model_frost, model_temp, X_test, y_frost_test, y_temp_test, station_ids_test
     )
     
     print(f"\nClassification Metrics (Frost Probability):")
@@ -606,8 +762,6 @@ def train_models_for_horizon(
     return {
         "horizon": horizon,
         "frost_metrics": frost_metrics,
-        "temp_metrics": temp_metrics,
-        "model_frost": model_frost,
-        "model_temp": model_temp
+        "temp_metrics": temp_metrics
     }
 

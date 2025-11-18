@@ -1,0 +1,82 @@
+Output directory: experiments/A/extratrees/raw
+================================================================================
+🚀 Training Started
+   Start Time: 2025-11-15 23:16:11
+   Model Type: extratrees
+   Horizons: [3, 6, 12, 24]
+   Output Directory: experiments/A/extratrees/raw
+================================================================================
+
+============================================================
+Step 1: Loading Data
+[2025-11-15 23:16:11] Starting data loading...
+============================================================
+Loading 18 station files from /home/zhengkun-li/frost-risk-forecast-challenge/data/raw/frost-risk-forecast-challenge/stations...
+  Loaded 5/18 files...  Loaded 10/18 files...  Loaded 15/18 files...  Loaded 18/18 files...
+Combining 18 station DataFrames...
+Combined data: 2367360 rows, 26 columns
+Stations: 18
+Loaded 2367360 rows, 26 columns
+Optimizing data types to reduce memory...
+Memory usage after optimization: 1.50 GB
+[2025-11-15 23:16:14] Step 1 completed in 3.30 seconds
+
+============================================================
+Step 2: Cleaning Data
+[2025-11-15 23:16:14] Starting data cleaning...
+============================================================
+After cleaning: 2367360 rows
+[2025-11-15 23:16:18] Step 2 completed in 3.95 seconds
+
+============================================================
+Step 3: Feature Engineering
+[2025-11-15 23:16:18] Starting feature engineering...
+============================================================
+After feature engineering: 2367360 rows, 293 columns
+Optimizing data types after feature engineering...
+Memory usage after optimization: 3.84 GB
+[2025-11-15 23:16:31] Step 3 completed in 12.61 seconds
+
+============================================================
+Step 4: Creating Frost Labels
+============================================================
+Created frost labels for horizons: [3, 6, 12, 24]
+Final dataset: 2367360 rows, 301 columns
+
+Saved labeled data to experiments/A/extratrees/raw/labeled_data.parquet and experiments/A/extratrees/raw/full_training/labeled_data.parquet
+
+[2025-11-15 23:16:46] Starting model training for all horizons...
+
+============================================================
+Training models for 3h horizon
+[2025-11-15 23:16:46] Starting 3h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 612 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2367306
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2367306
+Frost events: 20579.0 (0.87%)
+Train: 1657114, Val: 355096, Test: 355096
+❌ Error training 3h model: unexpected character after line continuation character (linear_model.py, line 119)
+
+============================================================
+Training models for 6h horizon
+[2025-11-15 23:16:49] Starting 6h horizon training...
+============================================================
+  ⚠️  Warning: Excluded 270 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 450 NaN values in features, filled using forward/backward fill
+Features: 27, Samples: 2367252
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°C
+Features: 27
+Samples: 2367252
+Frost events: 20579.0 (0.87%)
+Train: 1657076, Val: 355088, Test: 355088
+
+[2025-11-15 23:16:51] Training classification model for frost probability...
+[2025-11-15 23:17:12] Frost classification model training completed in 20.80 seconds (0.35 minutes)
+
+[2025-11-15 23:17:12] Training regression model for temperature...

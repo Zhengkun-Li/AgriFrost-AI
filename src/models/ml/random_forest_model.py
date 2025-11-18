@@ -55,13 +55,43 @@ class RandomForestModel(BaseModel):
         Args:
             X: Feature DataFrame.
             y: Target Series.
-            **kwargs: Additional arguments (ignored for Random Forest).
+            **kwargs: Additional arguments:
+                - checkpoint_dir: Optional directory for checkpoints
+                - log_file: Optional path for training log file
         
         Returns:
             Self for method chaining.
         """
+        # Setup training tools if requested
+        checkpoint_dir = kwargs.pop('checkpoint_dir', None)
+        log_file = kwargs.pop('log_file', None)
+        if checkpoint_dir or log_file:
+            model_params = self.config.get("model_params", {})
+            checkpoint_frequency = model_params.get("checkpoint_frequency", 0)
+            self.setup_training_tools(
+                checkpoint_dir=checkpoint_dir,
+                log_file=log_file,
+                checkpoint_frequency=checkpoint_frequency,
+                save_best=False,  # Random Forest doesn't support incremental training
+                best_metric="val_loss" if self.task_type == "regression" else "val_auc",
+                best_mode="min" if self.task_type == "regression" else "max"
+            )
+            if self.progress_logger:
+                self.progress_logger.log_training_start(
+                    model_name="Random Forest",
+                    config={
+                        "task_type": self.task_type,
+                        "n_estimators": model_params.get("n_estimators", "default"),
+                        "max_depth": model_params.get("max_depth", "default")
+                    }
+                )
+        
         self.feature_names = list(X.columns)
         self.model.fit(X, y)
+        
+        if self.progress_logger:
+            self.progress_logger.log("  ✅ Training completed", flush=True)
+        
         self.is_fitted = True
         
         return self

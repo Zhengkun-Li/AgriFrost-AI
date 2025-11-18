@@ -1,0 +1,13 @@
+{
+  "model_params": {
+    "n_estimators": 150,
+    "learning_rate": 0.05,
+    "max_depth": 8,
+    "num_leaves": 63,
+    "random_state": 42,
+    "verbose": -1,
+    "n_jobs": 8,
+    "force_col_wise": true
+  },
+  "task_type": "classification"
+}

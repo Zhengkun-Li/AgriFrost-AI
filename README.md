@@ -4,7 +4,7 @@
 **Email:** zhengkun.li3969@gmail.com  
 **Affiliation:** TRIC Robotics / UF ABE / F3 Innovate Participant  
 **Platform:** National Data Platform (NDP)  
-**Last Updated:** 2025-11-13
+**Last Updated:** 2025-11-16
 
 ## 🚀 Quick Start
 
@@ -40,6 +40,46 @@ python3 scripts/analysis/generate_feature_report.py \
     --model-dir experiments/lightgbm/top175_features \
     --output scripts/analysis/output
 ```
+
+## 🧰 Environment Setup (CUDA 13.0, PyTorch cu130)
+
+Prerequisites:
+- Python 3.12 (3.10–3.14 supported)
+- NVIDIA Driver r580+（`nvidia-smi` 可见）, 可选装系统 CUDA Toolkit 13.0（已安装更佳）
+
+Setup:
+```bash
+# Create venv
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Upgrade pip
+python -m pip install -U pip
+
+# Install project deps (requirements includes cu130 extra-index for PyTorch)
+pip install -r requirements.txt
+
+# Verify GPU & capability
+python - << 'PY'
+import torch
+print('torch=', torch.__version__, 'cuda=', torch.version.cuda)
+print('cuda_available=', torch.cuda.is_available())
+if torch.cuda.is_available():
+    print('device=', torch.cuda.get_device_name(0), 'cap=', torch.cuda.get_device_capability(0))
+PY
+```
+
+Notes:
+- The `requirements.txt` adds an extra index `https://download.pytorch.org/whl/cu130` and pins:
+  - `torch==2.9.1+cu130`, `torchvision==0.24.1+cu130`, `torchaudio==2.9.1+cu130`
+- 若仅需 CPU，可将 `requirements.txt` 中三行 PyTorch 依赖注释掉，然后单独安装：
+  ```bash
+  pip install torch==2.9.1
+  ```
+- 如果遇到新显卡架构（如 sm_120）不被某些轮子支持，请切换到以上 cu130 组合或从源码编译 PyTorch（设置 `TORCH_CUDA_ARCH_LIST="12.0"`）。
+- 训练优化：
+  - LSTM 与 LSTM-MT 均支持 AMP（混合精度）：可在 `model_params.use_amp: true` 开启（LSTM 早已支持，LSTM-MT 已对齐并使用 `GradScaler`）。
+  - 训练脚本在 CUDA 下会设置 `torch.set_float32_matmul_precision('high')` 以提升 matmul 性能，并在开头打印 GPU 型号与 cuDNN 版本到日志中。
 
 ## 📊 Results Summary
 

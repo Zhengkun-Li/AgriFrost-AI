@@ -1,0 +1,149 @@
+Training log: experiments/E/dcrnn/training_root.logTraining log: experiments/E/dcrnn/training_root.log
+
+
+CUDA Runtime Info: device=NVIDIA GeForce RTX 5090, cuDNN=91300
+CUDA Runtime Info: device=NVIDIA GeForce RTX 5090, cuDNN=91300
+
+================================================================================
+================================================================================
+🚀 Training Started
+🚀 Training Started
+   Start Time: 2025-11-17 12:39:49
+   Start Time: 2025-11-17 12:39:49
+   Model Type: dcrnn
+   Model Type: dcrnn
+   Horizons: [3, 6, 12, 24]
+   Horizons: [3, 6, 12, 24]
+   Output Directory: experiments/E/dcrnn   Output Directory: experiments/E/dcrnn
+
+================================================================================================================================================================
+
+  ℹ️  Raw-only track detected: skipping feature engineering
+  ℹ️  Raw-only track detected: skipping feature engineering
+
+============================================================
+============================================================
+
+Step 1: Loading DataStep 1: Loading Data
+
+[2025-11-17 12:39:49] Starting data loading...
+[2025-11-17 12:39:49] Starting data loading...
+========================================================================================================================
+
+Loading 18 station files from /home/zhengkun-li/frost-risk-forecast-challenge/data/raw/frost-risk-forecast-challenge/stations...Loading 18 station files from /home/zhengkun-li/frost-risk-forecast-challenge/data/raw/frost-risk-forecast-challenge/stations...
+
+  Loaded 5/18 files...
+  Loaded 5/18 files...
+  Loaded 10/18 files...
+  Loaded 10/18 files...
+  Loaded 15/18 files...  Loaded 15/18 files...
+
+  Loaded 18/18 files...  Loaded 18/18 files...
+
+Combining 18 station DataFrames...
+
+Combining 18 station DataFrames...
+Combined data: 2367360 rows, 26 columnsCombined data: 2367360 rows, 26 columns
+
+Stations: 18Stations: 18
+
+Loaded 2367360 rows, 26 columns
+Optimizing data types to reduce memory...
+Loaded 2367360 rows, 26 columns
+Optimizing data types to reduce memory...
+Memory usage after optimization: 1.50 GBMemory usage after optimization: 1.50 GB
+
+[2025-11-17 12:39:53] Step 1 completed in 3.46 seconds
+[2025-11-17 12:39:53] Step 1 completed in 3.46 seconds
+
+============================================================
+============================================================
+
+Step 2: Cleaning DataStep 2: Cleaning Data
+
+[2025-11-17 12:39:53] Starting data cleaning...
+[2025-11-17 12:39:53] Starting data cleaning...
+========================================================================================================================
+
+After cleaning: 2367360 rowsAfter cleaning: 2367360 rows
+
+[2025-11-17 12:39:57] Step 2 completed in 4.13 seconds
+
+============================================================[2025-11-17 12:39:57] Step 2 completed in 4.13 seconds
+Step 3: Skipping Feature Engineering (Raw-only track)
+
+============================================================
+
+Step 3: Skipping Feature Engineering (Raw-only track)
+========================================================================================================================
+
+Using raw features only: 2367360 rows, 26 columns
+Optimizing data types...Using raw features only: 2367360 rows, 26 columns
+
+Optimizing data types...
+Memory usage after optimization: 1.50 GBMemory usage after optimization: 1.50 GB
+
+[2025-11-17 12:39:58] Step 3 (skipped) completed in 5.60 seconds
+[2025-11-17 12:39:58] Step 3 (skipped) completed in 5.60 seconds
+
+============================================================
+
+============================================================
+Step 4: Creating Frost Labels
+Step 4: Creating Frost Labels
+========================================================================================================================
+
+Created frost labels for horizons: [3, 6, 12, 24]Created frost labels for horizons: [3, 6, 12, 24]
+
+Final dataset: 2367360 rows, 34 columns
+Final dataset: 2367360 rows, 34 columns
+
+Saved labeled data to experiments/E/dcrnn/labeled_data.parquet and experiments/E/dcrnn/full_training/labeled_data.parquet
+
+Saved labeled data to experiments/E/dcrnn/labeled_data.parquet and experiments/E/dcrnn/full_training/labeled_data.parquet
+
+[2025-11-17 12:40:02] Starting model training for all horizons...
+
+[2025-11-17 12:40:02] Starting model training for all horizons...
+
+============================================================
+
+============================================================
+Training models for 3h horizon
+Training models for 3h horizon
+[2025-11-17 12:40:02] Starting 3h horizon training...
+[2025-11-17 12:40:02] Starting 3h horizon training...
+============================================================
+============================================================
+  ⚠️  Warning: Excluded 12 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Excluded 12 non-numeric columns: ['Stn Name', 'CIMIS Region', 'qc', 'qc.1', 'qc.2']...
+  ⚠️  Warning: Found 594 NaN values in features, filled using forward/backward fill
+  ⚠️  Warning: Found 594 NaN values in features, filled using forward/backward fill
+Features: 19, Samples: 2367306
+Features: 19, Samples: 2367306
+Frost labels: 20579.0 positive (0.87%)
+Frost labels: 20579.0 positive (0.87%)
+Temperature range: -9.30°C to 45.60°CTemperature range: -9.30°C to 45.60°C
+
+Features: 19
+Features: 19
+Samples: 2367306
+Samples: 2367306
+Frost events: 20579.0 (0.87%)
+Frost events: 20579.0 (0.87%)
+Train: 1657114, Val: 355096, Test: 355096
+Train: 1657114, Val: 355096, Test: 355096
+
+[2025-11-17 12:40:03] Training classification model for frost probability...
+
+[2025-11-17 12:40:03] Training classification model for frost probability...
+/home/zhengkun-li/frost-risk-forecast-challenge/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:1406: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+  y = column_or_1d(y, warn=True)
+/home/zhengkun-li/frost-risk-forecast-challenge/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:1406: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+  y = column_or_1d(y, warn=True)
+[2025-11-17 13:45:07] Frost classification model training completed in 3904.38 seconds (65.07 minutes)
+[2025-11-17 13:45:07] Frost classification model training completed in 3904.38 seconds (65.07 minutes)
+
+[2025-11-17 13:45:07] Training regression model for temperature...
+
+[2025-11-17 13:45:07] Training regression model for temperature...

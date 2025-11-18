@@ -182,6 +182,7 @@ class BaseModel(ABC):
         self,
         checkpoint_dir: Optional[Path] = None,
         log_file: Optional[Path] = None,
+        detailed_log_file: Optional[Path] = None,
         checkpoint_frequency: int = 10,
         save_best: bool = True,
         best_metric: str = "val_loss",
@@ -195,7 +196,8 @@ class BaseModel(ABC):
         
         Args:
             checkpoint_dir: Directory to save checkpoints (None = disabled).
-            log_file: Path to log file (None = stdout only).
+            log_file: Path to brief log file (training.log, suitable for GitHub).
+            detailed_log_file: Path to detailed log file (training_detailed.log, excluded from GitHub).
             checkpoint_frequency: Save checkpoint every N epochs (0 = disabled).
             save_best: Whether to save the best model based on metric.
             best_metric: Metric name to use for determining best model.
@@ -225,7 +227,15 @@ class BaseModel(ABC):
         self.curve_plotter = TrainingCurvePlotter()
         
         # Progress logger (always available)
-        self.progress_logger = ProgressLogger(log_file=log_file)
+        # If detailed_log_file not provided but log_file is, derive it
+        if log_file and not detailed_log_file:
+            log_path = Path(log_file)
+            detailed_log_file = log_path.parent / f"{log_path.stem}_detailed{log_path.suffix}"
+        
+        self.progress_logger = ProgressLogger(
+            log_file=log_file,
+            detailed_log_file=detailed_log_file
+        )
         
         return self
     

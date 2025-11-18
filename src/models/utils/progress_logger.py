@@ -10,23 +10,28 @@ class ProgressLogger:
     """Log training progress in a unified way.
     
     This class provides a unified interface for logging training progress
-    that can be used by any model type.
+    that can be used by any model type. Supports dual logging:
+    - Brief log: Key training milestones (suitable for GitHub)
+    - Detailed log: All epoch-level details (excluded from GitHub)
     """
     
     def __init__(
         self,
         log_file: Optional[Path] = None,
+        detailed_log_file: Optional[Path] = None,
         use_tqdm: bool = True,
         flush_interval: int = 1
     ):
         """Initialize progress logger.
         
         Args:
-            log_file: Optional path to log file.
+            log_file: Optional path to brief log file (training.log).
+            detailed_log_file: Optional path to detailed log file (training_detailed.log).
             use_tqdm: Whether to use tqdm for progress bars.
             flush_interval: Flush output every N messages.
         """
         self.log_file = Path(log_file) if log_file else None
+        self.detailed_log_file = Path(detailed_log_file) if detailed_log_file else None
         self.use_tqdm = use_tqdm
         self.flush_interval = flush_interval
         self.message_count = 0
@@ -40,24 +45,38 @@ class ProgressLogger:
             except ImportError:
                 self._tqdm_available = False
         
-        # Setup log file
+        # Setup log files
         if self.log_file:
             self.log_file.parent.mkdir(parents=True, exist_ok=True)
+        if self.detailed_log_file:
+            self.detailed_log_file.parent.mkdir(parents=True, exist_ok=True)
     
-    def log(self, message: str, flush: bool = False) -> None:
+    def log(self, message: str, flush: bool = False, detailed: bool = False) -> None:
         """Log a message.
         
         Args:
             message: Message to log.
             flush: Whether to flush immediately.
+            detailed: If True, only write to detailed log. If False, write to both brief and detailed logs.
         """
         # Print to stdout
         print(message, flush=flush or (self.message_count % self.flush_interval == 0))
         
-        # Write to log file if available
-        if self.log_file:
+        # Write to brief log (if not detailed-only message)
+        if self.log_file and not detailed:
             try:
                 with open(self.log_file, 'a') as f:
+                    f.write(message + '\n')
+                    if flush:
+                        f.flush()
+            except Exception as e:
+                # Don't fail if logging fails
+                pass
+        
+        # Write to detailed log (all messages)
+        if self.detailed_log_file:
+            try:
+                with open(self.detailed_log_file, 'a') as f:
                     f.write(message + '\n')
                     if flush:
                         f.flush()
@@ -134,7 +153,8 @@ class ProgressLogger:
                 parts.append(f"{key}: {value}")
         
         message = "  " + " - ".join(parts)
-        self.log(message, flush=True)
+        # Epoch logs are detailed-only (not in brief log)
+        self.log(message, flush=True, detailed=True)
     
     def log_improvement(
         self,
@@ -181,6 +201,9 @@ class ProgressLogger:
     def get_tqdm(self, iterable, desc: str = "", **kwargs):
         """Get a tqdm progress bar if available.
         
+        Automatically disables tqdm when output is redirected to a file
+        to prevent huge log files. Only shows progress bar in interactive terminals.
+        
         Args:
             iterable: Iterable to wrap.
             desc: Description for the progress bar.
@@ -190,7 +213,14 @@ class ProgressLogger:
             tqdm progress bar or the original iterable.
         """
         if self._tqdm_available and self.use_tqdm:
-            from tqdm import tqdm
-            return tqdm(iterable, desc=desc, **kwargs)
+            # Only use tqdm if output is to a terminal (interactive mode)
+            # When output is redirected to file (nohup, >), disable tqdm to reduce log size
+            if sys.stdout.isatty():
+                from tqdm import tqdm
+                # Set mininterval to reduce update frequency
+                kwargs.setdefault('mininterval', 1.0)  # Update at most once per second
+                kwargs.setdefault('leave', False)  # Don't leave progress bar after completion
+                return tqdm(iterable, desc=desc, **kwargs)
+        # Output redirected to file or tqdm not available, return original iterable
         return iterable
 

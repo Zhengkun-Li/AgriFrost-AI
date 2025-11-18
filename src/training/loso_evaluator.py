@@ -145,7 +145,8 @@ def train_loso_models_for_horizon(
     X_test: pd.DataFrame,
     y_frost_test: pd.Series,
     y_temp_test: pd.Series,
-    station_ids_train: Optional[np.ndarray] = None
+    station_ids_train: Optional[np.ndarray] = None,
+    log_file: Optional[str] = None
 ) -> Tuple[object, object, Dict, Dict]:
     """Train models for a specific station and horizon in LOSO evaluation.
     
@@ -173,21 +174,24 @@ def train_loso_models_for_horizon(
     if model_type == "lstm_multitask":
         model_frost = train_multitask_model(
             model_type, model_class, frost_config,
-            X_train, y_temp_train, y_frost_train, station_ids_train
+            X_train, y_temp_train, y_frost_train, station_ids_train,
+            **({"log_file": log_file} if log_file else {})
         )
         model_temp = model_frost
         print(f"      ℹ️  Multi-task model already trained both temperature and frost prediction tasks together.")
     else:
         model_frost = train_frost_model(
             model_type, model_class, frost_config,
-            X_train, y_frost_train, X_test, y_frost_test, station_ids_train
+            X_train, y_frost_train, X_test, y_frost_test, station_ids_train,
+            **({"log_file": log_file} if log_file else {})
         )
         
         # Train regression model (temperature)
         temp_config = get_model_config(model_type, horizon, "regression", max_workers_loso, for_loso=True, station_id=test_station)
         model_temp = train_temp_model(
             model_type, model_class, temp_config,
-            X_train, y_temp_train, X_test, y_temp_test, station_ids_train
+            X_train, y_temp_train, X_test, y_temp_test, station_ids_train,
+            **({"log_file": log_file} if log_file else {})
         )
     
     # Evaluate models
@@ -208,7 +212,9 @@ def perform_loso_evaluation(
     feature_selection: Optional[Dict] = None,
     save_models: bool = False,
     save_worst_n: Optional[int] = None,
-    save_horizons: Optional[List[int]] = None
+    save_horizons: Optional[List[int]] = None,
+    track: Optional[str] = None,
+    matrix_cell: Optional[str] = None
 ) -> Dict:
     """Perform LOSO evaluation with no data leakage and optimized memory usage.
     
@@ -276,7 +282,19 @@ def perform_loso_evaluation(
     else:
         print("Using provided DataFrame - will create subsets using masks (memory efficient)")
     
-    loso_dir = output_dir / "loso"
+    # Infer track/matrix_cell from output_dir if not provided
+    parts = [p for p in output_dir.parts]
+    if track is None:
+        track = "raw" if "raw" in parts else ("top175_features" if "top175_features" in parts else "top175_features")
+    if matrix_cell is None:
+        candidates = {"A","B","C","D","E"}
+        found = [p for p in parts if p in candidates]
+        matrix_cell = found[0] if found else ("B" if track == "top175_features" else "A")
+    
+    # Resolve base dir: add matrix_cell only if not present
+    out_parts = set(output_dir.parts)
+    base_dir = output_dir if matrix_cell in out_parts else (output_dir / matrix_cell)
+    loso_dir = base_dir / "loso"
     ensure_dir(loso_dir)
     
     # Determine which horizons to save models for
@@ -380,7 +398,8 @@ def perform_loso_evaluation(
                     data_for_features, 
                     horizon, 
                     indices=combined_idx,
-                    feature_selection=feature_selection
+                    feature_selection=feature_selection,
+                    track=track
                 )
                 
                 # Get indices for train and test sets (after filtering)
@@ -414,11 +433,17 @@ def perform_loso_evaluation(
                 )
                 
                 # Train and evaluate models
+                # Prepare per-station/horizon log file
+                model_dir = loso_dir / f"station_{test_station}" / f"horizon_{horizon}h"
+                ensure_dir(model_dir)
+                loso_log_file = str(model_dir / "training.log")
+                
                 model_frost, model_temp, frost_metrics, temp_metrics = train_loso_models_for_horizon(
                     model_type, horizon, test_station,
                     X_train, y_frost_train, y_temp_train,
                     X_test, y_frost_test, y_temp_test,
-                    station_ids_train_loso
+                    station_ids_train_loso,
+                    log_file=loso_log_file
                 )
                 
                 # Store results

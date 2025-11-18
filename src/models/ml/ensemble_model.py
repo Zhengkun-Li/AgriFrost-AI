@@ -66,17 +66,47 @@ class EnsembleModel(BaseModel):
         Args:
             X: Feature DataFrame.
             y: Target Series.
-            **kwargs: Additional arguments passed to base models.
+            **kwargs: Additional arguments passed to base models:
+                - checkpoint_dir: Optional directory for checkpoints
+                - log_file: Optional path for training log file
         
         Returns:
             Self for method chaining.
         """
+        # Setup training tools if requested
+        checkpoint_dir = kwargs.pop('checkpoint_dir', None)
+        log_file = kwargs.pop('log_file', None)
+        if checkpoint_dir or log_file:
+            model_params = self.config.get("model_params", {})
+            checkpoint_frequency = model_params.get("checkpoint_frequency", 0)
+            self.setup_training_tools(
+                checkpoint_dir=checkpoint_dir,
+                log_file=log_file,
+                checkpoint_frequency=checkpoint_frequency,
+                save_best=False,  # Ensemble doesn't support incremental training
+                best_metric="val_loss" if self.task_type == "regression" else "val_auc",
+                best_mode="min" if self.task_type == "regression" else "max"
+            )
+            if self.progress_logger:
+                self.progress_logger.log_training_start(
+                    model_name="Ensemble",
+                    config={
+                        "task_type": self.task_type,
+                        "base_models": self.base_models_config,
+                        "ensemble_method": self.ensemble_method
+                    }
+                )
+        
         self.feature_names = list(X.columns)
         
         # Train each base model
         for i, model in enumerate(self.models):
-            print(f"Training {self.base_models_config[i]} model ({i+1}/{len(self.models)})...")
+            if self.progress_logger:
+                self.progress_logger.log(f"Training {self.base_models_config[i]} model ({i+1}/{len(self.models)})...", flush=True)
             model.fit(X, y, **kwargs)
+        
+        if self.progress_logger:
+            self.progress_logger.log("  ✅ Training completed", flush=True)
         
         self.is_fitted = True
         return self
