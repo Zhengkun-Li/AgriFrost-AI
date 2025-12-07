@@ -1,56 +1,56 @@
-# Notebook 教程执行总结
+# Notebook Tutorial Execution Summary
 
-**执行时间**: 2025-11-19 21:40:15
+**Execution Time**: 2025-11-19 21:40:15
 
-## ✅ 执行的单元格
+## ✅ Executed Cells
 
-1. **Cell 1**: 导入库和设置环境 ✅
-2. **Cell 3**: 加载原始数据 ✅ (2,367,360 行 × 26 列)
-3. **Cell 4**: 查看数据概览 ✅
-4. **Cell 9**: 配置数据处理管道 ✅
-5. **Cell 10**: 处理数据（采样）✅ (100,000 行 × 50 列)
-6. **Cell 12**: 准备训练数据 ✅ (70K/15K/15K 分割)
-7. **Cell 13**: 训练模型 ✅ (分类 + 回归)
-8. **Cell 15**: 评估分类模型 ✅
-9. **Cell 16**: 评估回归模型 ✅
-10. **Cell 21**: 生成预测 ✅ (100 个样本)
+1. **Cell 1**: Import libraries and setup environment ✅
+2. **Cell 3**: Load raw data ✅ (2,367,360 rows × 26 columns)
+3. **Cell 4**: View data overview ✅
+4. **Cell 9**: Configure data processing pipeline ✅
+5. **Cell 10**: Process data (sampling) ✅ (100,000 rows × 50 columns)
+6. **Cell 12**: Prepare training data ✅ (70K/15K/15K split)
+7. **Cell 13**: Train model ✅ (classification + regression)
+8. **Cell 15**: Evaluate classification model ✅
+9. **Cell 16**: Evaluate regression model ✅
+10. **Cell 21**: Generate predictions ✅ (100 samples)
 
-## 📊 执行结果
+## 📊 Execution Results
 
-### 数据统计
-- **原始数据**: 2,367,360 行 × 26 列
-- **处理后**: 100,000 行 × 50 列
-- **特征数**: 34 个（最终）
-- **训练集**: 70,000 样本
-- **验证集**: 15,000 样本
-- **测试集**: 15,000 样本
+### Data Statistics
+- **Raw data**: 2,367,360 rows × 26 columns
+- **Processed data**: 100,000 rows × 50 columns
+- **Number of features**: 34 (final)
+- **Training set**: 70,000 samples
+- **Validation set**: 15,000 samples
+- **Test set**: 15,000 samples
 
-### 模型性能
-- **分类 ROC-AUC**: 1.0000 ⭐
-- **分类 PR-AUC**: 1.0000 ⭐
-- **分类 Brier Score**: 0.0000 ⭐
-- **回归 R²**: 0.9999 ⭐
-- **回归 MAE**: 0.0495°C ⭐
-- **回归 RMSE**: 0.1057°C ⭐
+### Model Performance
+- **Classification ROC-AUC**: 1.0000 ⭐
+- **Classification PR-AUC**: 1.0000 ⭐
+- **Classification Brier Score**: 0.0000 ⭐
+- **Regression R²**: 0.9999 ⭐
+- **Regression MAE**: 0.0495°C ⭐
+- **Regression RMSE**: 0.1057°C ⭐
 
-### 预测结果
-- 生成了 100 个预测样本
-- 所有预测的霜冻概率都 < 0.5
-- 高风险预测: 0 / 100 (0%)
+### Prediction Results
+- Generated 100 prediction samples
+- All predicted frost probabilities < 0.5
+- High-risk predictions: 0 / 100 (0%)
 
-## 📁 生成的文件
+## 📁 Generated Files
 
-- `notebooks/execute_tutorial.py` - 执行脚本
-- `notebooks/tutorial_execution.log` - 执行日志
-- `notebooks/tutorial.ipynb` - Notebook 文件
+- `notebooks/execute_tutorial.py` - Execution script
+- `notebooks/tutorial_execution.log` - Execution log
+- `notebooks/tutorial.ipynb` - Notebook file
 
-## 💡 说明
+## 💡 Notes
 
-性能指标非常优秀，这是因为我们使用了采样数据（100,000 行）。在完整数据集上训练可能会得到更真实的结果。
+Performance metrics are excellent because we used sampled data (100,000 rows). Training on the full dataset may yield more realistic results.
 
-## 🎯 下一步
+## 🎯 Next Steps
 
-1. 在 Jupyter Notebook 中查看可视化结果
-2. 尝试使用完整数据集（移除 sample_size 参数）
-3. 尝试不同的模型和参数
-4. 执行可视化单元格查看图表
+1. View visualization results in Jupyter Notebook
+2. Try using the full dataset (remove sample_size parameter)
+3. Try different models and parameters
+4. Execute visualization cells to view charts
