@@ -128,6 +128,7 @@ The data includes:
 #### Step 3: Run Commands
 
 > **⭐ Recommended**: Use the unified CLI (`python -m src.cli ...`) for training, evaluation, inference, and analysis.  
+> **📖 CLI Documentation**: See [scripts/README.md](scripts/README.md) for complete CLI usage guide with all commands and detailed examples.  
 > **Note**: The `scripts/` directory contains additional tool scripts (e.g., `scripts/tools/fetch_station_metadata.py`) that can be used as needed.
 
 **Quick Test (Recommended for first-time users):**
@@ -249,7 +250,7 @@ python scripts/tools/generate_feature_category_importance_bar.py
 
 ### CLI Documentation
 
-- **[Unified CLI](scripts/README.md)**: Complete CLI documentation with all commands and detailed usage examples
+- **[Unified CLI Guide](scripts/README.md)**: Complete CLI documentation with all commands, detailed usage examples, and help information
   - **Main operations** (training, evaluation, inference, analysis): Use `python -m src.cli ...`
   - **Batch training scripts**: For training multiple models, see `scripts/experiments/`:
     - `batch_train_all_models.py` - Batch train multiple ML models (lightgbm, xgboost, catboost, random_forest)
