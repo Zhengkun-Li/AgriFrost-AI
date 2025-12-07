@@ -15,7 +15,8 @@
 **Author:** Zhengkun LI  
 **Email:** zhengkun.li3969@gmail.com  
 **Affiliation:** TRIC Robotics / UF ABE / F3 Innovate Participant  
-**Last Updated:** 2025-12-06
+**Last Updated:** 2025-12-06  
+**Report Location:** [docs/manuscript](https://github.com/Zhengkun-Li/AgriFrost-AI/tree/main/docs/manuscript)
 
 ## 📋 Project Description
 
