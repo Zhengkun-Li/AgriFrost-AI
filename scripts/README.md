@@ -125,6 +125,51 @@ Run complete pipeline (specific use case)
 
 Feature selection tool
 
+### `generate_matrix_a_feature_importance.py`
+
+Generate Matrix A feature importance figure across different forecast horizons (used for Figure 12 in the manuscript).
+
+**Usage:**
+```bash
+python scripts/tools/generate_matrix_a_feature_importance.py
+```
+
+**Output:**
+- `docs/manuscript/figures/v2/matrix_a_feature_importance_by_horizon.png`
+
+**Requirements:**
+- Matrix A experiment results must be available in `experiments/lightgbm/raw/A/full_training/`
+
+### `generate_matrix_a_supplementary_table.py`
+
+Generate Matrix A feature importance supplementary table (Supplementary Table S7).
+
+**Usage:**
+```bash
+python scripts/tools/generate_matrix_a_supplementary_table.py
+```
+
+**Output:**
+- `docs/manuscript/Supplementary/supplementary_table_S7_matrix_a_feature_importance.csv`
+
+**Requirements:**
+- Matrix A experiment results must be available in `experiments/lightgbm/raw/A/full_training/`
+
+### `generate_feature_category_importance_bar.py`
+
+Generate feature category importance bar chart across different forecast horizons (used for Figure 13 in the manuscript).
+
+**Usage:**
+```bash
+python scripts/tools/generate_feature_category_importance_bar.py
+```
+
+**Output:**
+- `docs/manuscript/figures/v2/feature_category_cross_horizon_bar.png`
+
+**Requirements:**
+- Feature category importance data must be available in `docs/manuscript/Supplementary/supplementary_table_S5_feature_category_importance.csv`
+
 ---
 
 **Note**: These scripts can be used as needed, they do not depend on the new CLI structure.

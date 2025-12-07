@@ -199,6 +199,16 @@ python -m src.cli analysis full \
     --data-path data/train.csv \
     --model-dir experiments/lightgbm_B_12h \
     --output-dir analysis/features
+
+# Generate feature importance figures for manuscript
+# Generate Matrix A feature importance figure (Figure 12)
+python scripts/tools/generate_matrix_a_feature_importance.py
+
+# Generate Matrix A supplementary table (Table S7)
+python scripts/tools/generate_matrix_a_supplementary_table.py
+
+# Generate feature category importance bar chart (Figure 13)
+python scripts/tools/generate_feature_category_importance_bar.py
 ```
 
 
