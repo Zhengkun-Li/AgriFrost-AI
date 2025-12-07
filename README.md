@@ -30,6 +30,46 @@ AgriFrost-AI is an end-to-end machine learning system for frost risk forecasting
 
 ### Experimental Results Summary
 
+#### Experimental Scale
+
+- **Total Experiments**: 471 reproducible experiments
+- **Feature Matrices**: 4 (A, B, C, D)
+- **Forecast Horizons**: 4 (3h, 6h, 12h, 24h)
+- **Model Families**: 7 (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN)
+- **Spatial Radius Range**: 0-200 km (20 km step)
+
+#### Best Performance (Matrix C + LightGBM)
+
+| Horizon | Radius | ROC-AUC ↑ | PR-AUC ↑ | Brier ↓ | ECE ↓ | MAE ↓ | RMSE ↓ |
+|---------|--------|-----------|----------|---------|-------|-------|--------|
+| 3h      | 60 km  | 0.9972    | 0.7242   | 0.0027  | 0.0012| 1.16   | 1.58    |
+| 6h      | 160 km | 0.9943    | 0.5871   | 0.0039  | 0.0021| 1.60   | 2.05    |
+| 12h     | 200 km | 0.9901    | 0.4914   | 0.0043  | 0.0032| 1.85   | 2.42    |
+| 24h     | 180 km | 0.9877    | 0.4671   | 0.0045  | 0.0034| 1.85   | 2.39    |
+
+#### LOSO Spatial Generalization (Matrix C + LightGBM)
+
+| Horizon | ROC-AUC (Standard) | ROC-AUC (LOSO) | Change | MAE (LOSO) |
+|---------|---------------------|----------------|--------|------------|
+| 3h      | 0.9965              | 0.9974         | +0.09  | 1.14       |
+| 6h      | 0.9926              | 0.9938         | +0.12  | 1.55       |
+| 12h     | 0.9892              | 0.9905         | +0.13  | 1.79       |
+| 24h     | 0.9843              | 0.9878         | +0.35  | 1.93       |
+
+#### Feature Selection Results (Matrix B, LightGBM, 12h Horizon)
+
+- **90% Cumulative Importance**: 146 features (47.5% compression)
+- **Performance**: ROC-AUC change < 0.01%, PR-AUC improvement +2.6%
+- **Efficiency**: Training time reduced 35-40%, inference time reduced 30-35%
+
+**Key Findings:**
+- ✅ Excellent spatial generalization (LOSO ROC-AUC > 0.98 for all horizons, no performance degradation)
+- ✅ Outstanding probability calibration (Brier Score < 0.005, ECE < 0.004)
+- ✅ High-precision temperature prediction (MAE < 2°C, RMSE < 2.5°C)
+- ✅ Effective feature selection (146 features maintain performance with 47.5% compression)
+
+#### Complete Results Data
+
 Complete experimental results are available in the Supplementary Materials:
 
 - **[All Experiments](docs/manuscript/Supplementary/supplementary_table_S2_all_experiments.csv)**: Complete performance metrics for all 471 experiment configurations
@@ -61,6 +101,8 @@ source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+> **✅ Good News**: By default, `requirements.txt` does **NOT** include PyTorch/CUDA. You can install dependencies immediately without downloading ~2GB of PyTorch packages. PyTorch is only needed if you plan to use deep learning models (GRU, LSTM, TCN).
 
 **Verify activation**: Command prompt should show `(.venv)` prefix
 
@@ -173,19 +215,28 @@ source .venv/bin/activate
 
 ### Step 3: Install Dependencies
 
-**For LightGBM (best performance model) - No PyTorch/CUDA needed:**
+> **✅ Good News**: By default, `requirements.txt` does **NOT** include PyTorch/CUDA. This means you can install dependencies immediately without downloading ~2GB of PyTorch packages. PyTorch is only needed if you plan to use deep learning models (GRU, LSTM, TCN).
+
+**For LightGBM (best performance model) - Default installation:**
 ```bash
 # Upgrade pip (important for latest package compatibility)
 python -m pip install -U pip
 
-# Install core dependencies (comment out PyTorch lines in requirements.txt first)
+# Install dependencies (PyTorch is NOT included by default)
 pip install -r requirements.txt
 ```
 
-**For Deep Learning Models (GRU, LSTM, TCN) - PyTorch/CUDA required:**
+**For Deep Learning Models (GRU, LSTM, TCN) - PyTorch required:**
 ```bash
-# Install with PyTorch CUDA support (default in requirements.txt)
+# First install core dependencies
 pip install -r requirements.txt
+
+# Then uncomment PyTorch lines in requirements.txt (lines 46-49) and reinstall, OR:
+# For CUDA 13.0 support:
+pip install --extra-index-url https://download.pytorch.org/whl/cu130 torch==2.9.1+cu130 torchvision==0.24.1+cu130 torchaudio==2.9.1+cu130
+
+# For CPU-only PyTorch:
+# pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1
 ```
 
 ### Step 4: Verify Installation
@@ -218,58 +269,20 @@ deactivate
 ### Notes
 
 **Important:**
-- **Best Performance Model (LightGBM)**: Does **not** require PyTorch or CUDA. You can comment out the three PyTorch lines in `requirements.txt` (lines 47-49) to install only the necessary dependencies.
-- **Deep Learning Models (GRU, LSTM, TCN)**: Require PyTorch. The `requirements.txt` includes CUDA 13.0 support by default:
-  - Extra index: `https://download.pytorch.org/whl/cu130`
-  - `torch==2.9.1+cu130`, `torchvision==0.24.1+cu130`, `torchaudio==2.9.1+cu130`
-- **CPU-only PyTorch**: If you need PyTorch but don't have CUDA, comment out the three PyTorch lines in `requirements.txt`, then install separately:
-  ```bash
-  pip install torch==2.9.1
-  ```
-- **GPU Architecture Issues**: If encountering unsupported GPU architectures (e.g., sm_120), switch to the cu130 combination above or compile PyTorch from source (set `TORCH_CUDA_ARCH_LIST="12.0"`).
+- **Best Performance Model (LightGBM)**: Does **not** require PyTorch or CUDA. By default, `requirements.txt` does NOT include PyTorch, so you can install dependencies immediately.
+- **Deep Learning Models (GRU, LSTM, TCN)**: Require PyTorch. To enable PyTorch:
+  - **CUDA 13.0 support**: Uncomment lines 46-49 in `requirements.txt` and reinstall, OR install manually:
+    ```bash
+    pip install --extra-index-url https://download.pytorch.org/whl/cu130 torch==2.9.1+cu130 torchvision==0.24.1+cu130 torchaudio==2.9.1+cu130
+    ```
+  - **CPU-only PyTorch**: If you need PyTorch but don't have CUDA:
+    ```bash
+    pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1
+    ```
+- **GPU Architecture Issues**: If encountering unsupported GPU architectures (e.g., sm_120), use the cu130 combination above or compile PyTorch from source (set `TORCH_CUDA_ARCH_LIST="12.0"`).
 - **Training Optimizations** (for deep learning models):
   - Both LSTM and LSTM-MT support AMP (mixed precision): enable with `model_params.use_amp: true`
   - Training scripts set `torch.set_float32_matmul_precision('high')` under CUDA to improve matmul performance
-
-## 📊 Results Summary
-
-### Experimental Scale
-
-- **Total Experiments**: 471 reproducible experiments
-- **Feature Matrices**: 4 (A, B, C, D)
-- **Forecast Horizons**: 4 (3h, 6h, 12h, 24h)
-- **Model Families**: 7 (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN)
-- **Spatial Radius Range**: 0-200 km (20 km step)
-
-### Best Performance (Matrix C + LightGBM)
-
-| Horizon | Radius | ROC-AUC ↑ | PR-AUC ↑ | Brier ↓ | ECE ↓ | MAE ↓ | RMSE ↓ |
-|---------|--------|-----------|----------|---------|-------|-------|--------|
-| 3h      | 60 km  | 0.9972    | 0.7242   | 0.0027  | 0.0012| 1.16   | 1.58    |
-| 6h      | 160 km | 0.9943    | 0.5871   | 0.0039  | 0.0021| 1.60   | 2.05    |
-| 12h     | 200 km | 0.9901    | 0.4914   | 0.0043  | 0.0032| 1.85   | 2.42    |
-| 24h     | 180 km | 0.9877    | 0.4671   | 0.0045  | 0.0034| 1.85   | 2.39    |
-
-### LOSO Spatial Generalization (Matrix C + LightGBM)
-
-| Horizon | ROC-AUC (Standard) | ROC-AUC (LOSO) | Change | MAE (LOSO) |
-|---------|---------------------|----------------|--------|------------|
-| 3h      | 0.9965              | 0.9974         | +0.09  | 1.14       |
-| 6h      | 0.9926              | 0.9938         | +0.12  | 1.55       |
-| 12h     | 0.9892              | 0.9905         | +0.13  | 1.79       |
-| 24h     | 0.9843              | 0.9878         | +0.35  | 1.93       |
-
-### Feature Selection Results (Matrix B, LightGBM, 12h Horizon)
-
-- **90% Cumulative Importance**: 146 features (47.5% compression)
-- **Performance**: ROC-AUC change < 0.01%, PR-AUC improvement +2.6%
-- **Efficiency**: Training time reduced 35-40%, inference time reduced 30-35%
-
-**Key Findings:**
-- ✅ Excellent spatial generalization (LOSO ROC-AUC > 0.98 for all horizons, no performance degradation)
-- ✅ Outstanding probability calibration (Brier Score < 0.005, ECE < 0.004)
-- ✅ High-precision temperature prediction (MAE < 2°C, RMSE < 2.5°C)
-- ✅ Effective feature selection (146 features maintain performance with 47.5% compression)
 
 ## 📚 Documentation
 
