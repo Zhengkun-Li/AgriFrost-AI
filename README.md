@@ -28,13 +28,15 @@ AgriFrost-AI is an end-to-end machine learning system for frost risk forecasting
   - **4 Feature Matrices**: A (16 dim), B (278 dim), C (534 dim), D (818 dim)
   - **4 Forecast Horizons**: 3h, 6h, 12h, 24h
   - **Spatial Radius Range**: 0-200 km (20 km step)
-- **471 Reproducible Experiments**: Comprehensive comparison across 7 model families (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN)
+- **Comprehensive Model Comparison**: Systematic evaluation across 7 model families (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN) with reproducible experimental configurations
 - **Best Performance**: Matrix C + LightGBM achieves ROC-AUC 0.9972 (3h) to 0.9877 (24h) with excellent spatial generalization (LOSO evaluation)
 - **Production-Ready**: Complete pipeline from data processing to model deployment with strict temporal leakage protection and robust validation
 
 ### Experimental Results Summary
 
 #### Best Performance (Matrix C + LightGBM)
+
+**Matrix C** represents multi-station spatial aggregation with raw features (534 dimensions). It combines single-station raw observations with spatial aggregation statistics (mean, gradient, range, etc.) from neighboring stations within a specified radius, capturing regional climate patterns such as cold air pooling and terrain effects. This configuration achieves the best balance between performance and feature complexity.
 
 | Horizon | Radius | ROC-AUC ↑ | PR-AUC ↑ | Brier ↓ | ECE ↓ | MAE ↓ | RMSE ↓ |
 |---------|--------|-----------|----------|---------|-------|-------|--------|
@@ -68,7 +70,7 @@ AgriFrost-AI is an end-to-end machine learning system for frost risk forecasting
 
 Complete experimental results are available in the Supplementary Materials:
 
-- **[All Experiments](docs/manuscript/Supplementary/supplementary_table_S2_all_experiments.csv)**: Complete performance metrics for all 471 experiment configurations
+- **[All Experiments](docs/manuscript/Supplementary/supplementary_table_S2_all_experiments.csv)**: Complete performance metrics for all experimental configurations
 - **[Best Configurations](docs/manuscript/Supplementary/supplementary_table_S3_best_configurations.csv)**: Optimal configurations for each feature matrix and horizon
 - **[Matrix Summary](docs/manuscript/Supplementary/supplementary_table_S4_matrix_summary.csv)**: Statistical summary aggregated by matrix and horizon
 - **[Feature Importance](docs/manuscript/Supplementary/supplementary_table_S5_feature_category_importance.csv)**: Cumulative importance of feature categories across horizons
