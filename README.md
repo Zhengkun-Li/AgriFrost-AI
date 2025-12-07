@@ -106,7 +106,28 @@ pip install -r requirements.txt
 
 **Verify activation**: Command prompt should show `(.venv)` prefix
 
-#### Step 2: Run Commands
+#### Step 2: Download Data
+
+**Important**: This repository contains only code. Data files must be downloaded separately.
+
+```bash
+# Clone the data repository
+git clone https://github.com/CarlSaganPhD/frost-risk-forecast-challenge.git data_repo
+
+# Copy data to project directory
+mkdir -p data/raw/frost-risk-forecast-challenge
+cp -r data_repo/stations data/raw/frost-risk-forecast-challenge/
+cp data_repo/cimis_all_stations.csv.gz data/raw/frost-risk-forecast-challenge/
+
+# Or download manually from:
+# https://github.com/CarlSaganPhD/frost-risk-forecast-challenge
+```
+
+The data includes:
+- **18 CIMIS station files** (2010–2025, hourly observations)
+- **Combined CSV** (`cimis_all_stations.csv.gz`, ~2.37M rows (2,367,360), 38 MB gzipped)
+
+#### Step 3: Run Commands
 
 ```bash
 # Train single model
@@ -150,185 +171,21 @@ python -m src.cli analysis full \
 ```
 
 
-## 📥 Data Download
-
-**Important**: This repository contains only code. Data files must be downloaded separately.
-
-### Download Data
-
-```bash
-# Clone the data repository
-git clone https://github.com/CarlSaganPhD/frost-risk-forecast-challenge.git data_repo
-
-# Copy data to project directory
-mkdir -p data/raw/frost-risk-forecast-challenge
-cp -r data_repo/stations data/raw/frost-risk-forecast-challenge/
-cp data_repo/cimis_all_stations.csv.gz data/raw/frost-risk-forecast-challenge/
-
-# Or download manually from:
-# https://github.com/CarlSaganPhD/frost-risk-forecast-challenge
-```
-
-The data includes:
-- **18 CIMIS station files** (2010–2025, hourly observations)
-- **Combined CSV** (`cimis_all_stations.csv.gz`, ~2.37M rows (2,367,360), 38 MB gzipped)
-
-## 🧰 Environment Setup
-
-### Prerequisites
-- **Python**: 3.12 (3.10–3.14 supported)
-- **CUDA & PyTorch**: **Optional** - Only required for deep learning models (GRU, LSTM, TCN). The best-performing model (LightGBM) does **not** require PyTorch or CUDA.
-  - If using deep learning models: NVIDIA Driver r580+ (visible via `nvidia-smi`), optional system CUDA Toolkit 13.0 (recommended if installed)
-
-### ⚠️ Important: Use Virtual Environment
-
-**Strongly recommended to use a virtual environment** to avoid dependency conflicts and prevent polluting the system Python environment.
-
-### Step 1: Create Virtual Environment
-
-```bash
-# Create virtual environment (recommended: use .venv)
-python3 -m venv .venv
-
-# Alternative: use 'venv' or 'env' as name
-# python3 -m venv venv
-# python3 -m venv env
-```
-
-### Step 2: Activate Virtual Environment
-
-**Linux/macOS:**
-```bash
-source .venv/bin/activate
-```
-
-**Windows:**
-```bash
-# PowerShell
-.venv\Scripts\Activate.ps1
-
-# Command Prompt
-.venv\Scripts\activate.bat
-```
-
-**Verify activation**: The command prompt should show `(.venv)` or `(venv)` prefix
-
-### Step 3: Install Dependencies
-
-> **✅ Good News**: By default, `requirements.txt` does **NOT** include PyTorch/CUDA. This means you can install dependencies immediately without downloading ~2GB of PyTorch packages. PyTorch is only needed if you plan to use deep learning models (GRU, LSTM, TCN).
-
-**For LightGBM (best performance model) - Default installation:**
-```bash
-# Upgrade pip (important for latest package compatibility)
-python -m pip install -U pip
-
-# Install dependencies (PyTorch is NOT included by default)
-pip install -r requirements.txt
-```
-
-**For Deep Learning Models (GRU, LSTM, TCN) - PyTorch required:**
-```bash
-# First install core dependencies
-pip install -r requirements.txt
-
-# Then uncomment PyTorch lines in requirements.txt (lines 46-49) and reinstall, OR:
-# For CUDA 13.0 support:
-pip install --extra-index-url https://download.pytorch.org/whl/cu130 torch==2.9.1+cu130 torchvision==0.24.1+cu130 torchaudio==2.9.1+cu130
-
-# For CPU-only PyTorch:
-# pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1
-```
-
-### Step 4: Verify Installation
-
-**For LightGBM (recommended):**
-```bash
-# Verify core packages (no PyTorch needed)
-python -c "import pandas, numpy, lightgbm, xgboost; print('✅ All packages installed!')"
-```
-
-**For Deep Learning Models (optional):**
-```bash
-# Verify GPU & PyTorch capability
-python - << 'PY'
-import torch
-print('torch=', torch.__version__, 'cuda=', torch.version.cuda)
-print('cuda_available=', torch.cuda.is_available())
-if torch.cuda.is_available():
-    print('device=', torch.cuda.get_device_name(0), 'cap=', torch.cuda.get_device_capability(0))
-PY
-```
-
-### Deactivate Virtual Environment
-
-When you're done working:
-```bash
-deactivate
-```
-
-### Notes
-
-**Important:**
-- **Best Performance Model (LightGBM)**: Does **not** require PyTorch or CUDA. By default, `requirements.txt` does NOT include PyTorch, so you can install dependencies immediately.
-- **Deep Learning Models (GRU, LSTM, TCN)**: Require PyTorch. To enable PyTorch:
-  - **CUDA 13.0 support**: Uncomment lines 46-49 in `requirements.txt` and reinstall, OR install manually:
-    ```bash
-    pip install --extra-index-url https://download.pytorch.org/whl/cu130 torch==2.9.1+cu130 torchvision==0.24.1+cu130 torchaudio==2.9.1+cu130
-    ```
-  - **CPU-only PyTorch**: If you need PyTorch but don't have CUDA:
-    ```bash
-    pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1
-    ```
-- **GPU Architecture Issues**: If encountering unsupported GPU architectures (e.g., sm_120), use the cu130 combination above or compile PyTorch from source (set `TORCH_CUDA_ARCH_LIST="12.0"`).
-- **Training Optimizations** (for deep learning models):
-  - Both LSTM and LSTM-MT support AMP (mixed precision): enable with `model_params.use_amp: true`
-  - Training scripts set `torch.set_float32_matmul_precision('high')` under CUDA to improve matmul performance
-
 ## 📚 Documentation
 
-### Academic Manuscript
+### Quick Links
+
+- **🚀 [Quick Start Guide](docs/guides/QUICK_START.md)**: Get started in 15 minutes! (Recommended for new users)
+- **📖 [User Guide](docs/guides/USER_GUIDE.md)**: Complete usage instructions
+- **🏗️ [Implementation Guide](docs/guides/IMPLEMENTATION_GUIDE.md)**: System architecture and methodology
+- **🤖 [Models Guide](docs/models/MODELS_GUIDE.md)**: Detailed model descriptions
+- **📊 [Feature Guide](docs/features/FEATURE_GUIDE.md)**: Feature engineering guide
+- **🔬 [Technical Documentation](docs/technical/TECHNICAL_DOCUMENTATION.md)**: Technical details
+
+### Academic Materials
 
 - **[Manuscript](docs/manuscript/frost_risk_progress_cn.pdf)**: Complete academic manuscript - methodology, results, and analysis (471 experiments, ABCD feature matrix framework)
 - **[Supplementary Materials](docs/manuscript/Supplementary/)**: Detailed feature lists, station metadata, and additional analysis
-
-### Main Documentation
-
-- **[USER_GUIDE.md](docs/guides/USER_GUIDE.md)**: Complete user guide - setup, quick start, and advanced usage
-- **[TECHNICAL_DOCUMENTATION.md](docs/technical/TECHNICAL_DOCUMENTATION.md)**: Technical documentation - architecture, API reference, configuration
-- **[DATA_DOCUMENTATION.md](docs/technical/DATA_DOCUMENTATION.md)**: Data documentation - data overview, QC processing, variable usage
-- **[FEATURE_GUIDE.md](docs/features/FEATURE_GUIDE.md)**: Complete feature engineering guide - 278 features (Matrix B), feature selection, and implementation
-- **[MODELS_GUIDE.md](docs/models/MODELS_GUIDE.md)**: Comprehensive guide to all models - principles, advantages, disadvantages, and use cases
-- **[TRAINING_GUIDE.md](docs/training/TRAINING_GUIDE.md)**: Training and evaluation - configuration, LOSO evaluation, performance comparison
-- **[INFERENCE_GUIDE.md](docs/inference/INFERENCE_GUIDE.md)**: Inference guide - how to use trained models for prediction
-
-### Key Improvements (2025)
-
-**Data Module:**
-- ✅ Strict temporal leakage protection for rolling/lagging features
-- ✅ Spatial aggregation features with missing mask features (`neighbor_missing_count`, `feature_missing_mask`)
-- ✅ Enhanced input validation and error handling
-
-**Training Module:**
-- ✅ Strict column validation (DATE_COL, STATION_ID_COL, feature columns)
-- ✅ Temporal leakage protection in LOSO evaluation
-- ✅ GPU memory management for multi-horizon training
-- ✅ Improved track inference (RAW_CELLS vs FE_CELLS)
-
-**Evaluation Module:**
-- ✅ Multi-horizon evaluator for cross-horizon analysis
-- ✅ Matrix evaluator for 2×2+1 framework comparison
-- ✅ Spatial sensitivity evaluator for radius/k parameter optimization
-- ✅ Multi-task model support (classification + regression structured metrics)
-- ✅ Enhanced LOSO with temporal sorting and validation
-
-### Module Documentation
-
-- **[Data Module](src/data/README.md)**: Data processing pipeline - loaders, cleaners, feature engineering, labels, spatial aggregation
-- **[Training Module](src/training/README.md)**: Training, evaluation, and inference runners with strict validation
-- **[Models Module](src/models/README.md)**: Model interfaces and implementations (ML, deep learning, graph neural networks)
-- **[Evaluation Module](src/evaluation/README.md)**: Metrics, cross-validation strategies, and advanced evaluators (multi-horizon, matrix, spatial sensitivity)
-- **[Utils Module](src/utils/README.md)**: Utility functions (calibration, hyperopt, losses, path utilities)
-- **[Visualization Module](src/visualization/README.md)**: Plotting utilities
 
 ### CLI Documentation
 
@@ -341,11 +198,7 @@ deactivate
   - `python -m src.cli inference predict ...` - Generate predictions
   - `python -m src.cli analysis full ...` - Feature analysis
 
-See [scripts/README.md](scripts/README.md) for detailed CLI usage and [scripts/MIGRATION.md](scripts/MIGRATION.md) for migration from old scripts.
-
-### Reports
-
-- **[MODELS_GUIDE.md](docs/models/MODELS_GUIDE.md)**: Comprehensive guide to all models (principles, advantages, disadvantages, use cases)
+See [scripts/README.md](scripts/README.md) for detailed CLI usage.
 
 ## 🧾 Project Structure
 
@@ -390,8 +243,6 @@ frost-risk-forecast-challenge/
 │   │   ├── multi_horizon_evaluator.py  # Multi-horizon evaluation
 │   │   ├── matrix_evaluator.py         # 2×2+1 matrix evaluation
 │   │   └── spatial_sensitivity_evaluator.py  # Spatial parameter sensitivity
-│   ├── visualization/       # Visualization utilities
-│   │   └── plots.py         # Plotting functions (matplotlib, plotly)
 │   ├── cli/                 # ⭐ Unified CLI (Recommended)
 │   │   ├── main.py          # CLI entry point
 │   │   ├── common.py        # Common utilities
@@ -433,38 +284,7 @@ frost-risk-forecast-challenge/
 └── README.md                # This file
 ```
 
-## 🎯 Key Features
-
-### Core Functionality
-
-- **ABCD Feature Configuration Matrix**: Systematic framework for evaluating spatial scope (single-station vs. multi-station) and feature complexity (raw vs. engineered features)
-  - **Matrix A**: Single-station + raw features (16 dimensions)
-  - **Matrix B**: Single-station + engineered features (278 dimensions)
-  - **Matrix C**: Multi-station aggregation + raw features (534 dimensions)
-  - **Matrix D**: Multi-station aggregation + engineered features (818 dimensions)
-- **278 Features (Matrix B)**: Raw variables (12) + engineered features: time-based (15), lagged (50), rolling statistics (180), derived meteorological (3), radiation (4), wind (6), humidity (4), trend (1), and station features (4)
-- **Feature Selection**: Two-stage strategy based on cumulative importance (90% threshold = 146 features for 12h horizon, 47.5% compression)
-- **Multi-Horizon Forecasting**: 3h, 6h, 12h, and 24h predictions
-- **Probabilistic Outputs**: Calibrated frost probabilities with temperature predictions
-- **Spatial Generalization**: LOSO evaluation across 18 CIMIS stations with temporal leakage protection
-- **Model Comparison**: 7 model families (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN) across 471 experiments
-- **Advanced Evaluation**: Multi-horizon, matrix, and spatial sensitivity evaluators
-- **Multi-Task Models**: Classification + regression with structured metrics
-
-### Code Quality & Architecture
-
-- **Unified Data Pipeline**: Configurable `DataPipeline` for reproducible data processing with strict validation
-- **Modular Feature Engineering**: Specialized modules (temporal, lagging, derived, station, spatial)
-- **Temporal Leakage Protection**: Strict sorting and validation for rolling/lagging features
-- **Spatial Aggregation**: Support for multi-station features (C/D/E tracks) with missing mask features
-- **Configuration-Driven**: YAML-based configuration with CLI overrides
-- **Standardized Logging**: Consistent logging across all modules using Python `logging`
-- **Robust Error Handling**: Specific exception types with informative error messages
-- **Input Validation**: Comprehensive parameter validation and boundary checks
-- **GPU Memory Management**: Automatic GPU cache cleanup for multi-horizon training
-- **Production-Ready**: Well-organized, maintainable, and tested codebase
-
-## 📦 Status
+## 📦 Project Status
 
 | Item | Status | Location |
 |------|--------|----------|
@@ -479,17 +299,6 @@ frost-risk-forecast-challenge/
 | Code quality | ✅ Complete | Logging, error handling, input validation, GPU memory management |
 | Configuration system | ✅ Complete | YAML-based configs with CLI overrides |
 | Documentation | ✅ Complete | Module READMEs, API docs, user guides |
-
-## 📚 Documentation
-
-- **🚀 [Quick Start Guide](docs/guides/QUICK_START.md)**: Get started in 15 minutes! (Recommended for new users)
-- **📖 [User Guide](docs/guides/USER_GUIDE.md)**: Complete usage instructions
-- **🏗️ [Implementation Guide](docs/guides/IMPLEMENTATION_GUIDE.md)**: System architecture and methodology (English)
-- **🏗️ [Implementation Guide (Chinese)](docs/guides/IMPLEMENTATION_GUIDE_CN.md)**: System architecture and methodology (中文/Chinese)
-- **📓 [Jupyter Notebook Tutorial](notebooks/tutorial.ipynb)**: Interactive end-to-end tutorial
-- **🤖 [Models Guide](docs/models/MODELS_GUIDE.md)**: Detailed model descriptions
-- **📊 [Feature Guide](docs/features/FEATURE_GUIDE.md)**: Feature engineering guide
-- **🔬 [Technical Documentation](docs/technical/TECHNICAL_DOCUMENTATION.md)**: Technical details
 
 ## 🔗 Links
 
