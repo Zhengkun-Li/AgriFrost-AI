@@ -15,17 +15,35 @@
 **Author:** Zhengkun LI  
 **Email:** zhengkun.li3969@gmail.com  
 **Affiliation:** TRIC Robotics / UF ABE / F3 Innovate Participant  
-**Platform:** National Data Platform (NDP)  
 **Last Updated:** 2025-12-06
 
 ## 🚀 Quick Start
 
 ### ⭐ New Unified CLI (Recommended)
 
-```bash
-# Activate virtual environment
-source .venv/bin/activate
+#### Step 1: Set Up Virtual Environment
 
+```bash
+# Create virtual environment (if not already created)
+python3 -m venv .venv
+
+# Activate virtual environment
+# Linux/macOS:
+source .venv/bin/activate
+# Windows:
+# .venv\Scripts\activate.bat  (Command Prompt)
+# .venv\Scripts\Activate.ps1   (PowerShell)
+
+# Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+**Verify activation**: Command prompt should show `(.venv)` prefix
+
+#### Step 2: Run Commands
+
+```bash
 # Train single model
 python -m src.cli train single \
     --model-name lightgbm \
@@ -88,7 +106,7 @@ cp data_repo/cimis_all_stations.csv.gz data/raw/frost-risk-forecast-challenge/
 
 The data includes:
 - **18 CIMIS station files** (2010–2025, hourly observations)
-- **Combined CSV** (`cimis_all_stations.csv.gz`, ~2.3M rows, 38 MB gzipped)
+- **Combined CSV** (`cimis_all_stations.csv.gz`, ~2.37M rows (2,367,360), 38 MB gzipped)
 
 ## 🧰 Environment Setup (CUDA 13.0, PyTorch cu130)
 
@@ -220,18 +238,18 @@ deactivate
 
 ### Academic Manuscript
 
-- **[Manuscript (Chinese)](docs/manuscript/frost_risk_progress_cn.pdf)**: Complete academic manuscript - methodology, results, and analysis (471 experiments, ABCD feature matrix framework)
+- **[Manuscript](docs/manuscript/frost_risk_progress_cn.pdf)**: Complete academic manuscript - methodology, results, and analysis (471 experiments, ABCD feature matrix framework)
 - **[Supplementary Materials](docs/manuscript/Supplementary/)**: Detailed feature lists, station metadata, and additional analysis
 
 ### Main Documentation
 
-- **[USER_GUIDE.md](docs/USER_GUIDE.md)**: Complete user guide - setup, quick start, and advanced usage
-- **[TECHNICAL_DOCUMENTATION.md](docs/TECHNICAL_DOCUMENTATION.md)**: Technical documentation - architecture, API reference, configuration
-- **[DATA_DOCUMENTATION.md](docs/DATA_DOCUMENTATION.md)**: Data documentation - data overview, QC processing, variable usage
-- **[FEATURE_GUIDE.md](docs/FEATURE_GUIDE.md)**: Complete feature engineering guide - 278 features (Matrix B), feature selection, and implementation
-- **[MODELS_GUIDE.md](docs/MODELS_GUIDE.md)**: Comprehensive guide to all models - principles, advantages, disadvantages, and use cases
-- **[TRAINING_AND_EVALUATION.md](docs/TRAINING_AND_EVALUATION.md)**: Training and evaluation - configuration, LOSO evaluation, performance comparison
-- **[INFERENCE_GUIDE.md](docs/INFERENCE_GUIDE.md)**: Inference guide - how to use trained models for prediction
+- **[USER_GUIDE.md](docs/guides/USER_GUIDE.md)**: Complete user guide - setup, quick start, and advanced usage
+- **[TECHNICAL_DOCUMENTATION.md](docs/technical/TECHNICAL_DOCUMENTATION.md)**: Technical documentation - architecture, API reference, configuration
+- **[DATA_DOCUMENTATION.md](docs/technical/DATA_DOCUMENTATION.md)**: Data documentation - data overview, QC processing, variable usage
+- **[FEATURE_GUIDE.md](docs/features/FEATURE_GUIDE.md)**: Complete feature engineering guide - 278 features (Matrix B), feature selection, and implementation
+- **[MODELS_GUIDE.md](docs/models/MODELS_GUIDE.md)**: Comprehensive guide to all models - principles, advantages, disadvantages, and use cases
+- **[TRAINING_GUIDE.md](docs/training/TRAINING_GUIDE.md)**: Training and evaluation - configuration, LOSO evaluation, performance comparison
+- **[INFERENCE_GUIDE.md](docs/inference/INFERENCE_GUIDE.md)**: Inference guide - how to use trained models for prediction
 
 ### Key Improvements (2025)
 
@@ -277,7 +295,7 @@ See [scripts/README.md](scripts/README.md) for detailed CLI usage and [scripts/M
 
 ### Reports
 
-- **[MODELS_GUIDE.md](docs/MODELS_GUIDE.md)**: Comprehensive guide to all models (principles, advantages, disadvantages, use cases)
+- **[MODELS_GUIDE.md](docs/models/MODELS_GUIDE.md)**: Comprehensive guide to all models (principles, advantages, disadvantages, use cases)
 
 ## 🧾 Project Structure
 
@@ -324,20 +342,21 @@ frost-risk-forecast-challenge/
 │   │   └── spatial_sensitivity_evaluator.py  # Spatial parameter sensitivity
 │   ├── visualization/       # Visualization utilities
 │   │   └── plots.py         # Plotting functions (matplotlib, plotly)
-│   └── utils/               # Utility functions
-│       ├── calibration.py   # Probability calibration
-│       ├── hyperopt.py      # Hyperparameter optimization
-│       ├── losses.py        # Custom loss functions
-│       └── path_utils.py    # Path utilities
-├── src/                     # Source code (library code)
 │   ├── cli/                 # ⭐ Unified CLI (Recommended)
 │   │   ├── main.py          # CLI entry point
 │   │   ├── common.py        # Common utilities
 │   │   └── commands/        # CLI commands
-│   │       ├── train.py     # Training commands
-│   │       ├── evaluate.py  # Evaluation commands
-│   │       ├── inference.py # Inference commands
-│   │       └── analysis.py  # Analysis commands
+│   │       ├── train.py      # Training commands
+│   │       ├── evaluate.py   # Evaluation commands
+│   │       ├── inference.py  # Inference commands
+│   │       └── analysis.py   # Analysis commands
+│   ├── visualization/       # Visualization utilities
+│   │   └── plots.py         # Plotting functions (matplotlib, plotly)
+│   └── utils/               # Utility functions
+│       ├── calibration.py   # Probability calibration
+│       ├── hyperopt.py       # Hyperparameter optimization
+│       ├── losses.py         # Custom loss functions
+│       └── path_utils.py    # Path utilities
 ├── scripts/                 # Scripts and tools
 │   ├── README.md            # CLI usage guide
 │   ├── MIGRATION.md         # Migration guide (from old scripts)
@@ -350,8 +369,13 @@ frost-risk-forecast-challenge/
 ├── experiments/             # Experiment results (created during training, not tracked in repo)
 ├── results/                 # Result summaries (not tracked in repo)
 ├── docs/                    # Documentation
-│   ├── MODEL_ROADMAP.md     # 2x2+1 model framework
-│   ├── USER_GUIDE.md        # User guide
+│   ├── guides/              # User guides and tutorials
+│   ├── technical/           # Technical documentation
+│   ├── features/            # Feature engineering guides
+│   ├── models/              # Model guides
+│   ├── training/            # Training guides
+│   ├── inference/           # Inference guides
+│   └── manuscript/          # Academic manuscript
 ├── tests/                   # Test code
 │   ├── data/                # Data module tests
 │   ├── models/              # Model tests
@@ -368,7 +392,7 @@ frost-risk-forecast-challenge/
   - **Matrix B**: Single-station + engineered features (278 dimensions)
   - **Matrix C**: Multi-station aggregation + raw features (534 dimensions)
   - **Matrix D**: Multi-station aggregation + engineered features (818 dimensions)
-- **278 Engineered Features**: Time-based (15), lagged (50), rolling statistics (180), derived meteorological (3), radiation (4), wind (6), humidity (4), trend (1), and station features (4)
+- **278 Features (Matrix B)**: Raw variables (12) + engineered features: time-based (15), lagged (50), rolling statistics (180), derived meteorological (3), radiation (4), wind (6), humidity (4), trend (1), and station features (4)
 - **Feature Selection**: Two-stage strategy based on cumulative importance (90% threshold = 146 features for 12h horizon, 47.5% compression)
 - **Multi-Horizon Forecasting**: 3h, 6h, 12h, and 24h predictions
 - **Probabilistic Outputs**: Calibrated frost probabilities with temperature predictions
@@ -409,13 +433,13 @@ frost-risk-forecast-challenge/
 ## 📚 Documentation
 
 - **🚀 [Quick Start Guide](docs/guides/QUICK_START.md)**: Get started in 15 minutes! (Recommended for new users)
-- **📖 [User Guide](docs/USER_GUIDE.md)**: Complete usage instructions
-- **🏗️ [Implementation Guide](docs/IMPLEMENTATION_GUIDE.md)**: System architecture and methodology (English)
+- **📖 [User Guide](docs/guides/USER_GUIDE.md)**: Complete usage instructions
+- **🏗️ [Implementation Guide](docs/guides/IMPLEMENTATION_GUIDE.md)**: System architecture and methodology (English)
 - **🏗️ [Implementation Guide (Chinese)](docs/guides/IMPLEMENTATION_GUIDE_CN.md)**: System architecture and methodology (中文/Chinese)
 - **📓 [Jupyter Notebook Tutorial](notebooks/tutorial.ipynb)**: Interactive end-to-end tutorial
-- **🤖 [Models Guide](docs/MODELS_GUIDE.md)**: Detailed model descriptions
-- **📊 [Feature Guide](docs/FEATURE_GUIDE.md)**: Feature engineering guide
-- **🔬 [Technical Documentation](docs/TECHNICAL_DOCUMENTATION.md)**: Technical details
+- **🤖 [Models Guide](docs/models/MODELS_GUIDE.md)**: Detailed model descriptions
+- **📊 [Feature Guide](docs/features/FEATURE_GUIDE.md)**: Feature engineering guide
+- **🔬 [Technical Documentation](docs/technical/TECHNICAL_DOCUMENTATION.md)**: Technical details
 
 ## 🔗 Links
 
