@@ -129,8 +129,30 @@ The data includes:
 > **Note**: The `scripts/` directory contains additional tool scripts (e.g., `scripts/tools/fetch_station_metadata.py`) that can be used as needed.
 
 **Quick Test (Recommended for first-time users):**
+
+Start with the simplest configuration (Matrix A + LightGBM + 3h) for quick testing:
+
 ```bash
-# Train with small dataset (100K samples) for quick testing
+# Step 1: Train with Matrix A (16 raw features, fastest to train)
+python -m src.cli train single \
+    --model-name lightgbm \
+    --matrix-cell A \
+    --horizon-h 3 \
+    --sample-size 100000 \
+    --output-dir experiments/lightgbm_A_3h_test
+
+# Step 2: Generate predictions with trained model
+python -m src.cli inference predict \
+    --model-dir experiments/lightgbm_A_3h_test \
+    --input data/processed/labeled_data.parquet \
+    --output predictions_test.csv \
+    --horizon-h 3
+```
+
+Once you're comfortable with the basic workflow, you can proceed to more complex configurations:
+
+```bash
+# Next: Try Matrix B (278 engineered features) for better performance
 python -m src.cli train single \
     --model-name lightgbm \
     --matrix-cell B \
@@ -139,13 +161,13 @@ python -m src.cli train single \
     --sample-size 100000 \
     --output-dir experiments/lightgbm_B_12h_test
 
-# Generate predictions with trained model
-# Note: Use the processed data file from training output, or any CSV with required columns
-python -m src.cli inference predict \
-    --model-dir experiments/lightgbm_B_12h_test \
-    --input data/processed/labeled_data.parquet \
-    --output predictions_test.csv \
-    --horizon-h 12
+# Or try Matrix C (534 spatial aggregation features) for best performance
+python -m src.cli train single \
+    --model-name lightgbm \
+    --matrix-cell C \
+    --horizon-h 3 \
+    --sample-size 100000 \
+    --output-dir experiments/lightgbm_C_3h_test
 ```
 
 **Full Training (Production):**
