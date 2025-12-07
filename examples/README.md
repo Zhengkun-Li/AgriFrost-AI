@@ -27,19 +27,19 @@ Complete end-to-end example demonstrating how to use all improved training tools
 
 **Prerequisites:**
 
-确保已创建并激活虚拟环境：
+Ensure you have created and activated a virtual environment:
 
 ```bash
-# 创建虚拟环境（如果还没有）
+# Create virtual environment (if not already created)
 python3 -m venv .venv
 
-# 激活虚拟环境
+# Activate virtual environment
 # Linux/macOS:
 source .venv/bin/activate
 # Windows:
 # .venv\Scripts\activate.bat
 
-# 安装依赖（如果还没有）
+# Install dependencies (if not already installed)
 pip install -r requirements.txt
 ```
 
@@ -47,10 +47,10 @@ pip install -r requirements.txt
 ```bash
 cd /home/zhengkun-li/frost-risk-forecast-challenge
 
-# 确保虚拟环境已激活（命令提示符前应显示 (.venv)）
+# Ensure virtual environment is activated (should show (.venv) before prompt)
 source .venv/bin/activate  # Linux/macOS
 
-# 运行示例
+# Run example
 python examples/training_with_tools.py
 ```
 

@@ -1,50 +1,50 @@
-# 深度学习模型快速测试指南
+# Deep Learning Models Quick Test Guide
 
-## 概述
+## Overview
 
-`test_deep_models_quick.py` 是一个快速测试脚本，用于验证深度学习模型（LSTM, GRU, TCN）是否正常工作。
+`test_deep_models_quick.py` is a quick test script to verify that deep learning models (LSTM, GRU, TCN) are working correctly.
 
-## 特点
+## Features
 
-- ✅ **内存友好**: 仅使用 5000 个样本
-- ✅ **快速验证**: 每个模型训练 5 个 epoch（约 2-5 分钟）
-- ✅ **完整测试**: 测试分类和回归任务
-- ✅ **不影响其他训练**: 不会干扰正在运行的 Random Forest 训练
+- ✅ **Memory friendly**: Uses only 5000 samples
+- ✅ **Quick verification**: Each model trains for 5 epochs (~2-5 minutes)
+- ✅ **Complete testing**: Tests both classification and regression tasks
+- ✅ **Non-interfering**: Does not interfere with running Random Forest training
 
-## 使用方法
+## Usage
 
 ```bash
-# 进入项目目录
+# Navigate to project directory
 cd /home/zhengkun-li/frost-risk-forecast-challenge
 
-# 运行测试
+# Run test
 python scripts/test/test_deep_models_quick.py
 ```
 
-## 测试内容
+## Test Content
 
-脚本会测试以下模型：
-1. **LSTM** - Long Short-Term Memory 网络
-2. **GRU** - Gated Recurrent Unit 网络
+The script tests the following models:
+1. **LSTM** - Long Short-Term Memory network
+2. **GRU** - Gated Recurrent Unit network
 3. **TCN** - Temporal Convolutional Network
 
-每个模型都会测试：
-- 分类任务（霜冻预测）
-- 回归任务（温度预测）
+Each model is tested for:
+- Classification task (frost prediction)
+- Regression task (temperature prediction)
 
-## 配置参数
+## Configuration Parameters
 
-可以在脚本中修改以下参数：
+You can modify the following parameters in the script:
 
 ```python
-models_to_test = ['lstm', 'gru', 'tcn']  # 要测试的模型列表
-horizon = 3                               # 预测时间窗口（小时）
-max_samples = 5000                        # 使用的样本数量
+models_to_test = ['lstm', 'gru', 'tcn']  # List of models to test
+horizon = 3                               # Forecast time window (hours)
+max_samples = 5000                        # Number of samples to use
 ```
 
-## 预期输出
+## Expected Output
 
-测试成功时会显示：
+When tests succeed, it will display:
 ```
 ✅ LSTM test PASSED!
 ✅ GRU test PASSED!
@@ -59,33 +59,33 @@ TCN: ✅ PASSED
 Total: 3/3 models passed
 ```
 
-## 注意事项
+## Notes
 
-1. **内存使用**: 测试使用少量数据，但深度学习模型仍需要一些内存。如果系统内存紧张，可以减少 `max_samples`。
+1. **Memory usage**: Tests use small amounts of data, but deep learning models still require some memory. If system memory is tight, you can reduce `max_samples`.
 
-2. **GPU 支持**: 如果系统有 GPU，PyTorch 会自动使用。可以在脚本中设置 `CUDA_VISIBLE_DEVICES` 来控制使用哪个 GPU。
+2. **GPU support**: If the system has a GPU, PyTorch will automatically use it. You can set `CUDA_VISIBLE_DEVICES` in the script to control which GPU to use.
 
-3. **训练时间**: 每个模型约需要 2-5 分钟，取决于硬件配置。
+3. **Training time**: Each model takes ~2-5 minutes, depending on hardware configuration.
 
-4. **依赖**: 确保已安装 PyTorch:
+4. **Dependencies**: Ensure PyTorch is installed:
    ```bash
    pip install torch
    ```
 
-## 故障排除
+## Troubleshooting
 
-**问题**: ImportError: PyTorch is required
-**解决**: 安装 PyTorch: `pip install torch`
+**Issue**: ImportError: PyTorch is required
+**Solution**: Install PyTorch: `pip install torch`
 
-**问题**: CUDA out of memory
-**解决**: 减少 `max_samples` 或 `batch_size` 参数
+**Issue**: CUDA out of memory
+**Solution**: Reduce `max_samples` or `batch_size` parameter
 
-**问题**: 测试失败但错误信息不明确
-**解决**: 检查日志输出，通常会有详细的错误信息
+**Issue**: Test fails but error message is unclear
+**Solution**: Check log output, usually there will be detailed error messages
 
-## 下一步
+## Next Steps
 
-测试通过后，可以使用完整的训练流程训练深度学习模型：
+After tests pass, you can use the complete training workflow to train deep learning models:
 
 ```bash
 python -m src.cli train single \
@@ -95,4 +95,3 @@ python -m src.cli train single \
     --horizon-h 3 \
     --output-dir experiments/lstm/raw/A/full_training/horizon_3h
 ```
-
