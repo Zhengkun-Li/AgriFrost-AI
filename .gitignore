@@ -24,12 +24,10 @@ share/python-wheels/
 MANIFEST
 
 # Virtual Environment
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
 .venv/
+venv/
+ENV/
+env/
 
 # IDE
 .vscode/
@@ -39,244 +37,117 @@ venv.bak/
 *~
 .DS_Store
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb
-
-# PyCharm
-.idea/
-
-# Data files (large files)
-data/raw/
-data/processed/
-*.csv
-*.csv.gz
-*.parquet
-*.h5
-*.hdf5
-*.feather
-
-# Model files (large binary files)
-*.pkl
-*.pth
-*.pt
-*.cbm
-*.model
-*.ckpt
-*.h5
-*.pb
-*.onnx
-*.tflite
-
-# Experiment results - keep summaries and logs, exclude large files
-experiments/*/top175_features/**/*.pkl
-experiments/*/top175_features/**/*.pth
-experiments/*/top175_features/**/*.cbm
-experiments/*/top175_features/**/*.model
-experiments/*/top175_features/**/*.parquet
-experiments/*/top175_features/**/checkpoints/
-experiments/*/top175_features/**/best_model.pth
-experiments/*/top175_features/**/checkpoint_epoch_*.pth
-
-# Keep experiment summaries, logs, and metrics
-!experiments/*/top175_features/**/*.json
-!experiments/*/top175_features/**/training.log
-!experiments/*/top175_features/**/*.txt
-!experiments/*/top175_features/**/summary.json
-!experiments/*/top175_features/**/metrics.json
-!experiments/*/top175_features/**/training_history.json
-!experiments/*/top175_features/**/training_curves.png
-!experiments/*/top175_features/**/reliability_diagram.png
-!experiments/*/top175_features/**/calibration_curve.png
-
-# Exclude detailed logs (epoch-level details)
-experiments/*/top175_features/**/training_detailed.log
-experiments/*/top175_features/**/*_detailed.log
-
-# Exclude large predictions.json files (>10MB)
-experiments/*/top175_features/**/predictions.json
-
-# Logs
-*.log
-logs/
-*.log.*
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.bak
-*.cache
-
-# OS files
-.DS_Store
-Thumbs.db
-desktop.ini
-
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
-.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# Documentation builds
-docs/_build/
-docs/.doctrees/
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+# Keep tutorial notebook
+!notebooks/tutorial.ipynb
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Data files (not tracked)
+data/
+experiments/
+experiments/graph_cache/
+results/
+*.csv
+# Exception: keep Supplementary CSV tables
+!docs/manuscript/Supplementary/*.csv
+*.parquet
+*.pkl
+*.h5
+*.hdf5
+*.feather
 
-# Large experiment outputs (keep structure but not large files)
-experiments/*/top175_features/full_training/**/*.pkl
-experiments/*/top175_features/full_training/**/*.pth
-experiments/*/top175_features/full_training/**/*.cbm
-experiments/*/top175_features/loso/**/*.pkl
-experiments/*/top175_features/loso/**/*.pth
-experiments/*/top175_features/loso/**/*.cbm
+# Model files
+*.model
+*.joblib
+*.pth
+*.pt
+*.cbm
+*.onnx
+*.tflite
 
-# Keep experiment structure and important files
-!experiments/*/top175_features/full_training/**/*.json
-!experiments/*/top175_features/full_training/**/training.log
-!experiments/*/top175_features/loso/**/*.json
-!experiments/*/top175_features/loso/**/training.log
+# Training outputs and metadata
+# Training history and metadata files (generated during training)
+**/training_history.json
+**/run_metadata.json
+**/checkpoints/
 
-# Exclude detailed logs
-experiments/*/top175_features/full_training/**/training_detailed.log
-experiments/*/top175_features/loso/**/training_detailed.log
-experiments/*/top175_features/full_training/**/*_detailed.log
-experiments/*/top175_features/loso/**/*_detailed.log
+# TensorBoard logs
+*.tfevents
+*.tfevents.*
 
-# Feature importance files (can be large)
-experiments/*/top175_features/**/feature_importance*.csv
-experiments/*/top175_features/**/feature_importance*.parquet
+# Logs
+*.log
+logs/
 
-# Keep feature importance summaries
-!experiments/*/top175_features/**/feature_importance_summary.json
+# OS
+.DS_Store
+Thumbs.db
+# Note: .DS_Store also listed in IDE section (line 38), but keeping both is harmless
 
-# New experiment tracks (A, B, C, D, E)
-# Ignore model files and large outputs, keep summaries and metrics
-experiments/A/**/*.pkl
-experiments/A/**/*.pth
-experiments/A/**/*.pt
-experiments/A/**/*.cbm
-experiments/A/**/*.model
-experiments/A/**/*.parquet
-experiments/A/**/checkpoints/
-experiments/A/**/best_model.pth
-experiments/A/**/checkpoint_epoch_*.pth
-experiments/A/**/model_weights/
-experiments/A/**/graph.pkl
-experiments/A/**/metadata.pkl
-
-experiments/B/**/*.pkl
-experiments/B/**/*.pth
-experiments/B/**/*.pt
-experiments/B/**/*.cbm
-experiments/B/**/*.model
-experiments/B/**/*.parquet
-experiments/B/**/checkpoints/
-experiments/B/**/best_model.pth
-experiments/B/**/checkpoint_epoch_*.pth
-experiments/B/**/model_weights/
-experiments/B/**/graph.pkl
-experiments/B/**/metadata.pkl
-
-experiments/C/**/*.pkl
-experiments/C/**/*.pth
-experiments/C/**/*.pt
-experiments/C/**/*.cbm
-experiments/C/**/*.model
-experiments/C/**/*.parquet
-experiments/C/**/checkpoints/
-experiments/C/**/best_model.pth
-experiments/C/**/checkpoint_epoch_*.pth
-experiments/C/**/model_weights/
-experiments/C/**/graph.pkl
-experiments/C/**/metadata.pkl
-
-experiments/D/**/*.pkl
-experiments/D/**/*.pth
-experiments/D/**/*.pt
-experiments/D/**/*.cbm
-experiments/D/**/*.model
-experiments/D/**/*.parquet
-experiments/D/**/checkpoints/
-experiments/D/**/best_model.pth
-experiments/D/**/checkpoint_epoch_*.pth
-experiments/D/**/model_weights/
-experiments/D/**/graph.pkl
-experiments/D/**/metadata.pkl
-
-experiments/E/**/*.pkl
-experiments/E/**/*.pth
-experiments/E/**/*.pt
-experiments/E/**/*.cbm
-experiments/E/**/*.model
-experiments/E/**/*.parquet
-experiments/E/**/checkpoints/
-experiments/E/**/best_model.pth
-experiments/E/**/checkpoint_epoch_*.pth
-experiments/E/**/model_weights/
-experiments/E/**/graph.pkl
-experiments/E/**/metadata.pkl
-
-# Keep experiment summaries, metrics, and important logs for new tracks
-!experiments/A/**/*.json
-!experiments/A/**/training_root.log
-!experiments/A/**/*.png
-!experiments/A/**/summary.json
-!experiments/A/**/metrics.json
-
-!experiments/B/**/*.json
-!experiments/B/**/training_root.log
-!experiments/B/**/*.png
-!experiments/B/**/summary.json
-!experiments/B/**/metrics.json
-
-!experiments/C/**/*.json
-!experiments/C/**/training_root.log
-!experiments/C/**/*.png
-!experiments/C/**/summary.json
-!experiments/C/**/metrics.json
-
-!experiments/D/**/*.json
-!experiments/D/**/training_root.log
-!experiments/D/**/*.png
-!experiments/D/**/summary.json
-!experiments/D/**/metrics.json
-
-!experiments/E/**/*.json
-!experiments/E/**/training_root.log
-!experiments/E/**/*.png
-!experiments/E/**/summary.json
-!experiments/E/**/metrics.json
+# Project specific
+config/local/
+*.tmp
+.cache/
+# Notebooks: ignore outputs and log files, but keep Python scripts and docs
+notebooks/outputs/
+notebooks/*.log
+# Example outputs
+examples/output/
 
 # CatBoost info directory
 catboost_info/
+# CatBoost generated files
+*.tsv
 
-# Training logs (detailed)
-experiments/**/training_detailed.log
-experiments/**/*_detailed.log
-experiments/**/*.log.*
-experiments/**/run_*.log
+# Sensitive configuration files (keep .example versions)
+config/settings.json
 
-# Graph model cache files
-data/interim/graph/**/*.pkl
-data/interim/graph/**/*.json
+# Keep example configs
+!config/settings.example.json
 
-# Keep graph structure files
-!data/interim/graph/**/graph_structure.json
+# LaTeX compilation artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.xdv
+*.synctex.gz
+*.bbl
+*.blg
+*.bcf
+*.run.xml
 
-# Large data files in interim
-data/interim/**/*.parquet
-data/interim/**/*.h5
-data/interim/**/*.hdf5
-data/interim/**/*.feather
+# Manuscript directory - exclude everything, then keep only necessary files
+docs/manuscript/*
+# Keep only the English report PDF
+!docs/manuscript/frost-risk-forecast challenge report.pdf
+# Keep necessary Supplementary files (PDF, CSV, HTML, README)
+!docs/manuscript/Supplementary/
+docs/manuscript/Supplementary/*
+!docs/manuscript/Supplementary/*.pdf
+!docs/manuscript/Supplementary/*.csv
+!docs/manuscript/Supplementary/*.html
+!docs/manuscript/Supplementary/README.md
 
-# Keep cleaned data summaries
-!data/interim/**/summary.json
-!data/interim/**/metadata.json
-
+# PDF files (general rule - exclude all PDFs)
+*.pdf
+# Exception: keep the English report PDF
+!docs/manuscript/frost-risk-forecast challenge report.pdf
+# Exception: keep Supplementary PDFs
+!docs/manuscript/Supplementary/*.pdf
+# Exception: keep reference documents
+!docs/reference/*.pdf
+# Exception: keep logo files
+!docs/logo/*.png
+!docs/logo/*.pdf

@@ -6,6 +6,7 @@ This module handles:
 - LOSO summary statistics calculation
 """
 
+import logging
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -14,6 +15,7 @@ import time
 import json
 import os
 import gc
+import shutil
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -22,15 +24,28 @@ sys.path.insert(0, str(project_root))
 import pandas as pd
 import numpy as np
 
+_logger = logging.getLogger(__name__)
+
 from src.data.preprocessors import preprocess_with_loso
+from src.data.features.constants import STATION_ID_COL, DATE_COL
 from src.evaluation.metrics import MetricsCalculator
 from src.utils.path_utils import ensure_dir
-from src.training.data_preparation import prepare_features_and_targets
+from src.training.data_preparation import (
+    load_and_prepare_data,
+    create_frost_labels,
+    prepare_features_and_targets,
+)
 from src.training.model_config import get_model_config, get_model_class
 from src.training.model_trainer import (
     train_frost_model, train_temp_model, train_multitask_model,
     evaluate_models
 )
+
+RAW_DATA_EXTENSIONS = {".csv", ".csv.gz"}
+
+
+def _is_raw_data_path(path: Path) -> bool:
+    return path.is_dir() or path.suffix.lower() in RAW_DATA_EXTENSIONS
 
 
 def calculate_loso_summary(
@@ -178,7 +193,7 @@ def train_loso_models_for_horizon(
             **({"log_file": log_file} if log_file else {})
         )
         model_temp = model_frost
-        print(f"      ℹ️  Multi-task model already trained both temperature and frost prediction tasks together.")
+        _logger.info("Multi-task model already trained both temperature and frost prediction tasks together.")
     else:
         model_frost = train_frost_model(
             model_type, model_class, frost_config,
@@ -243,25 +258,87 @@ def perform_loso_evaluation(
     Returns:
         Dictionary with summary statistics and per-station metrics.
     """
-    # Load data if path provided, otherwise use DataFrame
+    output_dir = Path(output_dir)
+    parts = [p for p in output_dir.parts]
+    if track is None:
+        track = "raw" if "raw" in parts else ("top175_features" if "top175_features" in parts else "top175_features")
+    if matrix_cell is None:
+        candidates = {"A", "B", "C", "D", "E"}
+        found = [p for p in parts if p in candidates]
+        matrix_cell = found[0] if found else ("B" if track == "top175_features" else "A")
+
+    if isinstance(data_source, (str, Path)):
+        candidate_path = Path(data_source)
+        if candidate_path.exists() and _is_raw_data_path(candidate_path):
+            _logger.info(f"Detected raw data source ({candidate_path}), running DataPipeline...")
+            df_processed, pipeline_metadata = load_and_prepare_data(
+                candidate_path,
+                use_feature_engineering=(track == "top175_features"),
+                matrix_cell=matrix_cell,
+                return_metadata=True,
+            )
+            data_source = create_frost_labels(
+                df_processed,
+                horizons=horizons,
+                frost_threshold=frost_threshold,
+            )
+            metadata_path = output_dir / "data_run_metadata.json"
+            with open(metadata_path, "w") as f:
+                json.dump(pipeline_metadata, f, indent=2)
+            _logger.info(f"Data pipeline metadata saved to {metadata_path}")
+
     if isinstance(data_source, (str, Path)):
         data_path = Path(data_source)
-        print(f"Loading data from disk: {data_path}")
-        df_full = pd.read_parquet(data_path)
-        print(f"Loaded {len(df_full)} rows, {len(df_full.columns)} columns")
-        print(f"Memory usage: {df_full.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
-        # Optimize data types
+        
+        # Input validation: Check if path exists
+        if not data_path.exists():
+            raise FileNotFoundError(f"Data source path does not exist: {data_path}")
+        
+        _logger.info(f"Loading data from disk: {data_path}")
+        try:
+            if data_path.suffix.lower() == ".parquet":
+                df_full = pd.read_parquet(data_path)
+            elif data_path.suffix.lower() == ".csv":
+                df_full = pd.read_csv(data_path, parse_dates=["Date"])
+            else:
+                raise ValueError(f"Unsupported file format: {data_path.suffix}. Expected .parquet or .csv")
+        except pd.errors.EmptyDataError as e:
+            raise ValueError(f"Data file is empty: {data_path}") from e
+        except pd.errors.ParserError as e:
+            raise ValueError(f"Error parsing data file {data_path}: {e}") from e
+        
+        # Input validation: Check if DataFrame is empty
+        if df_full.empty:
+            raise ValueError(f"Loaded DataFrame from {data_path} is empty.")
+        
+        # Check for required columns
+        if STATION_ID_COL not in df_full.columns:
+            raise ValueError(f"Missing required column '{STATION_ID_COL}' in data file: {data_path}")
+        
+        _logger.info(f"Loaded {len(df_full)} rows, {len(df_full.columns)} columns")
+        _logger.info(f"Memory usage: {df_full.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
         for col in df_full.select_dtypes(include=['float64']).columns:
             df_full[col] = pd.to_numeric(df_full[col], downcast='float')
         for col in df_full.select_dtypes(include=['int64']).columns:
             df_full[col] = pd.to_numeric(df_full[col], downcast='integer')
-        print(f"Memory usage after optimization: {df_full.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
+        _logger.info(f"Memory usage after optimization: {df_full.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
+        metadata_candidate = data_path.parent / "data_run_metadata.json"
+        target_metadata = output_dir / "data_run_metadata.json"
+        if metadata_candidate.exists():
+            # Check if source and target are the same file (avoid SameFileError)
+            if metadata_candidate.resolve() != target_metadata.resolve():
+                shutil.copy2(metadata_candidate, target_metadata)
+                _logger.info(f"Copied data pipeline metadata to {target_metadata}")
+            else:
+                _logger.debug(f"Metadata file already at target location: {target_metadata}")
+        else:
+            _logger.warning("data_run_metadata.json not found alongside labeled dataset.")
     else:
         df_full = data_source
     
     # Get station IDs first (before creating splits to save memory)
     station_ids = sorted(df_full["Stn Id"].unique())
-    print(f"Found {len(station_ids)} stations: {station_ids}")
+    _logger.info(f"Found {len(station_ids)} stations: {station_ids}")
     
     # Store data source for later use (if path provided, we'll reload; if DataFrame, we'll reuse)
     data_source_for_loop = data_source
@@ -278,18 +355,9 @@ def perform_loso_evaluation(
     if is_path_source:
         del df_full
         gc.collect()
-        print("Freed full dataset from memory - will reload per station on-demand")
+        _logger.info("Freed full dataset from memory - will reload per station on-demand")
     else:
-        print("Using provided DataFrame - will create subsets using masks (memory efficient)")
-    
-    # Infer track/matrix_cell from output_dir if not provided
-    parts = [p for p in output_dir.parts]
-    if track is None:
-        track = "raw" if "raw" in parts else ("top175_features" if "top175_features" in parts else "top175_features")
-    if matrix_cell is None:
-        candidates = {"A","B","C","D","E"}
-        found = [p for p in parts if p in candidates]
-        matrix_cell = found[0] if found else ("B" if track == "top175_features" else "A")
+        _logger.info("Using provided DataFrame - will create subsets using masks (memory efficient)")
     
     # Resolve base dir: add matrix_cell only if not present
     out_parts = set(output_dir.parts)
@@ -301,7 +369,7 @@ def perform_loso_evaluation(
     horizons_to_save = set(horizons)
     if save_horizons is not None:
         horizons_to_save = set(save_horizons)
-        print(f"📊 Will save models only for horizons: {sorted(horizons_to_save)}h")
+        _logger.info(f"Will save models only for horizons: {sorted(horizons_to_save)}h")
     
     # Checkpoint file for tracking completed stations
     checkpoint_file = loso_dir / "checkpoint.json"
@@ -314,21 +382,21 @@ def perform_loso_evaluation(
         with open(checkpoint_file, "r") as f:
             checkpoint = json.load(f)
             completed_stations = set(checkpoint.get("completed_stations", []))
-            print(f"📋 Resuming: {len(completed_stations)} stations already completed")
-            print(f"   Completed stations: {sorted(completed_stations)}")
+            _logger.info(f"Resuming: {len(completed_stations)} stations already completed")
+            _logger.info(f"   Completed stations: {sorted(completed_stations)}")
         
         if station_results_file.exists():
             with open(station_results_file, "r") as f:
                 station_metrics = json.load(f)
-                print(f"   Loaded {len(station_metrics)} station results")
+                _logger.info(f"   Loaded {len(station_metrics)} station results")
     
     loso_eval_start_time = time.time()
     loso_eval_start_datetime = datetime.now()
-    print(f"\n{'='*60}")
-    print(f"LOSO Evaluation: Processing {len(loso_splits)} stations")
-    print(f"   Memory optimization: Load data on-demand, free after each station")
-    print(f"   Horizons: {horizons}")
-    print(f"[{loso_eval_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Starting LOSO evaluation...")
+    _logger.info("=" * 60)
+    _logger.info(f"LOSO Evaluation: Processing {len(loso_splits)} stations")
+    _logger.info(f"   Memory optimization: Load data on-demand, free after each station")
+    _logger.info(f"   Horizons: {horizons}")
+    _logger.info(f"[{loso_eval_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Starting LOSO evaluation...")
     print(f"{'='*60}")
     
     # Process by station (one station at a time)
@@ -337,15 +405,15 @@ def perform_loso_evaluation(
         
         # Skip if already completed
         if resume and test_station in completed_stations:
-            print(f"\n[{i}/{len(loso_splits)}] Station {test_station}: ✅ Already completed, skipping...")
+            _logger.info(f"[{i}/{len(loso_splits)}] Station {test_station}: Already completed, skipping...")
             continue
         
         station_start_time = time.time()
         station_start_datetime = datetime.now()
         print(f"\n{'='*60}")
-        print(f"[{i}/{len(loso_splits)}] Processing Station {test_station}")
-        print(f"   Train stations: {len(station_ids)-1}, Test station: {test_station}")
-        print(f"[{station_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Starting station {test_station}...")
+        _logger.info(f"[{i}/{len(loso_splits)}] Processing Station {test_station}")
+        _logger.info(f"   Train stations: {len(station_ids)-1}, Test station: {test_station}")
+        _logger.info(f"[{station_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Starting station {test_station}...")
         print(f"{'='*60}")
         
         # Initialize station result
@@ -358,30 +426,43 @@ def perform_loso_evaluation(
         df_station = None
         if is_path_source:
             data_path = Path(data_source_for_loop)
-            print(f"  Loading data for station {test_station}...")
-            df_station = pd.read_parquet(data_path)
-            # Optimize data types immediately
+            _logger.info(f"  Loading data for station {test_station}...")
+            try:
+                df_station = pd.read_parquet(data_path)
+            except Exception as e:
+                _logger.error(f"Failed to load data from {data_path} for station {test_station}: {e}")
+                continue
+            
+            # Input validation
+            if df_station.empty:
+                _logger.warning(f"Loaded DataFrame is empty for station {test_station}. Skipping...")
+                continue
+            
+            # Optimize data types immediately (inplace to save memory)
             for col in df_station.select_dtypes(include=['float64']).columns:
                 df_station[col] = pd.to_numeric(df_station[col], downcast='float')
             for col in df_station.select_dtypes(include=['int64']).columns:
                 df_station[col] = pd.to_numeric(df_station[col], downcast='integer')
-            print(f"  Memory usage: {df_station.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
+            _logger.info(f"  Memory usage: {df_station.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
             
-            train_df = df_station[train_mask].copy()
-            test_df = df_station[test_mask].copy()
+            # Use views instead of copies when possible (memory optimization)
+            # Only copy if we need to modify in place later
+            train_df = df_station[train_mask]
+            test_df = df_station[test_mask]
         else:
-            print(f"  Creating train/test splits for station {test_station}...")
-            train_df = data_source_for_loop[train_mask].copy()
-            test_df = data_source_for_loop[test_mask].copy()
+            _logger.info(f"  Creating train/test splits for station {test_station}...")
+            # Use views instead of copies when possible (memory optimization)
+            train_df = data_source_for_loop[train_mask]
+            test_df = data_source_for_loop[test_mask]
         
-        print(f"  Train samples: {len(train_df)}, Test samples: {len(test_df)}")
+        _logger.info(f"  Train samples: {len(train_df)}, Test samples: {len(test_df)}")
         
         # Process all horizons for this station
         for horizon in horizons:
             try:
                 horizon_start_time = time.time()
                 horizon_start_datetime = datetime.now()
-                print(f"\n  [{horizon_start_datetime.strftime('%H:%M:%S')}] Processing {horizon}h horizon...")
+                _logger.info(f"[{horizon_start_datetime.strftime('%H:%M:%S')}] Processing {horizon}h horizon...")
                 
                 # Get indices first
                 train_idx = train_df.index
@@ -407,10 +488,10 @@ def perform_loso_evaluation(
                 test_idx_filtered = test_idx.intersection(X.index)
                 
                 if len(train_idx_filtered) == 0 or len(test_idx_filtered) == 0:
-                    print(f"    ⚠️  Skipping (no data)")
+                    _logger.warning("Skipping (no data)")
                     continue
                 
-                print(f"    Train samples: {len(train_idx_filtered)}, Test samples: {len(test_idx_filtered)}")
+                _logger.info(f"    Train samples: {len(train_idx_filtered)}, Test samples: {len(test_idx_filtered)}")
                 
                 X_train_raw = X.loc[train_idx_filtered]
                 X_test_raw = X.loc[test_idx_filtered]
@@ -423,6 +504,27 @@ def perform_loso_evaluation(
                 station_ids_train_loso = None
                 if model_type in ["lstm", "lstm_multitask"] and "Stn Id" in data_for_features.columns:
                     station_ids_train_loso = data_for_features.loc[train_idx_filtered, "Stn Id"].values if len(train_idx_filtered) > 0 else None
+                
+                # Strict leakage prevention: Verify temporal ordering
+                if DATE_COL in train_df.columns and DATE_COL in test_df.columns:
+                    train_max_date = pd.to_datetime(train_df.loc[train_idx_filtered, DATE_COL]).max()
+                    test_min_date = pd.to_datetime(test_df.loc[test_idx_filtered, DATE_COL]).min()
+                    if train_max_date >= test_min_date:
+                        _logger.warning(
+                            f"Potential temporal leakage detected for station {test_station}, horizon {horizon}h: "
+                            f"train_max_date ({train_max_date}) >= test_min_date ({test_min_date}). "
+                            f"This may indicate data leakage. Proceeding with caution."
+                        )
+                
+                # Verify train and test are from different stations (LOSO requirement)
+                if STATION_ID_COL in train_df.columns and STATION_ID_COL in test_df.columns:
+                    train_stations = set(train_df.loc[train_idx_filtered, STATION_ID_COL].unique())
+                    test_stations = set(test_df.loc[test_idx_filtered, STATION_ID_COL].unique())
+                    if train_stations & test_stations:  # Intersection should be empty
+                        raise ValueError(
+                            f"LOSO violation: Train and test sets share stations: {train_stations & test_stations}. "
+                            f"This indicates a data leakage bug."
+                        )
                 
                 # Preprocess with no data leakage
                 X_train, X_test = preprocess_with_loso(
@@ -453,11 +555,11 @@ def perform_loso_evaluation(
                 }
                 
                 horizon_elapsed = time.time() - horizon_start_time
-                print(f"    ✅ Brier={frost_metrics.get('brier_score', 'N/A'):.4f}, "
+                _logger.info(f"Brier={frost_metrics.get('brier_score', 'N/A'):.4f}, "
                       f"ECE={frost_metrics.get('ece', 'N/A'):.4f}, "
                       f"ROC-AUC={frost_metrics.get('roc_auc', 'N/A'):.4f}, "
                       f"MAE={temp_metrics.get('mae', 'N/A'):.4f}°C")
-                print(f"    [{datetime.now().strftime('%H:%M:%S')}] {horizon}h horizon completed in {horizon_elapsed:.2f} seconds ({horizon_elapsed/60:.2f} minutes)")
+                _logger.info(f"[{datetime.now().strftime('%H:%M:%S')}] {horizon}h horizon completed in {horizon_elapsed:.2f} seconds ({horizon_elapsed/60:.2f} minutes)")
                 
                 # Save models if criteria are met
                 should_save = False
@@ -479,21 +581,37 @@ def perform_loso_evaluation(
                         model_frost.save(model_dir / "frost_classifier")
                         model_temp.save(model_dir / "temp_regressor")
                     if save_worst_n is not None:
-                        print(f"    💾 Saved models (temporary, will filter to worst {save_worst_n} stations)")
+                        _logger.info(f"    Saved models (temporary, will filter to worst {save_worst_n} stations)")
                     else:
-                        print(f"    💾 Saved models to {model_dir}")
+                        _logger.info(f"    Saved models to {model_dir}")
                 
-                # Free memory after each horizon
+                # Free memory after each horizon (critical for multi-horizon LOSO)
                 del X_train_raw, X_test_raw
                 del X_train, X_test
                 del y_frost_train, y_frost_test, y_temp_train, y_temp_test
                 del model_frost, model_temp
                 gc.collect()
                 
+                # GPU memory cleanup for deep learning models
+                try:
+                    import torch
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                        _logger.debug("Cleared GPU cache after horizon")
+                except ImportError:
+                    pass  # PyTorch not available
+                
+            except (ValueError, KeyError, IndexError) as e:
+                # Specific errors that we can handle gracefully
+                _logger.error(f"Error processing {horizon}h horizon for station {test_station}: {e}")
+                _logger.debug("Full traceback:", exc_info=True)
+                continue
             except Exception as e:
-                print(f"    ❌ Error processing {horizon}h horizon: {e}")
-                import traceback
-                traceback.print_exc()
+                # Unexpected errors - log with full traceback
+                _logger.error(
+                    f"Unexpected error processing {horizon}h horizon for station {test_station}: {e}",
+                    exc_info=True
+                )
                 continue
         
         # Store station result
@@ -513,7 +631,7 @@ def perform_loso_evaluation(
         
         station_elapsed = time.time() - station_start_time
         station_end_datetime = datetime.now()
-        print(f"\n[{station_end_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Station {test_station} completed in {station_elapsed:.2f} seconds ({station_elapsed/60:.2f} minutes)")
+        _logger.info(f"[{station_end_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Station {test_station} completed in {station_elapsed:.2f} seconds ({station_elapsed/60:.2f} minutes)")
         
         # Free memory after each station
         del train_df, test_df
@@ -523,7 +641,7 @@ def perform_loso_evaluation(
     
     # Calculate summary statistics
     print(f"\n{'='*60}")
-    print("Calculating LOSO summary statistics...")
+    _logger.info("Calculating LOSO summary statistics...")
     print(f"{'='*60}")
     
     summary = calculate_loso_summary(station_metrics, horizons)
@@ -551,17 +669,17 @@ def perform_loso_evaluation(
     if station_rows:
         station_metrics_df = pd.DataFrame(station_rows)
         station_metrics_df.to_csv(loso_dir / "station_metrics.csv", index=False)
-        print(f"✅ Saved station metrics to {loso_dir / 'station_metrics.csv'}")
+        _logger.info(f"Saved station metrics to {loso_dir / 'station_metrics.csv'}")
     
     loso_eval_end_time = time.time()
     loso_eval_end_datetime = datetime.now()
     loso_eval_duration = loso_eval_end_time - loso_eval_start_time
     
     print(f"\n{'='*60}")
-    print(f"LOSO Evaluation Complete")
-    print(f"   Started: {loso_eval_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"   Ended: {loso_eval_end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"   Duration: {loso_eval_duration:.2f} seconds ({loso_eval_duration/60:.2f} minutes, {loso_eval_duration/3600:.2f} hours)")
+    _logger.info("LOSO Evaluation Complete")
+    _logger.info(f"   Started: {loso_eval_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    _logger.info(f"   Ended: {loso_eval_end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    _logger.info(f"   Duration: {loso_eval_duration:.2f} seconds ({loso_eval_duration/60:.2f} minutes, {loso_eval_duration/3600:.2f} hours)")
     print(f"{'='*60}")
     
     return {

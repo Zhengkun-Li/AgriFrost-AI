@@ -1,12 +1,13 @@
 """Machine learning models."""
 
-from .lightgbm_model import LightGBMModel
-from .xgboost_model import XGBoostModel
-from .catboost_model import CatBoostModel
-from .random_forest_model import RandomForestModel
-from .extratrees_model import ExtraTreesModel
-from .linear_model import LinearModel
-from .persistence_model import PersistenceModel
+from .lightgbm import LightGBMModel
+from .xgboost import XGBoostModel
+from .catboost import CatBoostModel
+from .random_forest import RandomForestModel
+from .extratrees import ExtraTreesModel
+from .linear import LinearModel
+from .persistence import PersistenceModel
+from .ensemble_model import EnsembleModel
 
 __all__ = [
     "LightGBMModel",
@@ -16,4 +17,5 @@ __all__ = [
     "ExtraTreesModel",
     "LinearModel",
     "PersistenceModel",
+    "EnsembleModel",
 ]

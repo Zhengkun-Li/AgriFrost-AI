@@ -1,0 +1,36 @@
+# Matrix Cell B Configuration
+# Single station, feature-engineered features, NO spatial aggregation
+# Track: feature_engineering
+# Use case: Single-station model with engineered features (statistical, temporal, etc.)
+
+data:
+  source: data/raw/frost-risk-forecast-challenge/stations
+  matrix_cell: B
+  track: feature_engineering  # Explicitly specify track
+  sample_size: null
+  cleaning:
+    config_path: config/data_cleaning_fe.yaml
+  feature_engineering:
+    enabled: true  # Feature engineering enabled for Matrix Cell B
+    config_path: config/feature_engineering/feature_engineering.yaml
+
+labels:
+  horizons: [3, 6, 12, 24]
+  frost_threshold: 0.0
+
+training:
+  # model: will be specified via --model CLI argument
+  # output_dir: will be specified via --output CLI argument or auto-generated
+  feature_selection: null
+  feature_selection_config: null
+  top_k: null
+
+evaluation:
+  loso:
+    enabled: false
+    save_models: false
+    resume: false
+    save_worst_n: null
+    save_horizons: null
+
+

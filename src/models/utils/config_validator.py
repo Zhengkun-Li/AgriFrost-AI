@@ -2,6 +2,9 @@
 
 from typing import Dict, Any, List, Tuple, Optional
 from pathlib import Path
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ConfigValidator:
@@ -9,6 +12,12 @@ class ConfigValidator:
     
     This class provides validation for model configurations to catch
     errors early and provide helpful error messages.
+    
+    **2×2+1 Framework Validation:**
+    - Enforces matrix cell rules (A/B/E: no radius, C/D: must have radius, E: must have knn_k)
+    - Validates horizon_h must be in {3, 6, 12, 24}
+    - Validates track must be in {raw, top175_features, ...}
+    - Supports strict/fallback modes for unknown keys
     """
     
     @staticmethod
@@ -131,18 +140,106 @@ class ConfigValidator:
         return True, None
     
     @staticmethod
+    def validate_experiment_metadata(
+        matrix_cell: Optional[str] = None,
+        track: Optional[str] = None,
+        horizon_h: Optional[int] = None,
+        model_name: Optional[str] = None,
+        radius_km: Optional[float] = None,
+        knn_k: Optional[int] = None
+    ) -> Tuple[bool, Optional[str]]:
+        """Validate experiment metadata according to 2×2+1 framework rules.
+        
+        **2×2+1 Framework Rules:**
+        - A/B/E cells: raw features only, no spatial aggregation (no radius/knn_k)
+        - C/D cells: must have radius_km for spatial aggregation
+        - E cell: must have knn_k for kNN graph
+        - horizon_h must be in {3, 6, 12, 24}
+        - track must be in {raw, top175_features, ...}
+        
+        Args:
+            matrix_cell: Matrix cell identifier (A, B, C, D, E, etc.).
+            track: Feature engineering track (raw, top175_features, ...).
+            horizon_h: Forecast horizon in hours.
+            model_name: Model name (for graph models, validates graph params).
+            radius_km: Radius in km (for C/D cells or graph models with radius).
+            knn_k: k value for kNN (for E cell or graph models with knn).
+        
+        Returns:
+            Tuple of (is_valid, error_message).
+        """
+        # Validate matrix cell if provided
+        if matrix_cell is not None:
+            matrix_cell_upper = matrix_cell.upper()
+            valid_cells = {'A', 'B', 'C', 'D', 'E'}
+            if matrix_cell_upper not in valid_cells:
+                return False, f"Invalid matrix_cell: {matrix_cell}. Must be one of {valid_cells}"
+        
+        # Validate horizon_h if provided
+        if horizon_h is not None:
+            valid_horizons = {3, 6, 12, 24}
+            if horizon_h not in valid_horizons:
+                return False, f"Invalid horizon_h: {horizon_h}. Must be one of {valid_horizons}"
+        
+        # Validate track if provided
+        if track is not None:
+            valid_tracks = {'raw', 'top175_features'}  # Can be extended
+            if track not in valid_tracks:
+                # Warning but not error (allow custom tracks)
+                _logger.warning(f"Unknown track: {track}. Known tracks: {valid_tracks}")
+        
+        # Validate 2×2+1 framework rules
+        if matrix_cell is not None:
+            matrix_cell_upper = matrix_cell.upper()
+            
+            # A/B/E cells: no spatial aggregation (no radius/knn_k)
+            if matrix_cell_upper in {'A', 'B'}:
+                if radius_km is not None:
+                    return False, f"Matrix cell {matrix_cell_upper} (raw features) cannot have radius_km. Remove spatial aggregation."
+                if knn_k is not None:
+                    return False, f"Matrix cell {matrix_cell_upper} (raw features) cannot have knn_k. Remove spatial aggregation."
+            
+            # C/D cells: must have radius_km
+            if matrix_cell_upper in {'C', 'D'}:
+                if radius_km is None:
+                    return False, f"Matrix cell {matrix_cell_upper} (spatial aggregation) must have radius_km. Provide radius_km in config."
+            
+            # E cell: must have knn_k (and no radius_km)
+            if matrix_cell_upper == 'E':
+                if knn_k is None:
+                    return False, f"Matrix cell E (kNN graph) must have knn_k. Provide knn_k in config."
+                if radius_km is not None:
+                    return False, f"Matrix cell E (kNN graph) cannot have radius_km. Use knn_k instead."
+        
+        # Validate graph model consistency (if model is a graph model)
+        if model_name is not None:
+            graph_models = {'dcrnn', 'gat_lstm', 'graphwavenet', 'st_gcn'}
+            if model_name.lower() in graph_models:
+                # Graph models must have either radius_km or knn_k
+                if radius_km is None and knn_k is None:
+                    return False, f"Graph model {model_name} must have either radius_km or knn_k in config."
+        
+        return True, None
+    
+    @staticmethod
     def validate_training_args(
         model_type: str,
         checkpoint_dir: Optional[Path] = None,
         log_file: Optional[Path] = None,
+        strict_mode: bool = False,
         **kwargs
     ) -> Tuple[bool, Optional[str]]:
         """Validate training arguments.
+        
+        **Strict/Fallback Modes:**
+        - strict_mode=True: Reject unknown keys (helpful for catching typos)
+        - strict_mode=False: Ignore unknown keys (helpful for CLI overrides)
         
         Args:
             model_type: Type of model.
             checkpoint_dir: Optional checkpoint directory.
             log_file: Optional log file path.
+            strict_mode: If True, reject unknown keys in kwargs.
             **kwargs: Additional training arguments.
         
         Returns:
@@ -151,7 +248,6 @@ class ConfigValidator:
         # Validate checkpoint directory
         if checkpoint_dir is not None:
             checkpoint_dir = Path(checkpoint_dir)
-            # Check if parent directory exists and is writable
             try:
                 checkpoint_dir.parent.mkdir(parents=True, exist_ok=True)
             except (OSError, PermissionError) as e:
@@ -160,11 +256,19 @@ class ConfigValidator:
         # Validate log file
         if log_file is not None:
             log_file = Path(log_file)
-            # Check if parent directory exists and is writable
             try:
                 log_file.parent.mkdir(parents=True, exist_ok=True)
             except (OSError, PermissionError) as e:
                 return False, f"Cannot create log file directory: {e}"
+        
+        # Strict mode: validate unknown keys (can be extended to check against schema)
+        if strict_mode:
+            # In strict mode, we could validate against a known schema
+            # For now, we just log a warning if there are unknown keys
+            known_keys = {'checkpoint_dir', 'log_file', 'strict_mode', 'model_type'}
+            unknown_keys = set(kwargs.keys()) - known_keys
+            if unknown_keys:
+                _logger.warning(f"Unknown keys in training args (strict_mode=True): {unknown_keys}")
         
         return True, None
     

@@ -1,9 +1,14 @@
 """Data loading utilities for CIMIS and external datasets."""
 
+import logging
 from pathlib import Path
 from typing import Optional, Dict, Any
 import pandas as pd
 import numpy as np
+
+from .features.constants import STATION_ID_COL, DATE_COL
+
+_logger = logging.getLogger(__name__)
 
 
 class DataLoader:
@@ -37,13 +42,13 @@ class DataLoader:
             raise FileNotFoundError(f"Data file not found: {path}")
         
         # Parse dates by default
-        parse_dates = kwargs.pop("parse_dates", ["Date"])
+        parse_dates = kwargs.pop("parse_dates", [DATE_COL])
         
         df = pd.read_csv(path, parse_dates=parse_dates, **kwargs)
         
         # Ensure Date column is datetime
-        if "Date" in df.columns:
-            df["Date"] = pd.to_datetime(df["Date"])
+        if DATE_COL in df.columns:
+            df[DATE_COL] = pd.to_datetime(df[DATE_COL])
         
         return df
     
@@ -72,36 +77,57 @@ class DataLoader:
         if not csv_files:
             raise FileNotFoundError(f"No CSV files found in {stations_dir}")
         
-        print(f"Loading {len(csv_files)} station files from {stations_dir}...")
+        _logger.info(f"Loading {len(csv_files)} station files from {stations_dir}...")
         
         # Parse dates by default
-        parse_dates = kwargs.pop("parse_dates", ["Date"])
+        parse_dates = kwargs.pop("parse_dates", [DATE_COL])
         
         # Load and combine all files
         dfs = []
+        failed_files = []
         for i, csv_file in enumerate(csv_files, 1):
             try:
                 df = pd.read_csv(csv_file, parse_dates=parse_dates, **kwargs)
                 dfs.append(df)
                 if (i % 5 == 0) or (i == len(csv_files)):
-                    print(f"  Loaded {i}/{len(csv_files)} files...", end='\r')
+                    _logger.debug(f"Loaded {i}/{len(csv_files)} files...")
+            except pd.errors.EmptyDataError:
+                _logger.warning(f"Empty file: {csv_file.name}, skipping")
+                failed_files.append(csv_file.name)
+                continue
+            except pd.errors.ParserError as e:
+                _logger.error(f"Parse error in {csv_file.name}: {e}, skipping")
+                failed_files.append(csv_file.name)
+                continue
             except Exception as e:
-                print(f"\nWarning: Failed to load {csv_file.name}: {e}")
+                _logger.error(f"Unexpected error loading {csv_file.name}: {e}", exc_info=True)
+                failed_files.append(csv_file.name)
                 continue
         
-        print(f"\nCombining {len(dfs)} station DataFrames...")
+        if not dfs:
+            raise FileNotFoundError(
+                f"Failed to load any valid CSV files from {stations_dir}. "
+                f"All {len(csv_files)} files failed to load."
+            )
+        
+        if failed_files:
+            _logger.warning(f"Failed to load {len(failed_files)}/{len(csv_files)} files: {failed_files[:5]}...")
+        
+        _logger.info(f"Combining {len(dfs)} station DataFrames...")
         combined_df = pd.concat(dfs, ignore_index=True)
         
         # Ensure Date column is datetime
-        if "Date" in combined_df.columns:
-            combined_df["Date"] = pd.to_datetime(combined_df["Date"])
+        if DATE_COL in combined_df.columns:
+            combined_df[DATE_COL] = pd.to_datetime(combined_df[DATE_COL])
         
-        # Sort by station and date
-        if "Stn Id" in combined_df.columns and "Date" in combined_df.columns:
-            combined_df = combined_df.sort_values(["Stn Id", "Date"]).reset_index(drop=True)
+        # Sort by station and date (use constants for consistency)
+        if STATION_ID_COL in combined_df.columns and DATE_COL in combined_df.columns:
+            combined_df = combined_df.sort_values([STATION_ID_COL, DATE_COL]).reset_index(drop=True)
         
-        print(f"Combined data: {len(combined_df)} rows, {len(combined_df.columns)} columns")
-        print(f"Stations: {combined_df['Stn Id'].nunique() if 'Stn Id' in combined_df.columns else 'N/A'}")
+        _logger.info(
+            f"Combined data: {len(combined_df)} rows, {len(combined_df.columns)} columns, "
+            f"{combined_df[STATION_ID_COL].nunique() if STATION_ID_COL in combined_df.columns else 'N/A'} stations"
+        )
         
         return combined_df
 
@@ -124,13 +150,13 @@ class DataLoader:
         if suffix == ".parquet":
             df = pd.read_parquet(path, **kwargs)
         elif suffix in [".csv", ".csv.gz"]:
-            parse_dates = kwargs.pop("parse_dates", ["Date"])
+            parse_dates = kwargs.pop("parse_dates", [DATE_COL])
             df = pd.read_csv(path, parse_dates=parse_dates, **kwargs)
         else:
             raise ValueError(f"Unsupported file format: {suffix}")
         
-        if "Date" in df.columns:
-            df["Date"] = pd.to_datetime(df["Date"])
+        if DATE_COL in df.columns:
+            df[DATE_COL] = pd.to_datetime(df[DATE_COL])
         
         return df
 
@@ -192,5 +218,5 @@ class DataLoader:
         else:
             raise ValueError(f"Unsupported format: {format}")
         
-        print(f"Data saved to {path}")
+        _logger.info(f"Data saved to {path}")
 

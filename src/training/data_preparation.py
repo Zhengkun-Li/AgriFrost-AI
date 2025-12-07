@@ -10,142 +10,148 @@ This module handles:
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Optional, Tuple
-import time
+from typing import Any, Dict, Optional, Tuple, Union
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+import logging
 import pandas as pd
 import numpy as np
 
-from src.data.loaders import DataLoader
-from src.data.cleaners import DataCleaner
-from src.data.feature_engineering import FeatureEngineer
+_logger = logging.getLogger(__name__)
+
+from src.data import DataPipeline
 from src.data.frost_labels import FrostLabelGenerator
 from src.data.preprocessors import preprocess_with_loso
-from src.evaluation.validators import CrossValidator
+
+DEFAULT_FEATURE_ENGINEERING_PARAMS = {
+    "create_time_features": True,
+    "create_lag_features": True,
+    "create_rolling_features": True,
+    "create_interaction_features": False,
+    "lag_periods": [1, 3, 6, 12, 24],
+    "rolling_windows": [3, 6, 12, 24],
+}
+
+DATA_CLEANING_CONFIG_MAP = {
+    "raw": Path(project_root / "config" / "data_cleaning_raw.yaml"),
+    "fe": Path(project_root / "config" / "data_cleaning_fe.yaml"),
+    "graph": Path(project_root / "config" / "data_cleaning_graph.yaml"),
+}
+
+
+def _optimize_numeric_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    """Downcast numeric columns to reduce memory usage."""
+    for col in df.select_dtypes(include=["float64"]).columns:
+        df[col] = pd.to_numeric(df[col], downcast="float")
+    for col in df.select_dtypes(include=["int64"]).columns:
+        df[col] = pd.to_numeric(df[col], downcast="integer")
+    return df
+
+
+def _select_cleaning_config_path(
+    use_feature_engineering: bool,
+    matrix_cell: Optional[str],
+    cleaning_config_path: Optional[Path],
+) -> Path:
+    if cleaning_config_path:
+        return cleaning_config_path
+    key = "fe" if use_feature_engineering else "raw"
+    if matrix_cell:
+        cell = matrix_cell.upper()
+        if cell in {"A", "C"}:
+            key = "raw"
+        elif cell in {"B", "D"}:
+            key = "fe"
+        elif cell == "E":
+            key = "graph"
+    return DATA_CLEANING_CONFIG_MAP.get(key, DATA_CLEANING_CONFIG_MAP["fe"])
+
+
+def _build_pipeline_config(
+    use_feature_engineering: bool,
+    feature_engineering_config: Optional[Dict] = None,
+    matrix_cell: Optional[str] = None,
+    cleaning_config_path: Optional[Path] = None,
+) -> Dict:
+    if feature_engineering_config:
+        feature_cfg = dict(feature_engineering_config)
+    else:
+        feature_cfg = dict(DEFAULT_FEATURE_ENGINEERING_PARAMS)
+    cleaning_path = _select_cleaning_config_path(
+        use_feature_engineering=use_feature_engineering,
+        matrix_cell=matrix_cell,
+        cleaning_config_path=cleaning_config_path,
+    )
+    return {
+        "cleaning": {
+            "config_path": str(cleaning_path),
+        },
+        "feature_engineering": {
+            "enabled": use_feature_engineering,
+            "config": feature_cfg,
+        }
+    }
 
 
 def load_and_prepare_data(
     data_path: Path,
     sample_size: int = None,
-    use_feature_engineering: bool = True
-) -> pd.DataFrame:
-    """Load, clean, and optionally engineer features.
+    use_feature_engineering: bool = True,
+    feature_engineering_config: Optional[Dict] = None,
+    return_metadata: bool = False,
+    matrix_cell: Optional[str] = None,
+    cleaning_config_path: Optional[Path] = None,
+) -> Union[pd.DataFrame, Tuple[pd.DataFrame, Dict[str, Any]]]:
+    """Load, clean, and optionally engineer features via DataPipeline.
     
     Args:
         data_path: Path to raw data file.
         sample_size: Optional sample size for quick testing.
         use_feature_engineering: If False, skip feature engineering (for Raw-only track).
+        feature_engineering_config: Optional override for feature engineering config.
+        return_metadata: If True, also return pipeline run metadata.
     
     Returns:
-        DataFrame with cleaned and optionally engineered features.
+        DataFrame with processed features, optionally accompanied by run metadata.
     """
-    step_start_time = time.time()
-    step_start_datetime = datetime.now()
-    print("\n" + "="*60)
-    print("Step 1: Loading Data")
-    print(f"[{step_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Starting data loading...")
-    print("="*60)
+    pipeline_config = _build_pipeline_config(
+        use_feature_engineering=use_feature_engineering,
+        feature_engineering_config=feature_engineering_config,
+        matrix_cell=matrix_cell,
+        cleaning_config_path=cleaning_config_path,
+    )
     
-    # Load raw data
-    df = DataLoader.load_raw_data(data_path)
-    print(f"Loaded {len(df)} rows, {len(df.columns)} columns")
+    _logger.info("=" * 60)
+    _logger.info("Step 1: Data Pipeline (load → clean → features)")
+    _logger.info(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting pipeline run...")
+    _logger.info("=" * 60)
+    pipeline = DataPipeline(config=pipeline_config)
+    bundle = pipeline.run(
+        data_path=data_path,
+        horizons=[],
+        use_feature_engineering=use_feature_engineering,
+        feature_config=pipeline_config["feature_engineering"],
+        generate_labels=False,
+    )
+    df = bundle.data
+    _logger.info(f"Pipeline output: {len(df)} rows, {len(df.columns)} columns")
     
-    # Optimize data types to reduce memory usage
-    print("Optimizing data types to reduce memory...")
-    for col in df.select_dtypes(include=['float64']).columns:
-        df[col] = pd.to_numeric(df[col], downcast='float')
-    for col in df.select_dtypes(include=['int64']).columns:
-        df[col] = pd.to_numeric(df[col], downcast='integer')
-    print(f"Memory usage after optimization: {df.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
-    
-    # Sample if requested
+    # Optional sampling for quick experiments
     if sample_size and sample_size < len(df):
         df = df.sample(n=sample_size, random_state=42)
-        print(f"Sampled {len(df)} rows")
+        _logger.info(f"Sampled {len(df)} rows for quick testing")
     
-    # Clean data
-    step_elapsed = time.time() - step_start_time
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Step 1 completed in {step_elapsed:.2f} seconds")
+    # Optimize dtypes to reduce memory footprint
+    df = _optimize_numeric_dtypes(df)
+    memory_gb = df.memory_usage(deep=True).sum() / 1024 ** 3
+    _logger.info(f"Memory usage after optimization: {memory_gb:.2f} GB")
     
-    step_start_time = time.time()
-    step_start_datetime = datetime.now()
-    print("\n" + "="*60)
-    print("Step 2: Cleaning Data")
-    print(f"[{step_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Starting data cleaning...")
-    print("="*60)
-    
-    cleaner = DataCleaner()
-    df_cleaned = cleaner.clean_pipeline(df)
-    print(f"After cleaning: {len(df_cleaned)} rows")
-    
-    # Delete original df to free memory
-    del df
-    import gc
-    gc.collect()
-    
-    # Feature engineering
-    step_elapsed = time.time() - step_start_time
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Step 2 completed in {step_elapsed:.2f} seconds")
-    
-    if use_feature_engineering:
-        step_start_time = time.time()
-        step_start_datetime = datetime.now()
-        print("\n" + "="*60)
-        print("Step 3: Feature Engineering")
-        print(f"[{step_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Starting feature engineering...")
-        print("="*60)
-        
-        engineer = FeatureEngineer()
-        feature_config = {
-            "create_time_features": True,
-            "create_lag_features": True,
-            "create_rolling_features": True,
-            "create_interaction_features": False,  # Disable to reduce memory
-            "lag_periods": [1, 3, 6, 12, 24],
-            "rolling_windows": [3, 6, 12, 24],
-        }
-        df_engineered = engineer.engineer_features(df_cleaned, feature_config)
-        print(f"After feature engineering: {len(df_engineered)} rows, {len(df_engineered.columns)} columns")
-        
-        # Delete cleaned df to free memory
-        del df_cleaned
-        gc.collect()
-        
-        # Optimize data types again after feature engineering
-        print("Optimizing data types after feature engineering...")
-        for col in df_engineered.select_dtypes(include=['float64']).columns:
-            df_engineered[col] = pd.to_numeric(df_engineered[col], downcast='float')
-        for col in df_engineered.select_dtypes(include=['int64']).columns:
-            df_engineered[col] = pd.to_numeric(df_engineered[col], downcast='integer')
-        print(f"Memory usage after optimization: {df_engineered.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
-        
-        step_elapsed = time.time() - step_start_time
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Step 3 completed in {step_elapsed:.2f} seconds")
-        
-        return df_engineered
-    else:
-        # Skip feature engineering for Raw-only track
-        print("\n" + "="*60)
-        print("Step 3: Skipping Feature Engineering (Raw-only track)")
-        print("="*60)
-        print(f"Using raw features only: {len(df_cleaned)} rows, {len(df_cleaned.columns)} columns")
-        
-        # Optimize data types
-        print("Optimizing data types...")
-        for col in df_cleaned.select_dtypes(include=['float64']).columns:
-            df_cleaned[col] = pd.to_numeric(df_cleaned[col], downcast='float')
-        for col in df_cleaned.select_dtypes(include=['int64']).columns:
-            df_cleaned[col] = pd.to_numeric(df_cleaned[col], downcast='integer')
-        print(f"Memory usage after optimization: {df_cleaned.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
-        
-        step_elapsed = time.time() - step_start_time
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Step 3 (skipped) completed in {step_elapsed:.2f} seconds")
-        
-        return df_cleaned
+    if return_metadata:
+        return df, bundle.run_metadata
+    return df
 
 
 def create_frost_labels(
@@ -163,15 +169,15 @@ def create_frost_labels(
     Returns:
         DataFrame with frost labels added.
     """
-    print("\n" + "="*60)
-    print("Step 4: Creating Frost Labels")
-    print("="*60)
+    _logger.info("=" * 60)
+    _logger.info("Step 4: Creating Frost Labels")
+    _logger.info("=" * 60)
     
     label_generator = FrostLabelGenerator(frost_threshold=frost_threshold)
     df_labeled = label_generator.create_frost_labels(df, horizons=horizons)
     
-    print(f"Created frost labels for horizons: {horizons}")
-    print(f"Final dataset: {len(df_labeled)} rows, {len(df_labeled.columns)} columns")
+    _logger.info(f"Created frost labels for horizons: {horizons}")
+    _logger.info(f"Final dataset: {len(df_labeled)} rows, {len(df_labeled.columns)} columns")
     
     return df_labeled
 
@@ -196,10 +202,34 @@ def prepare_features_and_targets(
     
     Returns:
         Tuple of (X, y_frost, y_temp) DataFrames/Series.
+    
+    Raises:
+        ValueError: If DataFrame is empty or missing required columns.
     """
+    # Input validation: Check if DataFrame is empty
+    if df.empty:
+        raise ValueError(f"Input DataFrame is empty. Cannot prepare features for {horizon}h horizon.")
+    
     # Filter by indices if provided
     if indices is not None:
-        df = df.loc[indices]
+        df_subset = df.loc[indices]
+        if df_subset.empty:
+            raise ValueError(f"Filtered DataFrame (after applying indices) is empty for {horizon}h horizon.")
+        df = df_subset
+    
+    # Strict validation: Check for required target columns
+    frost_col = f"frost_{horizon}h"
+    temp_col = f"temp_{horizon}h"
+    missing_targets = []
+    if frost_col not in df.columns:
+        missing_targets.append(frost_col)
+    if temp_col not in df.columns:
+        missing_targets.append(temp_col)
+    if missing_targets:
+        raise KeyError(
+            f"Missing required target columns for {horizon}h horizon: {missing_targets}. "
+            f"Available columns: {list(df.columns)[:20]}..."
+        )
     
     # Get features (exclude target columns and metadata)
     # Prophet model needs Date column, so don't exclude it for Prophet
@@ -214,44 +244,103 @@ def prepare_features_and_targets(
         exclude_cols.append("Stn Id")
     if model_type != "prophet":
         exclude_cols.append("Date")
-    feature_cols = [col for col in df.columns if col not in exclude_cols]
+    # Exclude ALL horizon label columns to prevent data leakage
+    # Only keep the current horizon labels as targets
+    feature_cols = [
+        col for col in df.columns 
+        if col not in exclude_cols 
+        and not col.startswith('frost_')  # Exclude all frost_*h columns
+        and not col.startswith('temp_')   # Exclude all temp_*h columns
+    ]
     
     # Track-aware feature selection
     if track == "raw":
+        # DEBUG: Log input df columns
+        neighbor_cols_in_df = [c for c in df.columns if 'neighbor' in c.lower()]
+        _logger.info(
+            f"🔍 DEBUG [prepare_features_and_targets] track='raw': "
+            f"Input df has {len(df.columns)} columns, {len(neighbor_cols_in_df)} neighbor columns"
+        )
+        if len(neighbor_cols_in_df) > 0:
+            _logger.info(f"🔍 DEBUG: Neighbor feature examples in input df: {neighbor_cols_in_df[:5]}")
+        else:
+            _logger.warning(
+                f"⚠️  DEBUG WARNING [prepare_features_and_targets]: "
+                f"No neighbor features found in input DataFrame! "
+                f"This may indicate DataPipeline did not generate neighbor features."
+            )
+        
         # Select numeric, non-engineered raw columns
         # Heuristics: drop common engineered patterns (lag/rolling/interaction/cyclical/station meta)
+        # BUT keep neighbor_* features for Matrix Cell C (raw + spatial aggregation)
         engineered_patterns = (
             "_lag_", "rolling", "interaction", "daily_", "_decline_rate",
-            "_gradient", "_range", "station_id_encoded", "is_eto_station",
+            "station_id_encoded", "is_eto_station",
             "latitude", "longitude", "latitude_", "longitude_", "distance_to_",
             "station_density", "county_encoded", "city_encoded", "groundcover_encoded",
             "hour_sin", "hour_cos", "month_sin", "month_cos", "season", "is_night"
         )
         def is_raw_feature(col: str) -> bool:
+            # Keep neighbor features for Matrix Cell C (raw + spatial aggregation)
+            if "neighbor" in col.lower():
+                return True
+            # Filter out engineered patterns (but allow _gradient and _range if they're from neighbors)
+            # The engineered_patterns for non-neighbor features will exclude _gradient and _range
             return not any(pat in col for pat in engineered_patterns)
         raw_feature_cols = [c for c in feature_cols if is_raw_feature(c)]
+        
+        # DEBUG: Log raw_feature_cols
+        neighbor_cols_in_raw = [c for c in raw_feature_cols if 'neighbor' in c.lower()]
+        _logger.info(
+            f"🔍 DEBUG [prepare_features_and_targets] track='raw': "
+            f"After is_raw_feature filtering: {len(raw_feature_cols)} columns, {len(neighbor_cols_in_raw)} neighbor columns"
+        )
+        
         # For Prophet, include Date column even if it's not numeric
         if model_type == "prophet" and "Date" in df.columns:
-            # Include Date column
-            X_numeric = df[raw_feature_cols].select_dtypes(include=[np.number]).copy()
-            X_date = df[["Date"]].copy()
+            # Include Date column (avoid copy if not needed)
+            X_numeric = df[raw_feature_cols].select_dtypes(include=[np.number])
+            X_date = df[["Date"]]
             X = pd.concat([X_date, X_numeric], axis=1)
         else:
-            X = df[raw_feature_cols].select_dtypes(include=[np.number]).copy()
+            X = df[raw_feature_cols].select_dtypes(include=[np.number])
+        
+        # DEBUG: Log final X columns
+        neighbor_cols_in_X = [c for c in X.columns if 'neighbor' in c.lower()]
+        _logger.info(
+            f"🔍 DEBUG [prepare_features_and_targets] track='raw': "
+            f"Final X (after select_dtypes) has {len(X.columns)} columns, {len(neighbor_cols_in_X)} neighbor columns"
+        )
+        if len(neighbor_cols_in_X) > 0:
+            _logger.info(f"🔍 DEBUG: Neighbor features in final X: {neighbor_cols_in_X[:5]}... (showing first 5)")
+        if len(neighbor_cols_in_X) == 0:
+            _logger.warning(
+                f"⚠️  DEBUG WARNING [prepare_features_and_targets]: No neighbor features in final X! "
+                f"This may indicate a bug. df had {len(neighbor_cols_in_df)} neighbor columns, "
+                f"raw_feature_cols had {len(neighbor_cols_in_raw)} neighbor columns"
+            )
     else:
         # Default: use engineered features (top175_features track)
         # For Prophet, include Date column even if it's not numeric
         if model_type == "prophet" and "Date" in df.columns:
-            X_numeric = df[feature_cols].select_dtypes(include=[np.number]).copy()
-            X_date = df[["Date"]].copy()
+            X_numeric = df[feature_cols].select_dtypes(include=[np.number])
+            X_date = df[["Date"]]
             X = pd.concat([X_date, X_numeric], axis=1)
         else:
-            X = df[feature_cols].select_dtypes(include=[np.number]).copy()
+            X = df[feature_cols].select_dtypes(include=[np.number])
+    
+    # Strict validation: Check that we have feature columns
+    if len(X.columns) == 0:
+        raise ValueError(
+            f"No feature columns found after preparation for {horizon}h horizon. "
+            f"This may indicate an issue with feature engineering or data filtering. "
+            f"Available columns in df: {list(df.columns)[:20]}..."
+        )
     
     # Warn if some columns were excluded
     excluded_non_numeric = [col for col in feature_cols if col not in X.columns]
     if excluded_non_numeric:
-        print(f"  ⚠️  Warning: Excluded {len(excluded_non_numeric)} non-numeric columns: {excluded_non_numeric[:5]}...")
+        _logger.warning(f"Excluded {len(excluded_non_numeric)} non-numeric columns: {excluded_non_numeric[:5]}...")
     
     # Apply feature selection if provided
     if feature_selection and track != "raw":
@@ -285,7 +374,7 @@ def prepare_features_and_targets(
     # For Prophet, preserve Date column separately (it shouldn't have NaN, but if it does, don't fill it)
     date_col = None
     if model_type == "prophet" and "Date" in X.columns:
-        date_col = X["Date"].copy()
+        date_col = X["Date"]
         X_numeric = X.drop(columns=["Date"])
     else:
         X_numeric = X
@@ -311,9 +400,9 @@ def prepare_features_and_targets(
         
         n_nan_after = X_numeric.isna().sum().sum()
         if n_nan_before > 0:
-            print(f"  ⚠️  Warning: Found {n_nan_before} NaN values in features, filled using forward/backward fill")
+            _logger.warning(f"Found {n_nan_before} NaN values in features, filled using forward/backward fill")
             if n_nan_after > 0:
-                print(f"     {n_nan_after} NaN values remain (likely at sequence boundaries)")
+                _logger.debug(f"{n_nan_after} NaN values remain (likely at sequence boundaries)")
     
     # Recombine Date column if it was separated
     if date_col is not None:
@@ -321,9 +410,9 @@ def prepare_features_and_targets(
     else:
         X = X_numeric
     
-    print(f"Features: {len(X.columns)}, Samples: {len(X)}")
-    print(f"Frost labels: {y_frost.sum()} positive ({y_frost.mean()*100:.2f}%)")
-    print(f"Temperature range: {y_temp.min():.2f}°C to {y_temp.max():.2f}°C")
+    _logger.info(f"Features: {len(X.columns)}, Samples: {len(X)}")
+    _logger.info(f"Frost labels: {y_frost.sum()} positive ({y_frost.mean()*100:.2f}%)")
+    _logger.info(f"Temperature range: {y_temp.min():.2f}°C to {y_temp.max():.2f}°C")
     
     return X, y_frost, y_temp
 

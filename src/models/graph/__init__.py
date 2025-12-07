@@ -8,16 +8,19 @@ spatial-temporal forecasting, including:
 - GraphWaveNet: Graph Convolution + WaveNet
 """
 
-# Models will be imported here once implemented
-from .dcrnn_model import DCRNNForecastModel
-from .st_gcn_model import STGCNForecastModel
-from .gat_lstm_model import GATLSTMForecastModel
-from .graphwavenet_model import GraphWaveNetForecastModel
+from .base_graph import BaseGraphModel
+from .dcrnn import DCRNNForecastModel
+from .st_gcn import STGCNForecastModel
+from .gat_lstm import GATLSTMForecastModel
+from .graphwavenet import GraphWaveNetForecastModel
+from .dataset import GraphDatasetBuilder
 
 __all__ = [
+    "BaseGraphModel",
     "DCRNNForecastModel",
     "STGCNForecastModel",
     "GATLSTMForecastModel",
     "GraphWaveNetForecastModel",
+    "GraphDatasetBuilder",
 ]
 

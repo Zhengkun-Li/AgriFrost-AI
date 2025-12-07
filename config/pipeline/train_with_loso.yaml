@@ -1,0 +1,27 @@
+# Training configuration with LOSO evaluation
+# This config enables LOSO cross-validation for all horizons
+
+model: lightgbm
+matrix_cell: A
+track: raw
+
+data:
+  source: data/raw/frost-risk-forecast-challenge/cimis_all_stations.csv.gz
+
+labels:
+  horizons: [3, 6, 12, 24]
+
+training:
+  model: lightgbm
+  output_dir: experiments/lightgbm/raw/A/full_training
+
+evaluation:
+  tasks:
+    - type: loso
+      enabled: true
+      params:
+        save_models: false
+        save_worst_n: null
+        save_horizons: [3, 6, 12, 24]
+        resume: false
+

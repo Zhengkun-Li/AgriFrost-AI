@@ -1,0 +1,95 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+# Keep tutorial notebook
+!notebooks/tutorial.ipynb
+
+# Data files (not tracked)
+data/
+experiments/
+*.csv
+*.parquet
+*.pkl
+*.h5
+*.hdf5
+*.feather
+
+# Model files
+*.model
+*.joblib
+*.pth
+*.pt
+*.cbm
+*.onnx
+*.tflite
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+config/local/
+*.tmp
+.cache/
+notebooks/
+
+# CatBoost info directory
+catboost_info/
+
+# Sensitive configuration files (keep .example versions)
+config/settings.json
+
+# Keep example configs
+!config/settings.example.json

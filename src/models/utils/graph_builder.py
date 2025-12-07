@@ -262,12 +262,21 @@ class GraphBuilder:
         }
     
     @staticmethod
-    def save_graph(graph: Dict, path: Union[str, Path]):
+    def save_graph(
+        graph: Dict,
+        path: Union[str, Path],
+        metadata_path: Optional[Union[str, Path]] = None
+    ):
         """Save graph structure to disk.
+        
+        **2×2+1 Framework Compatibility:**
+        - Saves graph metadata to run_metadata.json if metadata_path provided
+        - Ensures graph_type/graph_param are available for ExperimentMetadata
         
         Args:
             graph: Graph dictionary from build_radius_graph or build_knn_graph.
             path: Path to save the graph (directory or file).
+            metadata_path: Optional path to run_metadata.json for graph metadata export.
         """
         path = Path(path)
         if path.is_dir() or not path.suffix:
@@ -279,6 +288,50 @@ class GraphBuilder:
         
         with open(graph_path, 'wb') as f:
             pickle.dump(graph, f)
+        
+        # Export graph metadata to run_metadata.json if metadata_path provided
+        if metadata_path is not None:
+            GraphBuilder._export_graph_metadata(graph, metadata_path)
+    
+    @staticmethod
+    def _export_graph_metadata(
+        graph: Dict,
+        metadata_path: Union[str, Path]
+    ) -> None:
+        """Export graph metadata to run_metadata.json.
+        
+        **2×2+1 Framework Integration:**
+        - Adds graph_type and graph_param to ExperimentMetadata
+        - Enables automatic mapping to radius_km/knn_k
+        
+        Args:
+            graph: Graph dictionary with graph_type and graph_param.
+            metadata_path: Path to run_metadata.json.
+        """
+        metadata_path = Path(metadata_path)
+        if not metadata_path.exists():
+            # Create new metadata if doesn't exist
+            from src.utils.metadata import ExperimentMetadata
+            metadata = ExperimentMetadata(
+                model_name="",
+                horizon_h=0
+            )
+        else:
+            # Load existing metadata and update
+            from src.utils.metadata import ExperimentMetadata
+            metadata = ExperimentMetadata.load(metadata_path)
+        
+        # Update graph metadata
+        graph_type = graph.get('graph_type')
+        graph_param = graph.get('graph_param')
+        
+        if graph_type == 'radius' and graph_param is not None:
+            metadata.radius_km = float(graph_param)
+        elif graph_type == 'knn' and graph_param is not None:
+            metadata.knn_k = int(graph_param)
+        
+        # Save updated metadata
+        metadata.save(metadata_path.parent)
     
     @staticmethod
     def load_graph(path: Union[str, Path]) -> Dict:
@@ -308,14 +361,23 @@ class GraphBuilder:
 def get_graph_cache_path(
     graph_type: str,
     graph_param: Union[int, float],
-    cache_dir: Optional[Union[str, Path]] = None
+    cache_dir: Optional[Union[str, Path]] = None,
+    station_ids: Optional[np.ndarray] = None,
+    station_coords: Optional[np.ndarray] = None
 ) -> Path:
     """Get cache path for graph structure.
+    
+    **Enhanced Cache Key (2×2+1 Framework Compatibility):**
+    - Includes graph_type, graph_param (standard)
+    - Includes station_ids hash for validation (prevents cache invalidation)
+    - Includes station_coords hash for coordinate change detection
     
     Args:
         graph_type: 'radius' or 'knn'.
         graph_param: Radius in km (for 'radius') or k (for 'knn').
         cache_dir: Cache directory (default: data/interim/graph).
+        station_ids: Optional station IDs array for cache key validation.
+        station_coords: Optional station coordinates array for cache key validation.
     
     Returns:
         Path to cached graph file.
@@ -327,12 +389,27 @@ def get_graph_cache_path(
     
     cache_dir.mkdir(parents=True, exist_ok=True)
     
+    # Build cache key with validation info
     if graph_type == 'radius':
-        filename = f"radius_{graph_param}km.pkl"
+        base_filename = f"radius_{graph_param}km"
     elif graph_type == 'knn':
-        filename = f"knn_{graph_param}.pkl"
+        base_filename = f"knn_{graph_param}"
     else:
         raise ValueError(f"Unknown graph_type: {graph_type}")
     
-    return cache_dir / filename
+    # Add station IDs hash to cache key (prevents cache invalidation)
+    if station_ids is not None:
+        import hashlib
+        station_ids_str = ','.join(sorted(str(sid) for sid in station_ids))
+        station_ids_hash = hashlib.md5(station_ids_str.encode()).hexdigest()[:8]
+        base_filename += f"_stations_{station_ids_hash}"
+    
+    # Add coordinates hash to cache key (detects coordinate changes)
+    if station_coords is not None:
+        import hashlib
+        coords_str = ','.join(f"{c[0]:.6f},{c[1]:.6f}" for c in station_coords)
+        coords_hash = hashlib.md5(coords_str.encode()).hexdigest()[:8]
+        base_filename += f"_coords_{coords_hash}"
+    
+    return cache_dir / f"{base_filename}.pkl"
 

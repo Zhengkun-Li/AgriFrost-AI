@@ -1,5 +1,6 @@
 """Base model interface for all forecasting models."""
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -7,6 +8,8 @@ import pandas as pd
 import numpy as np
 import pickle
 import json
+
+_logger = logging.getLogger(__name__)
 
 
 class BaseModel(ABC):
@@ -97,12 +100,19 @@ class BaseModel(ABC):
         with open(model_path, "wb") as f:
             pickle.dump(self.model, f)
         
-        # Save config
-        with open(config_path, "w") as f:
-            json.dump(self.config, f, indent=2, default=str)
+        # Save config (include feature_names if available)
+        config_to_save = self.config.copy() if self.config else {}
+        if hasattr(self, 'feature_names') and self.feature_names is not None:
+            config_to_save['feature_names'] = self.feature_names
         
-        print(f"Model saved to {model_path}")
-        print(f"Config saved to {config_path}")
+        try:
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config_to_save, f, indent=2, default=str)
+        except (IOError, OSError, TypeError) as e:
+            _logger.warning(f"Failed to save config to {config_path}: {e}")
+        
+        _logger.info(f"Model saved to {model_path}")
+        _logger.info(f"Config saved to {config_path}")
     
     @classmethod
     def load(cls, path: Path) -> "BaseModel":
@@ -114,9 +124,17 @@ class BaseModel(ABC):
         Returns:
             Loaded model instance.
         
+        Raises:
+            FileNotFoundError: If model file does not exist.
+            ValueError: If path is None.
+            (IOError, OSError, pickle.UnpicklingError): If file operations fail.
+        
         Note:
             This is a base implementation. Subclasses may override for custom loading.
         """
+        if path is None:
+            raise ValueError("load path cannot be None")
+        
         if isinstance(path, str):
             path = Path(path)
         
@@ -132,20 +150,33 @@ class BaseModel(ABC):
             raise FileNotFoundError(f"Model file not found: {model_path}")
         
         # Load config
+        config = {}
         if config_path.exists():
-            with open(config_path, "r") as f:
-                config = json.load(f)
-        else:
-            config = {}
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+            except (IOError, OSError, json.JSONDecodeError) as e:
+                _logger.warning(f"Failed to load config from {config_path}: {e}. Using empty config.")
+        
+        # Extract feature_names from config if present
+        feature_names = config.pop('feature_names', None)
         
         # Create instance
         instance = cls(config)
         
         # Load model
-        with open(model_path, "rb") as f:
-            instance.model = pickle.load(f)
+        try:
+            with open(model_path, "rb") as f:
+                instance.model = pickle.load(f)
+        except (IOError, OSError, pickle.UnpicklingError) as e:
+            raise OSError(f"Failed to load model from {model_path}: {e}") from e
+        
+        # Restore feature_names if available
+        if feature_names is not None:
+            instance.feature_names = feature_names
         
         instance.is_fitted = True
+        _logger.debug(f"Loaded model from {model_path}")
         return instance
     
     def get_feature_importance(self) -> Optional[pd.DataFrame]:
@@ -155,6 +186,75 @@ class BaseModel(ABC):
             DataFrame with columns ['feature', 'importance'], or None if not available.
         """
         return None
+    
+    def get_model_info(self) -> Dict[str, Any]:
+        """Get model information for reporting and analysis.
+        
+        Returns:
+            Dictionary containing:
+                - model_type: Model type name (e.g., "lightgbm", "lstm")
+                - task_type: Task type ("classification" or "regression")
+                - n_params: Number of trainable parameters (if available)
+                - library: Underlying library name (e.g., "lightgbm", "torch")
+                - is_fitted: Whether model has been fitted
+                - feature_names: List of feature names (if available)
+        """
+        # Get model type from class name
+        model_type = self.__class__.__name__.lower().replace("model", "").replace("forecast", "")
+        
+        # Determine library
+        library = "unknown"
+        if hasattr(self, "model") and self.model is not None:
+            module_name = self.model.__class__.__module__
+            if "lightgbm" in module_name:
+                library = "lightgbm"
+            elif "xgboost" in module_name:
+                library = "xgboost"
+            elif "catboost" in module_name:
+                library = "catboost"
+            elif "sklearn" in module_name:
+                library = "scikit-learn"
+            elif "torch" in module_name:
+                library = "torch"
+            elif "prophet" in module_name.lower():
+                library = "prophet"
+        
+        # Try to get number of parameters
+        n_params = None
+        if hasattr(self, "model") and self.model is not None:
+            try:
+                # For sklearn models
+                if hasattr(self.model, "coef_"):
+                    n_params = np.prod(self.model.coef_.shape) if hasattr(self.model.coef_, "shape") else None
+                # For tree models
+                elif hasattr(self.model, "n_features_in_"):
+                    n_params = self.model.n_features_in_
+                # For PyTorch models
+                elif hasattr(self.model, "parameters"):
+                    n_params = sum(p.numel() for p in self.model.parameters())
+            except Exception:
+                pass
+        
+        # Get task type
+        task_type = getattr(self, "task_type", None)
+        if task_type is None:
+            # Try to infer from model type
+            if hasattr(self, "model") and self.model is not None:
+                if "Classifier" in self.model.__class__.__name__:
+                    task_type = "classification"
+                elif "Regressor" in self.model.__class__.__name__:
+                    task_type = "regression"
+        
+        info = {
+            "model_type": model_type,
+            "task_type": task_type,
+            "n_params": n_params,
+            "library": library,
+            "is_fitted": self.is_fitted,
+            "feature_names": self.feature_names if hasattr(self, "feature_names") else None
+        }
+        
+        return info
     
     def get_params(self) -> Dict[str, Any]:
         """Get model parameters.
@@ -190,9 +290,8 @@ class BaseModel(ABC):
     ) -> "BaseModel":
         """Setup optional training utilities.
         
-        This method initializes training history, checkpoint manager, curve plotter,
-        and progress logger. These tools can be used by any model type for consistent
-        training monitoring and checkpointing.
+        This method initializes training history, checkpoint manager, and progress logger.
+        These tools use event-based APIs with Runner path management.
         
         Args:
             checkpoint_dir: Directory to save checkpoints (None = disabled).
@@ -206,63 +305,93 @@ class BaseModel(ABC):
         Returns:
             Self for method chaining.
         """
-        from src.models.utils import (
-            TrainingHistory, CheckpointManager, TrainingCurvePlotter, ProgressLogger
-        )
+        # Use MetricSchema for default metrics if available
+        try:
+            from src.training.metrics import MetricSchema
+            default_metrics = MetricSchema.default_history_metrics()
+        except ImportError:
+            default_metrics = ['train_loss', 'val_loss', 'learning_rate', 'epoch_time']
         
-        # Training history (always available)
-        self.training_history = TrainingHistory()
+        from src.models.utils import TrainingHistory, CheckpointManager, ProgressLogger
         
-        # Checkpoint manager (if checkpoint_dir provided)
+        # Training history (with schema injection)
+        self.training_history = TrainingHistory(metrics=default_metrics, use_metric_schema=True)
+        
+        # Checkpoint manager (path management by Runner)
         if checkpoint_dir:
             self.checkpoint_manager = CheckpointManager(
-                checkpoint_dir=Path(checkpoint_dir),
                 checkpoint_frequency=checkpoint_frequency,
                 save_best=save_best,
                 best_metric=best_metric,
-                best_mode=best_mode
+                best_mode=best_mode,
+                keep_top_k=3
+            )
+            self.checkpoint_manager.bind_dir(Path(checkpoint_dir))
+        else:
+            self.checkpoint_manager = None
+        
+        # Progress logger (event-based, path management by Runner)
+        self.progress_logger = ProgressLogger(use_metric_schema=True)
+        if log_file or detailed_log_file:
+            # Convert to Path if needed (log_file may be str or Path)
+            if log_file:
+                log_path = Path(log_file)
+                if not detailed_log_file:
+                    detailed_log_file = log_path.parent / f"{log_path.stem}_detailed{log_path.suffix}"
+            else:
+                log_path = None
+            if detailed_log_file:
+                detailed_log_path = Path(detailed_log_file)
+            else:
+                detailed_log_path = None
+            self.progress_logger.bind_files(
+                brief_path=log_path,
+                detailed_path=detailed_log_path
             )
         
-        # Curve plotter (always available)
-        self.curve_plotter = TrainingCurvePlotter()
-        
-        # Progress logger (always available)
-        # If detailed_log_file not provided but log_file is, derive it
-        if log_file and not detailed_log_file:
-            log_path = Path(log_file)
-            detailed_log_file = log_path.parent / f"{log_path.stem}_detailed{log_path.suffix}"
-        
-        self.progress_logger = ProgressLogger(
-            log_file=log_file,
-            detailed_log_file=detailed_log_file
-        )
+        # Curve plotter is now stateless (no instance needed)
+        self.curve_plotter = None
         
         return self
     
     def save_training_artifacts(self, output_dir: Path) -> None:
         """Save training artifacts (history, curves) if available.
         
+        Uses stateless plotting functions from `src.visualization.plots`.
+        
         Args:
             output_dir: Directory to save artifacts.
+        
+        Raises:
+            ValueError: If output_dir is None.
+            OSError: If directory creation fails.
         """
+        if output_dir is None:
+            raise ValueError("output_dir cannot be None")
+        
         output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            output_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            raise OSError(f"Failed to create output directory {output_dir}: {e}") from e
         
         # Save training history
         if self.training_history and len(self.training_history) > 0:
             history_path = output_dir / "training_history.json"
             self.training_history.save(history_path)
             
-            # Plot training curves
-            if self.curve_plotter:
-                curve_path = output_dir / "training_curves.png"
-                history_dict = self.training_history.get_history()
-                
-                # Check if it's a multi-task model
-                if any('_temp' in k or '_frost' in k for k in history_dict.keys()):
-                    self.curve_plotter.plot_multitask(history_dict, curve_path)
-                else:
-                    self.curve_plotter.plot(history_dict, curve_path)
+            # Plot training curves (stateless function from visualization.plots)
+            from src.visualization.plots import plot_training_curves, plot_multitask_curves
+            
+            curve_path = output_dir / "training_curves.png"
+            
+            history_dict = self.training_history.get_history()
+            
+            # Check if it's a multi-task model
+            if isinstance(history_dict, dict) and any('_temp' in k or '_frost' in k or 'train_loss_total' in k for k in history_dict.keys()):
+                plot_multitask_curves(self.training_history, curve_path)
+            else:
+                plot_training_curves(self.training_history, curve_path)
     
     def __repr__(self) -> str:
         """String representation of the model."""

@@ -1,8 +1,16 @@
-"""Training curve plotting utility."""
+"""Training curve plotting utility.
 
-from typing import Dict, List, Any, Optional, Tuple
+**Note:** This module provides basic training curve plotting.
+For advanced visualizations (ROC curves, Precision-Recall curves, etc.),
+use src.visualization.plots module instead.
+"""
+
+import logging
+from typing import Dict, List, Any, Optional, Tuple, Union
 from pathlib import Path
 import sys
+
+_logger = logging.getLogger(__name__)
 
 
 class TrainingCurvePlotter:
@@ -39,7 +47,7 @@ class TrainingCurvePlotter:
     
     def plot(
         self,
-        history: Dict[str, List[Any]],
+        history: Union[Dict[str, List[Any]], Any],
         save_path: Path,
         title: str = "Training Curves",
         figsize: Tuple[int, int] = (10, 8),
@@ -47,9 +55,17 @@ class TrainingCurvePlotter:
     ) -> bool:
         """Plot training curves from history.
         
+        **TrainingHistory Integration:**
+        - Accepts TrainingHistory instance directly (uses get_history())
+        - Ensures consistency between ProgressLogger, TrainingHistory, and plotting
+        
+        **Normalized Save Path:**
+        - Saves to model_dir/curves/loss.png (standardized structure)
+        - Compatible with new CLI output structure
+        
         Args:
-            history: Training history dictionary with metric names as keys.
-            save_path: Path to save the plot.
+            history: Training history dictionary or TrainingHistory instance.
+            save_path: Path to save the plot (normalized to curves/ subdirectory).
             title: Plot title.
             figsize: Figure size (width, height).
             dpi: Resolution for saved figure.
@@ -57,12 +73,23 @@ class TrainingCurvePlotter:
         Returns:
             True if plot was saved successfully, False otherwise.
         """
+        # Handle TrainingHistory instance
+        if hasattr(history, 'get_history'):
+            history = history.get_history()
+        
+        # Normalize save path to curves/ subdirectory
+        save_path = Path(save_path)
+        if save_path.parent.name != 'curves':
+            # If save_path is model_dir/plot.png, change to model_dir/curves/plot.png
+            curves_dir = save_path.parent / "curves"
+            save_path = curves_dir / save_path.name
+        
         if self.backend == "matplotlib" and self._matplotlib_available:
             return self._plot_matplotlib(history, save_path, title, figsize, dpi)
         elif self.backend == "plotly" and self._plotly_available:
             return self._plot_plotly(history, save_path, title)
         else:
-            print(f"  ⚠️  Plotting backend '{self.backend}' not available, skipping plot", flush=True)
+            _logger.warning(f"Plotting backend '{self.backend}' not available, skipping plot")
             return False
     
     def _plot_matplotlib(
@@ -98,7 +125,7 @@ class TrainingCurvePlotter:
                 metrics_to_plot.append(('lr', ['learning_rate']))
             
             if len(metrics_to_plot) == 0:
-                print("  ⚠️  No metrics to plot", flush=True)
+                _logger.warning("No metrics to plot")
                 return False
             
             n_plots = len(metrics_to_plot)
@@ -154,7 +181,7 @@ class TrainingCurvePlotter:
             return True
             
         except Exception as e:
-            print(f"  ⚠️  Failed to plot training curves: {e}", flush=True)
+            _logger.warning(f"Failed to plot training curves: {e}", exc_info=True)
             return False
     
     def _plot_plotly(
@@ -258,6 +285,6 @@ class TrainingCurvePlotter:
             return True
             
         except Exception as e:
-            print(f"  ⚠️  Failed to plot multi-task training curves: {e}", flush=True)
+            _logger.warning(f"Failed to plot multi-task training curves: {e}", exc_info=True)
             return False
 

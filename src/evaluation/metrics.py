@@ -1,7 +1,10 @@
 """Evaluation metrics for frost forecasting models."""
 
+import logging
 from typing import Dict, Optional
 import numpy as np
+
+_logger = logging.getLogger(__name__)
 
 try:
     from sklearn.metrics import (
@@ -54,7 +57,26 @@ class MetricsCalculator:
             - rmse: Root Mean Squared Error
             - r2: R-squared
             - mape: Mean Absolute Percentage Error (if applicable)
+        
+        Raises:
+            ValueError: If inputs are empty or have incompatible shapes.
         """
+        # Input validation
+        y_true = np.asarray(y_true)
+        y_pred = np.asarray(y_pred)
+        
+        if len(y_true) == 0 or len(y_pred) == 0:
+            raise ValueError(f"Input arrays cannot be empty. y_true length: {len(y_true)}, y_pred length: {len(y_pred)}")
+        
+        if len(y_true) != len(y_pred):
+            raise ValueError(f"y_true and y_pred must have the same length. Got {len(y_true)} and {len(y_pred)}")
+        
+        if not np.isfinite(y_true).all():
+            _logger.warning("y_true contains non-finite values (NaN or Inf)")
+        
+        if not np.isfinite(y_pred).all():
+            _logger.warning("y_pred contains non-finite values (NaN or Inf)")
+        
         metrics = {
             "mae": mean_absolute_error(y_true, y_pred),
             "rmse": np.sqrt(mean_squared_error(y_true, y_pred)),
@@ -98,9 +120,29 @@ class MetricsCalculator:
             - roc_auc: ROC AUC (if y_proba provided)
             - pr_auc: Precision-Recall AUC (if y_proba provided)
             - brier_score: Brier Score (if y_proba provided)
+        
+        Raises:
+            ImportError: If scikit-learn is not available.
+            ValueError: If inputs are empty or have incompatible shapes.
         """
         if not SKLEARN_AVAILABLE:
             raise ImportError("scikit-learn is required for classification metrics. Install with: pip install scikit-learn")
+        
+        # Input validation
+        y_true = np.asarray(y_true).flatten()
+        y_pred = np.asarray(y_pred).flatten()
+        
+        if len(y_true) == 0 or len(y_pred) == 0:
+            raise ValueError(f"Input arrays cannot be empty. y_true length: {len(y_true)}, y_pred length: {len(y_pred)}")
+        
+        if len(y_true) != len(y_pred):
+            raise ValueError(f"y_true and y_pred must have the same length. Got {len(y_true)} and {len(y_pred)}")
+        
+        # Check for valid binary labels
+        unique_true = np.unique(y_true)
+        unique_pred = np.unique(y_pred)
+        if not np.all(np.isin(unique_true, [0, 1])) or not np.all(np.isin(unique_pred, [0, 1])):
+            _logger.warning(f"Expected binary labels (0, 1), but found: y_true={unique_true}, y_pred={unique_pred}")
         
         metrics = {
             "accuracy": np.mean(y_true == y_pred),
@@ -111,19 +153,32 @@ class MetricsCalculator:
         
         # Probability-based metrics
         if y_proba is not None:
+            y_proba = np.asarray(y_proba).flatten()
+            
+            if len(y_proba) != len(y_true):
+                raise ValueError(f"y_proba must have the same length as y_true. Got {len(y_proba)} and {len(y_true)}")
+            
+            # Check probability range
+            if np.any(y_proba < 0) or np.any(y_proba > 1):
+                _logger.warning("y_proba contains values outside [0, 1]. Clipping will be applied.")
+                y_proba = np.clip(y_proba, 0, 1)
+            
             try:
                 metrics["roc_auc"] = roc_auc_score(y_true, y_proba)
-            except ValueError:
+            except ValueError as e:
+                _logger.debug(f"Could not calculate ROC AUC: {e}")
                 metrics["roc_auc"] = np.nan
             
             try:
                 metrics["pr_auc"] = average_precision_score(y_true, y_proba)
-            except ValueError:
+            except ValueError as e:
+                _logger.debug(f"Could not calculate PR AUC: {e}")
                 metrics["pr_auc"] = np.nan
             
             try:
                 metrics["brier_score"] = brier_score_loss(y_true, y_proba)
-            except ValueError:
+            except ValueError as e:
+                _logger.debug(f"Could not calculate Brier Score: {e}")
                 metrics["brier_score"] = np.nan
         
         # Confusion matrix
@@ -149,28 +204,53 @@ class MetricsCalculator:
         
         Returns:
             Dictionary of probability metrics.
+        
+        Raises:
+            ValueError: If inputs are empty or have incompatible shapes.
         """
+        # Input validation
+        y_true = np.asarray(y_true).flatten()
+        y_proba = np.asarray(y_proba).flatten()
+        
+        if len(y_true) == 0 or len(y_proba) == 0:
+            raise ValueError(f"Input arrays cannot be empty. y_true length: {len(y_true)}, y_proba length: {len(y_proba)}")
+        
+        if len(y_true) != len(y_proba):
+            raise ValueError(f"y_true and y_proba must have the same length. Got {len(y_true)} and {len(y_proba)}")
+        
+        # Check probability range
+        if np.any(y_proba < 0) or np.any(y_proba > 1):
+            _logger.warning("y_proba contains values outside [0, 1]. Clipping will be applied.")
+            y_proba = np.clip(y_proba, 0, 1)
+        
         metrics = {}
         
         try:
             metrics["brier_score"] = brier_score_loss(y_true, y_proba)
-        except ValueError:
+        except ValueError as e:
+            _logger.debug(f"Could not calculate Brier Score: {e}")
             metrics["brier_score"] = np.nan
         
         try:
             metrics["roc_auc"] = roc_auc_score(y_true, y_proba)
-        except ValueError:
+        except ValueError as e:
+            _logger.debug(f"Could not calculate ROC AUC: {e}")
             metrics["roc_auc"] = np.nan
         
         try:
             metrics["pr_auc"] = average_precision_score(y_true, y_proba)
-        except ValueError:
+        except ValueError as e:
+            _logger.debug(f"Could not calculate PR AUC: {e}")
             metrics["pr_auc"] = np.nan
         
         # Expected Calibration Error (ECE)
         try:
             metrics["ece"] = MetricsCalculator.calculate_ece(y_true, y_proba)
-        except Exception:
+        except (ValueError, TypeError) as e:
+            _logger.debug(f"Could not calculate ECE: {e}")
+            metrics["ece"] = np.nan
+        except Exception as e:
+            _logger.warning(f"Unexpected error calculating ECE: {e}")
             metrics["ece"] = np.nan
         
         return metrics
@@ -192,13 +272,27 @@ class MetricsCalculator:
         
         Returns:
             ECE value (lower is better, 0 is perfect calibration).
+        
+        Raises:
+            ValueError: If inputs are empty, have incompatible shapes, or n_bins <= 0.
         """
         # Ensure 1D arrays
         y_true = np.asarray(y_true).flatten()
         y_proba = np.asarray(y_proba).flatten()
         
+        if len(y_true) == 0 or len(y_proba) == 0:
+            raise ValueError(f"Input arrays cannot be empty. y_true length: {len(y_true)}, y_proba length: {len(y_proba)}")
+        
         if len(y_true) != len(y_proba):
             raise ValueError(f"y_true and y_proba must have the same length. Got {len(y_true)} and {len(y_proba)}")
+        
+        if n_bins <= 0:
+            raise ValueError(f"n_bins must be positive, got {n_bins}")
+        
+        # Check probability range and clip if needed
+        if np.any(y_proba < 0) or np.any(y_proba > 1):
+            _logger.debug("Clipping y_proba to [0, 1] for ECE calculation")
+            y_proba = np.clip(y_proba, 0, 1)
         
         # Bin edges
         bin_boundaries = np.linspace(0, 1, n_bins + 1)
@@ -236,13 +330,27 @@ class MetricsCalculator:
         
         Returns:
             Dictionary with bin centers, predicted probabilities, and actual frequencies.
+        
+        Raises:
+            ValueError: If inputs are empty, have incompatible shapes, or n_bins <= 0.
         """
         # Ensure 1D arrays
         y_true = np.asarray(y_true).flatten()
         y_proba = np.asarray(y_proba).flatten()
         
+        if len(y_true) == 0 or len(y_proba) == 0:
+            raise ValueError(f"Input arrays cannot be empty. y_true length: {len(y_true)}, y_proba length: {len(y_proba)}")
+        
         if len(y_true) != len(y_proba):
             raise ValueError(f"y_true and y_proba must have the same length. Got {len(y_true)} and {len(y_proba)}")
+        
+        if n_bins <= 0:
+            raise ValueError(f"n_bins must be positive, got {n_bins}")
+        
+        # Check probability range and clip if needed
+        if np.any(y_proba < 0) or np.any(y_proba > 1):
+            _logger.debug("Clipping y_proba to [0, 1] for reliability diagram")
+            y_proba = np.clip(y_proba, 0, 1)
         
         bin_boundaries = np.linspace(0, 1, n_bins + 1)
         bin_lowers = bin_boundaries[:-1]
@@ -289,18 +397,104 @@ class MetricsCalculator:
         
         Returns:
             Dictionary of all metrics.
+        
+        Raises:
+            ValueError: If task_type is not "regression" or "classification".
         """
+        if task_type not in ["regression", "classification"]:
+            raise ValueError(f"task_type must be 'regression' or 'classification', got {task_type}")
+        
         if task_type == "regression":
             metrics = MetricsCalculator.calculate_regression_metrics(y_true, y_pred)
             if y_proba is not None:
                 # For regression with probability output, also calculate probability metrics
                 # Convert y_true to binary if needed (e.g., frost event threshold)
                 # This is a placeholder - should be configured based on use case
+                _logger.debug("Probability metrics for regression tasks not yet implemented")
                 pass
         else:
             metrics = MetricsCalculator.calculate_classification_metrics(y_true, y_pred, y_proba)
         
         return metrics
+    
+    @staticmethod
+    def calculate_multitask_metrics(
+        y_true_frost: np.ndarray,
+        y_pred_frost: np.ndarray,
+        y_proba_frost: Optional[np.ndarray],
+        y_true_temp: np.ndarray,
+        y_pred_temp: np.ndarray
+    ) -> Dict[str, Dict[str, float]]:
+        """Calculate metrics for multi-task models (classification + regression).
+        
+        Args:
+            y_true_frost: True frost labels (binary).
+            y_pred_frost: Predicted frost labels (binary).
+            y_proba_frost: Predicted frost probabilities (optional).
+            y_true_temp: True temperature values.
+            y_pred_temp: Predicted temperature values.
+        
+        Returns:
+            Dictionary with structured metrics:
+            {
+                "classification": {
+                    "roc_auc": ...,
+                    "pr_auc": ...,
+                    "brier_score": ...,
+                    "ece": ...,
+                    "precision": ...,
+                    "recall": ...,
+                    "f1": ...
+                },
+                "regression": {
+                    "mae": ...,
+                    "rmse": ...,
+                    "r2": ...
+                }
+            }
+        
+        Raises:
+            ValueError: If inputs are empty or have incompatible shapes.
+        """
+        # Validate inputs
+        y_true_frost = np.asarray(y_true_frost).flatten()
+        y_pred_frost = np.asarray(y_pred_frost).flatten()
+        y_true_temp = np.asarray(y_true_temp).flatten()
+        y_pred_temp = np.asarray(y_pred_temp).flatten()
+        
+        if len(y_true_frost) == 0 or len(y_true_temp) == 0:
+            raise ValueError("Input arrays cannot be empty")
+        
+        if len(y_true_frost) != len(y_true_temp):
+            raise ValueError(
+                f"Frost and temp targets must have the same length. "
+                f"Got {len(y_true_frost)} and {len(y_true_temp)}"
+            )
+        
+        # Calculate classification metrics (frost)
+        classification_metrics = MetricsCalculator.calculate_classification_metrics(
+            y_true_frost, y_pred_frost, y_proba_frost
+        )
+        
+        # Calculate probability metrics if available
+        if y_proba_frost is not None:
+            prob_metrics = MetricsCalculator.calculate_probability_metrics(
+                y_true_frost, y_proba_frost
+            )
+            # Merge probability metrics (may include ECE)
+            for key, value in prob_metrics.items():
+                if key not in classification_metrics:
+                    classification_metrics[key] = value
+        
+        # Calculate regression metrics (temperature)
+        regression_metrics = MetricsCalculator.calculate_regression_metrics(
+            y_true_temp, y_pred_temp
+        )
+        
+        return {
+            "classification": classification_metrics,
+            "regression": regression_metrics
+        }
     
     @staticmethod
     def format_metrics(metrics: Dict[str, float], precision: int = 4) -> str:

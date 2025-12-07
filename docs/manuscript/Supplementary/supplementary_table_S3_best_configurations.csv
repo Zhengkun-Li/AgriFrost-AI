@@ -1,0 +1,17 @@
+model,matrix_cell,horizon_h,radius_km,roc_auc,pr_auc,brier_score,temp_rmse,path
+gru,A,3,0.0,0.9969426837150492,0.740804485797967,0.0025071000335470865,1.5985778372663502,experiments/gru/raw/A/A/full_training/horizon_3h/full_training/horizon_3h
+gru,A,6,0.0,0.9935011210693152,0.5962127097952612,0.0032993015415733037,2.317004531102628,experiments/gru/raw/A/A/full_training/horizon_12h/full_training/horizon_6h
+gru,A,12,0.0,0.9882985194529714,0.45771578289155357,0.0038881241670955338,2.854277405885168,experiments/gru/raw/A/A/full_training/horizon_6h/full_training/horizon_12h
+lightgbm,A,24,0.0,0.9820771406378211,0.30586634452073147,0.005205679481785059,2.5893099550647234,experiments/lightgbm/raw/A/full_training/horizon_24h
+lightgbm,B,3,0.0,0.9969235036876423,0.7041580810000353,0.0028979132833966627,1.5046358923478447,experiments/lightgbm/feature_engineering/B/full_training/horizon_3h
+lightgbm,B,6,0.0,0.9937186076178773,0.5530524024877622,0.0038030675846202236,1.9888845367229464,experiments/lightgbm/feature_engineering/B/full_training/horizon_6h
+lightgbm,B,12,0.0,0.9895849785495453,0.4336780133583974,0.004366076361198146,2.402619769861656,experiments/lightgbm/feature_engineering/B/full_training_threshold_80/full_training/horizon_12h
+lightgbm,B,24,0.0,0.984304411946293,0.32070730360002603,0.006463731384567014,2.531531616763875,experiments/lightgbm/feature_engineering/B/full_training/horizon_24h
+lightgbm,C,3,60.0,0.9972327742572048,0.7241652514959019,0.0026782299484716865,1.5797342463189772,experiments/lightgbm/raw/C/radius_60km/full_training/horizon_3h
+lightgbm,C,6,160.0,0.9942933631674956,0.5871432151044276,0.0038502193273237213,2.0474433093599633,experiments/lightgbm/raw/C/radius_160km/full_training/horizon_6h
+lightgbm,C,12,200.0,0.9900853691202655,0.49137477119394507,0.004348148925329777,2.418538004393567,experiments/lightgbm/raw/C/radius_200km/full_training/horizon_12h
+lightgbm,C,24,180.0,0.9876765703079138,0.4671053150277252,0.004496075827068737,2.388115673403679,experiments/lightgbm/raw/C/radius_180km/full_training/horizon_24h
+catboost,D,3,200.0,0.9874060681578082,0.393135646449553,0.0038350959193115606,3.65780116548098,experiments/catboost/feature_engineering/D/radius_200km/full_training/horizon_3h
+xgboost,D,6,160.0,0.9737490264939617,0.23542390772142308,0.0047057441276699905,4.36380294098944,experiments/xgboost/feature_engineering/D/radius_160km/full_training/horizon_6h
+xgboost,D,12,200.0,0.963379230526643,0.1467375792081919,0.004919416724359503,4.980389666957919,experiments/xgboost/feature_engineering/D/radius_200km/full_training/horizon_12h
+xgboost,D,24,200.0,0.9521428374720357,0.12980326329538058,0.004807007442048483,5.361032124114816,experiments/xgboost/feature_engineering/D/radius_200km/full_training/horizon_24h

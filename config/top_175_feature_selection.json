@@ -1,8 +1,0 @@
-{
-  "enabled": true,
-  "method": "importance",
-  "top_k": 175,
-  "importance_path": "experiments/test_new_features_100k/feature_importance_3h_all.csv",
-  "save_report": true,
-  "report_path": "config/feature_selection_report.json"
-}

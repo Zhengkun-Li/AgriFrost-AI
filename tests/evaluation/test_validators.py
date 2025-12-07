@@ -34,15 +34,31 @@ class TestCrossValidator:
         with pytest.raises(ValueError, match="Date column"):
             CrossValidator.time_split(df)
     
-    def test_leave_one_station_out(self, sample_dataframe):
-        """Test LOSO cross-validation."""
-        splits = CrossValidator.leave_one_station_out(sample_dataframe)
+    def test_leave_one_station_out(self):
+        """Test LOSO cross-validation with multiple stations."""
+        # Create DataFrame with multiple stations (LOSO requires at least 2)
+        df = pd.DataFrame({
+            "Stn Id": [2, 2, 7, 7],
+            "Date": pd.date_range("2020-01-01", periods=4, freq="h"),
+            "value": [1, 2, 3, 4]
+        })
         
-        assert len(splits) == 1  # Only one station in sample_dataframe
+        splits = CrossValidator.leave_one_station_out(df)
         
-        train, test = splits[0]
-        assert len(train) == 0  # All data is from same station
-        assert len(test) == len(sample_dataframe)
+        # Should have splits for each unique station (2 stations)
+        assert len(splits) == 2
+        
+        # Check each split
+        for train, test in splits:
+            test_station = test["Stn Id"].iloc[0]
+            assert test_station not in train["Stn Id"].values
+            assert len(test) > 0
+    
+    def test_leave_one_station_out_single_station(self, sample_dataframe):
+        """Test LOSO cross-validation with single station (should raise error)."""
+        # LOSO requires at least 2 stations
+        with pytest.raises(ValueError, match="Need at least 2 stations"):
+            CrossValidator.leave_one_station_out(sample_dataframe)
     
     def test_leave_one_station_out_multiple_stations(self):
         """Test LOSO with multiple stations."""

@@ -1,0 +1,27 @@
+qc_mapping:
+  "": true
+  Y: true
+  M: false
+  R: false
+  S: false
+  Q: false
+  P: false
+
+variable_qc_map: {}
+
+sentinel_values:
+  - -6999
+  - -9999
+
+impute:
+  enabled: true
+  strategy: forward_fill
+  columns: null
+
+outlier:
+  enabled: false
+  method: iqr
+  factor: 1.5
+  mode: nan
+  columns: null
+

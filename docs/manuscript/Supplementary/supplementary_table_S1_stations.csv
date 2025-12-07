@@ -1,0 +1,19 @@
+Stn Id,Stn Name,CIMIS Region,County,City,Latitude,Longitude,Elevation (ft),GroundCover,ConnectDate,DisconnectDate,IsActive,IsEtoStation
+2,FivePoints,San Joaquin Valley,Fresno,Five Points,36.336222,-120.11291,285,Grass,6/7/1982,12/31/2050,True,True
+7,Firebaugh/Telles,San Joaquin Valley,Fresno,Firebaugh,36.851222,-120.59092,185,Grass,9/22/1982,12/31/2050,True,False
+15,Stratford,San Joaquin Valley,Kings,Stratford,36.157972,-119.85143,193,Grass,10/29/1982,12/31/2050,True,True
+39,Parlier,San Joaquin Valley,Fresno,Parlier,36.597444,-119.50404,337,Grass,5/23/1983,12/31/2050,True,True
+47,Brentwood,San Francisco Bay,Contra Costa,Brentwood,37.928258,-121.6599,45,Grass,11/18/1985,12/31/2050,True,True
+70,Manteca,San Joaquin Valley,San Joaquin,Manteca,37.834822,-121.22319,33,Grass,11/12/1987,12/31/2050,True,True
+71,Modesto,San Joaquin Valley,Stanislaus,Modesto,37.645222,-121.18776,35,Grass,6/25/1987,12/31/2050,True,True
+80,Fresno State,San Joaquin Valley,Fresno,Fresno,36.820833,-119.74231,339,Grass,10/3/1988,12/31/2050,True,True
+105,Westlands,San Joaquin Valley,Fresno,Tranquility,36.634028,-120.38181,191,Grass,4/17/1992,12/31/2050,True,True
+124,Panoche,San Joaquin Valley,Fresno,Firebaugh,36.890056,-120.73141,183,Grass,7/27/1995,12/31/2050,True,True
+125,Arvin-Edison,San Joaquin Valley,Kern,Arvin,35.205583,-118.77841,500,Grass,3/22/1995,12/31/2050,True,True
+131,Fair Oaks,Sacramento Valley,Sacramento,Fair Oaks,38.649964,-121.21887,265,Grass,4/18/1997,12/31/2050,True,True
+146,Belridge,San Joaquin Valley,Kern,Lost Hills,35.505833,-119.69114,410,Grass,10/9/1998,12/31/2050,True,True
+182,Delano,San Joaquin Valley,Tulare,Delano,35.833,-119.25596,300,Grass,3/21/2002,12/31/2050,True,True
+194,Oakdale,San Joaquin Valley,Stanislaus,Oakdale,37.727194,-120.85086,165,Grass,11/2/2004,12/31/2050,True,True
+195,Auburn,Sierra Foothill,Placer,Auburn,38.887603,-121.10291,935,Grass,2/16/2005,12/31/2050,True,True
+205,Coalinga,San Joaquin Valley,Fresno,Coalinga,36.175833,-120.36027,730,Grass,3/25/2010,12/31/2050,True,False
+206,Denair II,San Joaquin Valley,Stanislaus,Denair,37.545869,-120.75453,150,Grass,4/9/2009,12/31/2050,True,True

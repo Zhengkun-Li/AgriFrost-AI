@@ -1,0 +1,33 @@
+qc_mapping:
+  "": true
+  Y: true
+  M: false
+  R: false
+  S: false
+  Q: false
+  P: false
+
+variable_qc_map: {}
+
+sentinel_values:
+  - -6999
+  - -9999
+
+impute:
+  enabled: true
+  strategy: forward_fill
+  columns:
+    - "Air Temp (C)"
+    - "Rel Hum (%)"
+    - "Wind Speed (m/s)"
+    - "Sol Rad (W/sq.m)"
+
+outlier:
+  enabled: true
+  method: zscore
+  factor: 3.0
+  mode: nan
+  columns:
+    - "Air Temp (C)"
+    - "Rel Hum (%)"
+

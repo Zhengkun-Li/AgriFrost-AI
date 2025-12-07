@@ -1,0 +1,39 @@
+# Matrix Cell D Configuration
+# Multi-station with spatial aggregation, feature-engineered features
+# Track: feature_engineering
+# Use case: Multi-station model with engineered features, incorporating neighbor station data
+# IMPORTANT: Requires --radius-km CLI parameter for spatial aggregation distance threshold
+
+data:
+  source: data/raw/frost-risk-forecast-challenge/stations
+  matrix_cell: D
+  track: feature_engineering  # Explicitly specify track
+  sample_size: null
+  cleaning:
+    config_path: config/data_cleaning_fe.yaml
+  feature_engineering:
+    enabled: true  # Feature engineering enabled for Matrix Cell D
+    config_path: config/feature_engineering/feature_engineering.yaml
+    # Spatial aggregation configuration will be set dynamically via CLI --radius-km parameter
+    # The spatial.radius_km from CLI will be mapped to spatial_aggregation.distance_threshold_km
+
+labels:
+  horizons: [3, 6, 12, 24]
+  frost_threshold: 0.0
+
+training:
+  # model: will be specified via --model CLI argument
+  # output_dir: will be specified via --output CLI argument or auto-generated
+  feature_selection: null
+  feature_selection_config: null
+  top_k: null
+
+evaluation:
+  loso:
+    enabled: false
+    save_models: false
+    resume: false
+    save_worst_n: null
+    save_horizons: null
+
+

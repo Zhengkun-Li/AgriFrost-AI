@@ -6,6 +6,7 @@ This module handles:
 - Model saving
 """
 
+import logging
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -21,6 +22,8 @@ sys.path.insert(0, str(project_root))
 
 import pandas as pd
 import numpy as np
+
+_logger = logging.getLogger(__name__)
 
 from src.evaluation.metrics import MetricsCalculator
 from src.evaluation.validators import CrossValidator
@@ -67,6 +70,33 @@ def check_models_exist(
         return frost_model_exists and temp_model_exists
 
 
+def _ensure_finite_array(
+    values,
+    name: str,
+    fill_value: float = 0.0,
+    clip_range: Optional[Tuple[float, float]] = None
+) -> Optional[np.ndarray]:
+    """Ensure arrays used for metrics don't contain NaN/Inf values."""
+    if values is None:
+        return values
+
+    arr = np.asarray(values, dtype=np.float64)
+    invalid_mask = ~np.isfinite(arr)
+    if invalid_mask.any():
+        _logger.warning(
+            "Detected %d invalid values in %s; replacing with %s via np.nan_to_num",
+            invalid_mask.sum(),
+            name,
+            fill_value
+        )
+        arr = np.nan_to_num(arr, nan=fill_value, posinf=fill_value, neginf=fill_value)
+
+    if clip_range is not None:
+        arr = np.clip(arr, clip_range[0], clip_range[1])
+
+    return arr
+
+
 def load_existing_results(horizon_dir: Path) -> Optional[Dict]:
     """Load existing results if models exist.
     
@@ -85,12 +115,16 @@ def load_existing_results(horizon_dir: Path) -> Optional[Dict]:
         with open(temp_metrics_path, "r") as f:
             temp_metrics = json.load(f)
         
-        print(f"  Frost - Brier: {frost_metrics.get('brier_score', 'N/A'):.4f}, "
-              f"ECE: {frost_metrics.get('ece', 'N/A'):.4f}, "
-              f"ROC-AUC: {frost_metrics.get('roc_auc', 'N/A'):.4f}")
-        print(f"  Temp  - MAE: {temp_metrics.get('mae', 'N/A'):.4f}, "
-              f"RMSE: {temp_metrics.get('rmse', 'N/A'):.4f}, "
-              f"R²: {temp_metrics.get('r2', 'N/A'):.4f}")
+        _logger.info(
+            f"Frost - Brier: {frost_metrics.get('brier_score', 'N/A'):.4f}, "
+            f"ECE: {frost_metrics.get('ece', 'N/A'):.4f}, "
+            f"ROC-AUC: {frost_metrics.get('roc_auc', 'N/A'):.4f}"
+        )
+        _logger.info(
+            f"Temp  - MAE: {temp_metrics.get('mae', 'N/A'):.4f}, "
+            f"RMSE: {temp_metrics.get('rmse', 'N/A'):.4f}, "
+            f"R²: {temp_metrics.get('r2', 'N/A'):.4f}"
+        )
         
         return {
             "frost_metrics": frost_metrics,
@@ -128,11 +162,11 @@ def train_frost_model(
     model_frost = model_class(frost_config)
     
     if model_type in ["lightgbm", "xgboost", "catboost"]:
-        model_frost.fit(X_train, y_frost_train, eval_set=[(X_val, y_frost_val)])
+        # Pass fit_kwargs (including log_file) to model.fit()
+        model_frost.fit(X_train, y_frost_train, eval_set=[(X_val, y_frost_val)], **fit_kwargs)
     elif model_type == "prophet":
         if "Date" not in X_train.columns:
-            print("  ⚠️  Warning: Date column not found. Prophet may not work correctly.")
-            print("     Consider ensuring Date column is available in feature engineering.")
+            _logger.warning("Date column not found. Prophet may not work correctly. Consider ensuring Date column is available in feature engineering.")
         model_frost.fit(X_train, y_frost_train)
     elif model_type == "lstm":
         # Get checkpoint directory from config or kwargs
@@ -144,7 +178,8 @@ def train_frost_model(
         if station_ids_val is not None:
             fit_kwargs_lstm['station_ids_val'] = station_ids_val
         # Pass eval_set (external validation from time split)
-        eval_set = [(X_val, y_frost_val)] if 'X_val' in locals() and 'y_frost_val' in locals() else None
+        # Use parameters passed to function instead of locals() check
+        eval_set = [(X_val, y_frost_val)] if X_val is not None and y_frost_val is not None else None
         if checkpoint_dir:
             fit_kwargs_lstm['checkpoint_dir'] = checkpoint_dir
         if 'resume_from_checkpoint' in fit_kwargs:
@@ -190,10 +225,10 @@ def train_temp_model(
     """
     # Initialize temp model (reuse model_class for same model type)
     if model_type == "lstm":
-        from src.models.deep.lstm_model import LSTMForecastModel
+        from src.models.deep.lstm import LSTMForecastModel
         temp_model_class = LSTMForecastModel
     elif model_type == "prophet":
-        from src.models.traditional.prophet_model import ProphetModel
+        from src.models.traditional.prophet import ProphetModel
         temp_model_class = ProphetModel
     else:
         temp_model_class = model_class
@@ -201,10 +236,11 @@ def train_temp_model(
     model_temp = temp_model_class(temp_config)
     
     if model_type in ["lightgbm", "xgboost", "catboost"]:
-        model_temp.fit(X_train, y_temp_train, eval_set=[(X_val, y_temp_val)])
+        # Pass fit_kwargs (including log_file) to model.fit()
+        model_temp.fit(X_train, y_temp_train, eval_set=[(X_val, y_temp_val)], **fit_kwargs)
     elif model_type == "prophet":
         if "Date" not in X_train.columns:
-            print("  ⚠️  Warning: Date column not found. Prophet may not work correctly.")
+            _logger.warning("Date column not found. Prophet may not work correctly.")
         model_temp.fit(X_train, y_temp_train)
     elif model_type == "lstm":
         # Get checkpoint directory from config or kwargs
@@ -299,7 +335,7 @@ def evaluate_models(
         
         # Handle models that don't support predict_proba (LSTM, Prophet)
         if y_frost_proba is None:
-            print("  ⚠️  Model doesn't support predict_proba. Using temperature regression for frost probability.")
+            _logger.warning("Model doesn't support predict_proba. Using temperature regression for frost probability.")
             if model_type == "lstm":
                 y_temp_pred = model_temp.predict(X_test, station_ids=station_ids_test)
             elif model_type == "lstm_multitask":
@@ -315,6 +351,25 @@ def evaluate_models(
                 y_temp_pred = model_temp.predict(X_test, station_ids=station_ids_test)
             else:
                 y_temp_pred = model_temp.predict(X_test)
+    
+    # Sanitize predictions before computing metrics
+    y_frost_proba = _ensure_finite_array(
+        y_frost_proba,
+        "frost probabilities",
+        fill_value=0.0,
+        clip_range=(0.0, 1.0)
+    )
+    y_temp_pred = _ensure_finite_array(
+        y_temp_pred,
+        "temperature predictions",
+        fill_value=0.0
+    )
+    y_frost_pred = _ensure_finite_array(
+        y_frost_pred,
+        "frost class predictions",
+        fill_value=0.0
+    )
+    y_frost_pred = (y_frost_pred >= 0.5).astype(int)
     
     # Calculate metrics
     frost_metrics = MetricsCalculator.calculate_classification_metrics(
@@ -380,7 +435,7 @@ def save_models_and_results(
         json.dump(temp_metrics, f, indent=2, default=str)
     
     # Generate reliability diagram
-    print(f"\nGenerating reliability diagram...")
+    _logger.info("Generating reliability diagram...")
     plotter = Plotter(style="matplotlib", figsize=(10, 8))
     plotter.plot_reliability_diagram(
         y_frost_test.values,
@@ -405,6 +460,53 @@ def save_models_and_results(
     }
     with open(horizon_dir / "predictions.json", "w") as f:
         json.dump(predictions, f, indent=2, default=str)
+    
+    # Save feature importance if available
+    _save_feature_importance(model_frost, model_temp, horizon_dir, model_type)
+
+
+def _save_feature_importance(model_frost, model_temp, horizon_dir: Path, model_type: str):
+    """Save feature importance for frost and temp models if available.
+    
+    Args:
+        model_frost: Frost classification model.
+        model_temp: Temperature regression model.
+        horizon_dir: Directory to save results.
+        model_type: Model type name.
+    """
+    try:
+        # Get feature importance from frost model
+        frost_importance = model_frost.get_feature_importance() if hasattr(model_frost, 'get_feature_importance') else None
+        if frost_importance is not None:
+            # Normalize to percentages
+            total = frost_importance['importance'].sum()
+            if total > 0:
+                frost_importance = frost_importance.copy()
+                frost_importance['importance_pct'] = (frost_importance['importance'] / total * 100).round(2)
+                frost_importance['cumulative_pct'] = frost_importance['importance_pct'].cumsum()
+                frost_importance = frost_importance.sort_values('importance', ascending=False).reset_index(drop=True)
+            
+            # Save to CSV
+            frost_importance.to_csv(horizon_dir / "frost_feature_importance.csv", index=False)
+            _logger.info(f"Saved frost feature importance to {horizon_dir / 'frost_feature_importance.csv'}")
+        
+        # Get feature importance from temp model
+        temp_importance = model_temp.get_feature_importance() if hasattr(model_temp, 'get_feature_importance') else None
+        if temp_importance is not None:
+            # Normalize to percentages
+            total = temp_importance['importance'].sum()
+            if total > 0:
+                temp_importance = temp_importance.copy()
+                temp_importance['importance_pct'] = (temp_importance['importance'] / total * 100).round(2)
+                temp_importance['cumulative_pct'] = temp_importance['importance_pct'].cumsum()
+                temp_importance = temp_importance.sort_values('importance', ascending=False).reset_index(drop=True)
+            
+            # Save to CSV
+            temp_importance.to_csv(horizon_dir / "temp_feature_importance.csv", index=False)
+            _logger.info(f"Saved temp feature importance to {horizon_dir / 'temp_feature_importance.csv'}")
+    
+    except Exception as e:
+        _logger.warning(f"Could not save feature importance: {e}")
 
 
 def train_models_for_horizon(
@@ -417,7 +519,8 @@ def train_models_for_horizon(
     skip_if_exists: bool = True,
     feature_selection: Optional[Dict] = None,
     track: Optional[str] = None,
-    matrix_cell: Optional[str] = None
+    matrix_cell: Optional[str] = None,
+    experiment_log_file: Optional[Path] = None,
 ) -> Dict:
     """Train classification and regression models for a specific horizon.
     
@@ -436,12 +539,10 @@ def train_models_for_horizon(
     """
     horizon_start_time = time.time()
     horizon_start_datetime = datetime.now()
-    print(f"\n{'='*60}")
-    print(f"Training models for {horizon}h horizon", flush=True)
-    print(f"[{horizon_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Starting {horizon}h horizon training...", flush=True)
-    import sys
-    sys.stdout.flush()
-    print("="*60)
+    _logger.info("=" * 60)
+    _logger.info(f"Training models for {horizon}h horizon")
+    _logger.info(f"[{horizon_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Starting {horizon}h horizon training...")
+    _logger.info("=" * 60)
     
     # Infer track/matrix_cell from output_dir if not provided
     parts = [p for p in output_dir.parts]
@@ -461,28 +562,99 @@ def train_models_for_horizon(
     horizon_dir = base_dir / "full_training" / f"horizon_{horizon}h"
     
     if skip_if_exists and check_models_exist(horizon_dir, model_type):
-        print(f"✅ Models for {horizon}h already exist, loading results...")
+        _logger.info(f"Models for {horizon}h already exist, loading results...")
         results = load_existing_results(horizon_dir)
         if results:
             return results
         else:
-            print(f"⚠️  Models exist but metrics not found, retraining...")
+            _logger.warning(f"Models exist but metrics not found, retraining...")
     
     # Ensure horizon directory exists (for logs and outputs)
     ensure_dir(horizon_dir)
     # Prepare per-horizon brief log file (detailed log will be derived automatically)
     horizon_log_file = str(horizon_dir / "training.log")
     
+    # Create log file immediately if it doesn't exist (ensures data info can be logged)
+    log_path = Path(horizon_log_file)
+    if not log_path.exists():
+        with open(log_path, 'w', encoding='utf-8') as f:
+            f.write(f"Training Log - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write("=" * 70 + "\n\n")
+    
+    # Input validation: Check if DataFrame is empty
+    if df.empty:
+        raise ValueError(f"Input DataFrame is empty. Cannot train models for {horizon}h horizon.")
+    
+    # DEBUG: Log df columns before prepare_features_and_targets
+    neighbor_cols_in_df = [c for c in df.columns if 'neighbor' in c.lower()]
+    _logger.info(f"[train_models_for_horizon] Before prepare_features_and_targets: df has {len(df.columns)} columns, {len(neighbor_cols_in_df)} neighbor columns")
+    _logger.info(f"[train_models_for_horizon] track parameter: {track}, model_type: {model_type}")
+    
     # Prepare data
     X, y_frost, y_temp = prepare_features_and_targets(
         df, horizon, feature_selection=feature_selection, track=track, model_type=model_type
     )
-    print(f"Features: {len(X.columns)}")
-    print(f"Samples: {len(X)}")
-    print(f"Frost events: {y_frost.sum()} ({y_frost.mean()*100:.2f}%)")
     
-    # Time-based split
-    df_split = df.loc[X.index].copy()
+    # DEBUG: Log X columns after prepare_features_and_targets
+    neighbor_cols_in_X = [c for c in X.columns if 'neighbor' in c.lower()]
+    _logger.info(f"[train_models_for_horizon] After prepare_features_and_targets: X has {len(X.columns)} columns, {len(neighbor_cols_in_X)} neighbor columns")
+    if len(neighbor_cols_in_X) == 0:
+        _logger.warning(f"[train_models_for_horizon] WARNING: No neighbor features in X after prepare_features_and_targets!")
+    
+    # Strict validation: Check if features and targets are empty after preparation
+    if X.empty:
+        raise ValueError(
+            f"Features DataFrame is empty after preparation for {horizon}h horizon. "
+            f"This may indicate an issue with feature engineering or data filtering."
+        )
+    if len(y_frost) == 0:
+        raise ValueError(
+            f"Frost target is empty after preparation for {horizon}h horizon. "
+            f"Check label generation logic."
+        )
+    if len(y_temp) == 0:
+        raise ValueError(
+            f"Temperature target is empty after preparation for {horizon}h horizon. "
+            f"Check label generation logic."
+        )
+    
+    # Validate feature and target shapes match
+    if len(X) != len(y_frost) or len(X) != len(y_temp):
+        raise ValueError(
+            f"Feature and target lengths do not match for {horizon}h horizon: "
+            f"X={len(X)}, y_frost={len(y_frost)}, y_temp={len(y_temp)}"
+        )
+    _logger.info(f"Features: {len(X.columns)}")
+    _logger.info(f"Samples: {len(X)}")
+    _logger.info(f"Frost events: {y_frost.sum()} ({y_frost.mean()*100:.2f}%)")
+    
+    # Log data information to training log and experiment log
+    feature_list = list(X.columns)
+    data_info_lines = [
+        f"\n  📊 Data preparation:",
+        f"     Features: {len(X.columns)}",
+        f"     Samples: {len(X):,}",
+        f"     Frost events: {y_frost.sum():,} ({y_frost.mean()*100:.2f}%)",
+        f"     Feature list: {', '.join(feature_list)}",
+    ]
+    
+    # Write to training log
+    if horizon_log_file:
+        log_path = Path(horizon_log_file)
+        if log_path.exists():
+            with open(log_path, 'a', encoding='utf-8') as f:
+                for line in data_info_lines:
+                    f.write(line + '\n')
+    
+    # Write to experiment log if available
+    if experiment_log_file and experiment_log_file.exists():
+        with open(experiment_log_file, 'a', encoding='utf-8') as f:
+            for line in data_info_lines:
+                # Adjust indentation for experiment log
+                f.write("    " + line.lstrip() + '\n')
+    
+    # Time-based split (only copy if necessary - CrossValidator.time_split may copy internally)
+    df_split = df.loc[X.index]
     train_df, val_df, test_df = CrossValidator.time_split(
         df_split, train_ratio=train_ratio, val_ratio=val_ratio
     )
@@ -628,12 +800,41 @@ def train_models_for_horizon(
                 station_ids_train = df.loc[train_idx, "Stn Id"].values if train_idx.intersection(df.index).size > 0 else None
                 station_ids_val = df.loc[val_idx, "Stn Id"].values if val_idx.intersection(df.index).size > 0 else None
                 station_ids_test = df.loc[test_idx, "Stn Id"].values if test_idx.intersection(df.index).size > 0 else None
-            except Exception:
+            except (KeyError, IndexError) as e:
+                # "Stn Id" column may not exist for some models/tracks, which is OK
+                _logger.debug(f"Could not extract station IDs: {e}. Proceeding without station IDs.")
                 station_ids_train = None
                 station_ids_val = None
                 station_ids_test = None
     
-    print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
+    _logger.info(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
+    
+    # Log data split information to training log and experiment log
+    train_pct = len(X_train) / len(X) * 100
+    val_pct = len(X_val) / len(X) * 100
+    test_pct = len(X_test) / len(X) * 100
+    
+    split_info_lines = [
+        f"\n  📊 Data split:",
+        f"     Train: {len(X_train):,} ({train_pct:.1f}%)",
+        f"     Val: {len(X_val):,} ({val_pct:.1f}%)",
+        f"     Test: {len(X_test):,} ({test_pct:.1f}%)",
+    ]
+    
+    # Write to training log
+    if horizon_log_file:
+        log_path = Path(horizon_log_file)
+        if log_path.exists():
+            with open(log_path, 'a', encoding='utf-8') as f:
+                for line in split_info_lines:
+                    f.write(line + '\n')
+    
+    # Write to experiment log if available
+    if experiment_log_file and experiment_log_file.exists():
+        with open(experiment_log_file, 'a', encoding='utf-8') as f:
+            for line in split_info_lines:
+                # Adjust indentation for experiment log
+                f.write("    " + line.lstrip() + '\n')
     
     # Get model configuration
     max_workers = min(8, max(1, os.cpu_count() // 4))
@@ -642,7 +843,7 @@ def train_models_for_horizon(
     # Train classification model (frost probability)
     task_start_time = time.time()
     task_start_datetime = datetime.now()
-    print(f"\n[{task_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Training classification model for frost probability...", flush=True)
+    _logger.info(f"[{task_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Training classification model for frost probability...")
     import sys
     sys.stdout.flush()
     
@@ -656,7 +857,7 @@ def train_models_for_horizon(
             log_file=horizon_log_file
         )
         model_temp = model_frost  # Same instance for consistency
-        print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Multi-task model already trained both temperature and frost prediction tasks together.")
+        _logger.info(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Multi-task model already trained both temperature and frost prediction tasks together.")
     else:
         # Setup checkpoint directory for LSTM models
         if model_type in ["lstm", "lstm_multitask"]:
@@ -682,14 +883,14 @@ def train_models_for_horizon(
         )
         
         task_elapsed = time.time() - task_start_time
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Frost classification model training completed in {task_elapsed:.2f} seconds ({task_elapsed/60:.2f} minutes)", flush=True)
+        _logger.info(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Frost classification model training completed in {task_elapsed:.2f} seconds ({task_elapsed/60:.2f} minutes)")
         import sys
         sys.stdout.flush()
         
         # Train regression model (temperature)
         task_start_time = time.time()
         task_start_datetime = datetime.now()
-        print(f"\n[{task_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Training regression model for temperature...", flush=True)
+        _logger.info(f"[{task_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Training regression model for temperature...")
         import sys
         sys.stdout.flush()
         
@@ -701,23 +902,23 @@ def train_models_for_horizon(
         )
         
         task_elapsed = time.time() - task_start_time
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Temperature regression model training completed in {task_elapsed:.2f} seconds ({task_elapsed/60:.2f} minutes)", flush=True)
+        _logger.info(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Temperature regression model training completed in {task_elapsed:.2f} seconds ({task_elapsed/60:.2f} minutes)")
         import sys
         sys.stdout.flush()
     
     # Evaluate on test set
     eval_start_time = time.time()
     eval_start_datetime = datetime.now()
-    print(f"\n[{eval_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Evaluating on test set...")
-    
+    _logger.info(f"[{eval_start_datetime.strftime('%Y-%m-%d %H:%M:%S')}] Evaluating on test set...")
+
     frost_metrics, temp_metrics, y_frost_pred, y_frost_proba, y_temp_pred = evaluate_models(
         model_type, model_frost, model_temp, X_test, y_frost_test, y_temp_test, station_ids_test
     )
     
-    print(f"\nClassification Metrics (Frost Probability):")
-    print(MetricsCalculator.format_metrics(frost_metrics))
-    print(f"\nRegression Metrics (Temperature):")
-    print(MetricsCalculator.format_metrics(temp_metrics))
+    _logger.info("Classification Metrics (Frost Probability):")
+    _logger.info(MetricsCalculator.format_metrics(frost_metrics))
+    _logger.info("Regression Metrics (Temperature):")
+    _logger.info(MetricsCalculator.format_metrics(temp_metrics))
     
     # Save models and results
     save_models_and_results(
@@ -728,7 +929,35 @@ def train_models_for_horizon(
     )
     
     eval_elapsed = time.time() - eval_start_time
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Evaluation completed in {eval_elapsed:.2f} seconds")
+    _logger.info(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Evaluation completed in {eval_elapsed:.2f} seconds")
+    
+    # Log evaluation results summary to training log and experiment log
+    # Include calibration & reliability metrics as requested
+    eval_info_lines = [
+        f"\n  📊 Evaluation Results:",
+        f"     Calibration & Reliability:",
+        f"       Brier Score: {frost_metrics.get('brier_score', 'N/A'):.4f}\n" if isinstance(frost_metrics.get('brier_score'), (int, float)) else f"       Brier Score: {frost_metrics.get('brier_score', 'N/A')}\n",
+        f"       Expected Calibration Error (ECE): {frost_metrics.get('ece', 'N/A'):.4f}\n" if isinstance(frost_metrics.get('ece'), (int, float)) else f"       Expected Calibration Error (ECE): {frost_metrics.get('ece', 'N/A')}\n",
+        f"       Reliability Diagram: {horizon_dir / 'reliability_diagram.png'}\n",
+        f"     Discrimination Skill:",
+        f"       ROC-AUC: {frost_metrics.get('roc_auc', 'N/A'):.4f}\n" if isinstance(frost_metrics.get('roc_auc'), (int, float)) else f"       ROC-AUC: {frost_metrics.get('roc_auc', 'N/A')}\n",
+        f"       PR-AUC: {frost_metrics.get('pr_auc', 'N/A'):.4f}\n" if isinstance(frost_metrics.get('pr_auc'), (int, float)) else f"       PR-AUC: {frost_metrics.get('pr_auc', 'N/A')}\n",
+        f"     Temp Metrics:",
+        f"       MAE: {temp_metrics.get('mae', 'N/A'):.2f}°C\n" if isinstance(temp_metrics.get('mae'), (int, float)) else f"       MAE: {temp_metrics.get('mae', 'N/A')}\n",
+        f"       RMSE: {temp_metrics.get('rmse', 'N/A'):.2f}°C\n" if isinstance(temp_metrics.get('rmse'), (int, float)) else f"       RMSE: {temp_metrics.get('rmse', 'N/A')}\n",
+        f"       R²: {temp_metrics.get('r2', 'N/A'):.4f}\n" if isinstance(temp_metrics.get('r2'), (int, float)) else f"       R²: {temp_metrics.get('r2', 'N/A')}\n",
+        f"     Evaluation time: {eval_elapsed:.2f} seconds",
+        f"     Model saved to: {horizon_dir}",
+    ]
+    
+    # Write to training log
+    if horizon_log_file:
+        log_path = Path(horizon_log_file)
+        if log_path.exists():
+            with open(log_path, 'a', encoding='utf-8') as f:
+                for line in eval_info_lines:
+                    if line.strip():  # Skip empty lines
+                        f.write(line.rstrip() + '\n')
     
     # Free memory aggressively
     del X_train, X_val, X_test
@@ -751,11 +980,14 @@ def train_models_for_horizon(
         import torch
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-    except:
+    except ImportError:
+        # PyTorch not available, which is OK for non-deep-learning models
         pass
+    except Exception as e:
+        _logger.debug(f"Could not clear GPU cache: {e}")
     
     horizon_elapsed = time.time() - horizon_start_time
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {horizon}h horizon training completed in {horizon_elapsed:.2f} seconds ({horizon_elapsed/60:.2f} minutes)", flush=True)
+    _logger.info(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {horizon}h horizon training completed in {horizon_elapsed:.2f} seconds ({horizon_elapsed/60:.2f} minutes)")
     import sys
     sys.stdout.flush()
     

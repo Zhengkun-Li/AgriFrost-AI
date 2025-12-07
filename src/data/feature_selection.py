@@ -7,11 +7,14 @@ This module provides functions to select and filter features before training:
 4. Remove low-variance features
 """
 
+import logging
 from typing import List, Dict, Optional, Tuple
 import pandas as pd
 import numpy as np
 from pathlib import Path
 import json
+
+_logger = logging.getLogger(__name__)
 
 
 class FeatureSelector:
@@ -232,12 +235,12 @@ class FeatureSelector:
         # Step 1: Remove high missing rate features
         if remove_high_missing:
             selected_features = self.select_by_missing_rate(X[selected_features])
-            print(f"  After removing high missing rate: {len(selected_features)} features")
+            _logger.debug(f"After removing high missing rate: {len(selected_features)} features")
         
         # Step 2: Remove low variance features
         if remove_low_variance:
             selected_features = self.select_by_variance(X[selected_features])
-            print(f"  After removing low variance: {len(selected_features)} features")
+            _logger.debug(f"After removing low variance: {len(selected_features)} features")
         
         # Step 3: Remove highly correlated features
         if remove_correlated:
@@ -245,7 +248,7 @@ class FeatureSelector:
                 X[selected_features],
                 target_col=target_col
             )
-            print(f"  After removing highly correlated: {len(selected_features)} features")
+            _logger.debug(f"After removing highly correlated: {len(selected_features)} features")
         
         # Step 4: Select by importance (if provided)
         if feature_importance is not None:
@@ -263,7 +266,7 @@ class FeatureSelector:
                 top_k=top_k,
                 min_importance=min_importance
             )
-            print(f"  After selecting by importance: {len(selected_features)} features")
+            _logger.debug(f"After selecting by importance: {len(selected_features)} features")
         
         # Store selected features
         self.selected_features = selected_features
@@ -379,4 +382,66 @@ def remove_highly_correlated_features(
     selected_features = [f for f in X.columns if f not in to_drop]
     
     return X[selected_features], to_drop
+
+
+def load_feature_selection_config(config_path: Path) -> Dict:
+    """Load a feature selection configuration JSON."""
+    config_path = Path(config_path)
+    if not config_path.exists():
+        raise FileNotFoundError(f"Feature selection config not found: {config_path}")
+    with open(config_path, "r") as f:
+        return json.load(f)
+
+
+def select_features_with_config(
+    X: pd.DataFrame,
+    config: Dict,
+    feature_importance: Optional[pd.DataFrame] = None
+) -> Tuple[pd.DataFrame, FeatureSelector]:
+    """Apply feature selection based on a configuration dictionary.
+    
+    Args:
+        X: Feature DataFrame.
+        config: Configuration dictionary (or JSON-loaded object) supporting:
+            - min_importance / max_correlation / max_missing_rate / min_variance
+            - remove_correlated / remove_high_missing / remove_low_variance (bool)
+            - top_k / importance_threshold
+            - importance_path: CSV path for feature importance
+            - save_report / report_path
+        feature_importance: Optional importance DataFrame (overrides importance_path).
+    
+    Returns:
+        Tuple of (selected features DataFrame, FeatureSelector instance).
+    """
+    selector = FeatureSelector(
+        min_importance=config.get("min_importance", 0.0),
+        max_correlation=config.get("max_correlation", 0.95),
+        max_missing_rate=config.get("max_missing_rate", 0.5),
+        min_variance=config.get("min_variance", 0.0)
+    )
+    
+    importance_df = feature_importance
+    if importance_df is None and config.get("importance_path"):
+        importance_path = Path(config["importance_path"])
+        if importance_path.exists():
+            importance_df = pd.read_csv(importance_path)
+        else:
+            _logger.warning(f"Importance file not found: {importance_path}")
+    
+    selected_df = selector.select_features(
+        X,
+        feature_importance=importance_df,
+        top_k=config.get("top_k"),
+        min_importance=config.get("importance_threshold"),
+        remove_correlated=config.get("remove_correlated", True),
+        remove_high_missing=config.get("remove_high_missing", True),
+        remove_low_variance=config.get("remove_low_variance", False),
+        target_col=config.get("target_column")
+    )
+    
+    if config.get("save_report"):
+        report_path = Path(config.get("report_path", "feature_selection_report.json"))
+        selector.save_selection_report(report_path)
+    
+    return selected_df, selector
 

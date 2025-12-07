@@ -6,6 +6,29 @@ import numpy as np
 from pathlib import Path
 import tempfile
 import os
+import sys
+
+# Disable ROS pytest plugins that may cause conflicts
+# These are installed system-wide and can interfere with standard pytest
+def pytest_configure(config):
+    """Disable problematic ROS plugins if they are loaded."""
+    plugin_manager = config.pluginmanager
+    # Remove ROS plugins that use incompatible hooks
+    plugins_to_remove = [
+        'launch_testing_ros_pytest_entrypoint',
+        'launch_testing',
+        'ament_flake8',
+        'ament_copyright',
+        'ament_xmllint',
+        'ament_lint',
+        'ament_pep257',
+    ]
+    for plugin_name in plugins_to_remove:
+        try:
+            plugin_manager.unregister(name=plugin_name)
+        except (ValueError, KeyError):
+            # Plugin not registered, ignore
+            pass
 
 
 @pytest.fixture

@@ -38,6 +38,13 @@ def get_resource_aware_config() -> Tuple[int, int]:
         return 64, 64  # Increased minimums
 
 
+def _default_graph_dataloader_workers() -> int:
+    """Get default DataLoader worker count for graph models."""
+    cpu_count = os.cpu_count() or 4
+    # Use at least 4 workers and up to 32 to avoid oversubscription
+    return max(4, min(32, cpu_count // 2))
+
+
 def get_model_params(
     model_type: str,
     task_type: str = "classification",
@@ -296,8 +303,13 @@ def get_model_params(
             "graph_type": "radius",  # 'radius' or 'knn'
             "graph_param": 50.0,  # Radius in km or k for kNN
             "edge_weight": "gaussian",  # 'gaussian', 'distance', 'binary', 'learnable'
+            "dataloader_workers": _default_graph_dataloader_workers(),
+            "prefetch_factor": 4,
+            "persistent_workers": True,
+            "log_epoch_frequency": 1,
         }
     elif model_type == "st_gcn":
+        graph_batch_size = min(batch_size, 64)
         return {
             "sequence_length": 24,
             "hidden_channels": hidden_size,
@@ -305,7 +317,7 @@ def get_model_params(
             "kernel_size": 3,
             "dropout": 0.2,
             "learning_rate": 0.0003,
-            "batch_size": batch_size,
+            "batch_size": graph_batch_size,
             "epochs": epochs,
             "early_stopping": True,
             "patience": patience,
@@ -320,8 +332,13 @@ def get_model_params(
             "graph_type": "radius",
             "graph_param": 50.0,
             "edge_weight": "gaussian",
+            "dataloader_workers": _default_graph_dataloader_workers(),
+            "prefetch_factor": 4,
+            "persistent_workers": True,
+            "log_epoch_frequency": 1,
         }
     elif model_type == "gat_lstm":
+        graph_batch_size = min(batch_size, 64)
         return {
             "sequence_length": 24,
             "hidden_size": hidden_size,
@@ -330,7 +347,7 @@ def get_model_params(
             "num_heads": 4,
             "dropout": 0.2,
             "learning_rate": 0.0003,
-            "batch_size": batch_size,
+            "batch_size": graph_batch_size,
             "epochs": epochs,
             "early_stopping": True,
             "patience": patience,
@@ -345,8 +362,13 @@ def get_model_params(
             "graph_type": "radius",
             "graph_param": 50.0,
             "edge_weight": "gaussian",
+            "dataloader_workers": _default_graph_dataloader_workers(),
+            "prefetch_factor": 4,
+            "persistent_workers": True,
+            "log_epoch_frequency": 1,
         }
     elif model_type == "graphwavenet":
+        graph_batch_size = min(batch_size, 64)
         return {
             "sequence_length": 24,
             "hidden_channels": hidden_size,
@@ -354,7 +376,7 @@ def get_model_params(
             "kernel_size": 2,
             "dropout": 0.2,
             "learning_rate": 0.0003,
-            "batch_size": batch_size,
+            "batch_size": graph_batch_size,
             "epochs": epochs,
             "early_stopping": True,
             "patience": patience,
@@ -369,6 +391,10 @@ def get_model_params(
             "graph_type": "radius",
             "graph_param": 50.0,
             "edge_weight": "gaussian",
+            "dataloader_workers": _default_graph_dataloader_workers(),
+            "prefetch_factor": 4,
+            "persistent_workers": True,
+            "log_epoch_frequency": 1,
         }
     elif model_type in ["linear_regression", "ridge", "elasticnet", "logreg"]:
         # base params for linear models; classification vs regression handled in class
@@ -433,53 +459,53 @@ def get_model_class(model_type: str):
         Model class.
     """
     if model_type == "lightgbm":
-        from src.models.ml.lightgbm_model import LightGBMModel
+        from src.models.ml.lightgbm import LightGBMModel
         return LightGBMModel
     elif model_type == "xgboost":
-        from src.models.ml.xgboost_model import XGBoostModel
+        from src.models.ml.xgboost import XGBoostModel
         return XGBoostModel
     elif model_type == "catboost":
-        from src.models.ml.catboost_model import CatBoostModel
+        from src.models.ml.catboost import CatBoostModel
         return CatBoostModel
     elif model_type == "random_forest":
-        from src.models.ml.random_forest_model import RandomForestModel
+        from src.models.ml.random_forest import RandomForestModel
         return RandomForestModel
     elif model_type == "ensemble":
         from src.models.ml.ensemble_model import EnsembleModel
         return EnsembleModel
     elif model_type == "lstm":
-        from src.models.deep.lstm_model import LSTMForecastModel
+        from src.models.deep.lstm import LSTMForecastModel
         return LSTMForecastModel
     elif model_type == "lstm_multitask":
-        from src.models.deep.lstm_multitask_model import LSTMMultiTaskForecastModel
+        from src.models.deep.lstm_multitask import LSTMMultiTaskForecastModel
         return LSTMMultiTaskForecastModel
     elif model_type == "prophet":
-        from src.models.traditional.prophet_model import ProphetModel
+        from src.models.traditional.prophet import ProphetModel
         return ProphetModel
     elif model_type == "extratrees":
-        from src.models.ml.extratrees_model import ExtraTreesModel
+        from src.models.ml.extratrees import ExtraTreesModel
         return ExtraTreesModel
     elif model_type in ["linear_regression", "ridge", "elasticnet", "logreg"]:
-        from src.models.ml.lightgbm_model import LightGBMModel  # placeholder for import order
-        from src.models.ml.linear_model import LinearModel
+        from src.models.ml.lightgbm import LightGBMModel  # placeholder for import order
+        from src.models.ml.linear import LinearModel
         return LinearModel
     elif model_type == "gru":
-        from src.models.deep.gru_model import GRUForecastModel
+        from src.models.deep.gru import GRUForecastModel
         return GRUForecastModel
     elif model_type == "tcn":
-        from src.models.deep.tcn_model import TCNForecastModel
+        from src.models.deep.tcn import TCNForecastModel
         return TCNForecastModel
     elif model_type == "dcrnn":
-        from src.models.graph.dcrnn_model import DCRNNForecastModel
+        from src.models.graph.dcrnn import DCRNNForecastModel
         return DCRNNForecastModel
     elif model_type == "st_gcn":
-        from src.models.graph.st_gcn_model import STGCNForecastModel
+        from src.models.graph.st_gcn import STGCNForecastModel
         return STGCNForecastModel
     elif model_type == "gat_lstm":
-        from src.models.graph.gat_lstm_model import GATLSTMForecastModel
+        from src.models.graph.gat_lstm import GATLSTMForecastModel
         return GATLSTMForecastModel
     elif model_type == "graphwavenet":
-        from src.models.graph.graphwavenet_model import GraphWaveNetForecastModel
+        from src.models.graph.graphwavenet import GraphWaveNetForecastModel
         return GraphWaveNetForecastModel
     else:
         raise ValueError(f"Unsupported model type: {model_type}")

@@ -1,0 +1,38 @@
+# Default pipeline configuration template
+# CLI arguments (--model, --matrix-cell, etc.) will override these defaults
+
+data:
+  source: data/raw/frost-risk-forecast-challenge/stations
+  # matrix_cell: will be inferred from output path or specified via CLI
+  sample_size: null
+  cleaning:
+    # config_path will be auto-selected based on matrix_cell:
+    # A/C/E -> config/data_cleaning_raw.yaml
+    # B/D -> config/data_cleaning_fe.yaml
+    # E -> config/data_cleaning_graph.yaml
+    config_path: null
+  feature_engineering:
+    # enabled will be auto-determined based on matrix_cell (B/D = true, others = false)
+    enabled: null
+    # config_path will be auto-selected based on track (feature_engineering.yaml or top175.yaml if legacy)
+    config_path: null
+
+labels:
+  horizons: [3, 6, 12, 24]
+  frost_threshold: 0.0
+
+training:
+  # model: will be specified via --model CLI argument
+  # output_dir: will be specified via --output CLI argument or auto-generated
+  feature_selection: null
+  feature_selection_config: null
+  top_k: null
+
+evaluation:
+  loso:
+    enabled: false
+    save_models: false
+    resume: false
+    save_worst_n: null
+    save_horizons: null
+
