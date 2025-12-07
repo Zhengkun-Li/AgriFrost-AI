@@ -38,20 +38,20 @@ output_dir = project_root / "notebooks" / "outputs" / "figures"
 output_dir.mkdir(parents=True, exist_ok=True)
 
 print("=" * 70)
-print("🎨 执行 Notebook 可视化单元格")
+print("🎨 Execute Notebook Visualization Cells")
 print("=" * 70)
 
 # Load data
-print("\n📂 加载数据...")
+print("\n📂 Loading data...")
 from src.data.loaders import DataLoader
 
 data_path = project_root / "data/raw/frost-risk-forecast-challenge/cimis_all_stations.csv.gz"
 loader = DataLoader()
 df_raw = loader.load_raw_data(data_path)
-print(f"✅ 数据加载成功: {df_raw.shape}")
+print(f"✅ Data loaded successfully: {df_raw.shape}")
 
 # Process data (using pipeline)
-print("\n🔄 处理数据...")
+print("\n🔄 Processing data...")
 from src.data import DataPipeline
 
 config = {
@@ -81,10 +81,10 @@ dataset_bundle = pipeline.run(
 )
 
 df_processed = dataset_bundle.data
-print(f"✅ 数据处理完成: {df_processed.shape}")
+print(f"✅ Data processing complete: {df_processed.shape}")
 
 # Prepare training data
-print("\n📊 准备训练数据...")
+print("\n📊 Preparing training data...")
 from src.training.data_preparation import prepare_features_and_targets
 from src.evaluation.validators import CrossValidator
 from src.models.registry import get_model_class
@@ -115,10 +115,10 @@ X_test, y_frost_test, y_temp_test = prepare_features_and_targets(
     track="top175_features"
 )
 
-print(f"✅ 数据准备完成: {X_train.shape}")
+print(f"✅ Data preparation complete: {X_train.shape}")
 
 # Train models (quick training)
-print("\n🤖 训练模型（快速版本）...")
+print("\n🤖 Training models (quick version)...")
 ModelClass = get_model_class('lightgbm')
 
 frost_model = ModelClass(
@@ -136,7 +136,7 @@ frost_model = ModelClass(
 )
 
 frost_model.fit(X=X_train, y=y_frost_train, eval_set=[(X_val, y_frost_val)])
-print("✅ 分类模型训练完成")
+print("✅ Classification model training complete")
 
 temp_model = ModelClass(
     config={
@@ -153,7 +153,7 @@ temp_model = ModelClass(
 )
 
 temp_model.fit(X=X_train, y=y_temp_train, eval_set=[(X_val, y_temp_val)])
-print("✅ 回归模型训练完成")
+print("✅ Regression model training complete")
 
 # Generate predictions
 y_frost_pred = frost_model.predict(X_test)
@@ -162,7 +162,7 @@ y_temp_pred = temp_model.predict(X_test)
 
 # Cell 6: Time series visualization
 print("\n" + "=" * 70)
-print("📊 Cell 6: 时间序列可视化")
+print("📊 Cell 6: Time Series Visualization")
 print("=" * 70)
 
 df_raw['Date'] = pd.to_datetime(df_raw['Date'])
@@ -191,11 +191,11 @@ plt.tight_layout()
 output_path = output_dir / "time_series.png"
 plt.savefig(output_path, dpi=150, bbox_inches='tight')
 plt.close()
-print(f"✅ 时间序列图已保存: {output_path}")
+print(f"✅ Time series plot saved: {output_path}")
 
 # Cell 7: Frost event statistics
 print("\n" + "=" * 70)
-print("📊 Cell 7: 霜冻事件统计")
+print("📊 Cell 7: Frost Event Statistics")
 print("=" * 70)
 
 df_raw['is_frost'] = (df_raw['Air Temp (C)'] <= 0.0).astype(int)
@@ -223,13 +223,13 @@ plt.tight_layout()
 output_path = output_dir / "frost_statistics.png"
 plt.savefig(output_path, dpi=150, bbox_inches='tight')
 plt.close()
-print(f"✅ 霜冻统计图已保存: {output_path}")
-print(f"   总霜冻事件: {df_raw['is_frost'].sum():,}")
-print(f"   霜冻率: {df_raw['is_frost'].mean()*100:.2f}%")
+print(f"✅ Frost statistics plot saved: {output_path}")
+print(f"   Total frost events: {df_raw['is_frost'].sum():,}")
+print(f"   Frost rate: {df_raw['is_frost'].mean()*100:.2f}%")
 
 # Cell 17: Prediction visualization
 print("\n" + "=" * 70)
-print("📊 Cell 17: 预测结果可视化")
+print("📊 Cell 17: Prediction Results Visualization")
 print("=" * 70)
 
 metrics_calc = MetricsCalculator()
@@ -285,11 +285,11 @@ plt.tight_layout()
 output_path = output_dir / "prediction_results.png"
 plt.savefig(output_path, dpi=150, bbox_inches='tight')
 plt.close()
-print(f"✅ 预测结果图已保存: {output_path}")
+print(f"✅ Prediction results plot saved: {output_path}")
 
 # Cell 19: Feature importance
 print("\n" + "=" * 70)
-print("📊 Cell 19: 特征重要性分析")
+print("📊 Cell 19: Feature Importance Analysis")
 print("=" * 70)
 
 try:
@@ -300,7 +300,7 @@ try:
         'importance': feature_importance
     }).sort_values('importance', ascending=False)
     
-    print("\n🔝 Top 20 最重要特征:")
+    print("\n🔝 Top 20 Most Important Features:")
     print(importance_df.head(20).to_string(index=False))
     
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -316,13 +316,13 @@ try:
     output_path = output_dir / "feature_importance.png"
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"✅ 特征重要性图已保存: {output_path}")
+    print(f"✅ Feature importance plot saved: {output_path}")
 except Exception as e:
-    print(f"⚠️  特征重要性分析失败: {e}")
+    print(f"⚠️  Feature importance analysis failed: {e}")
 
 # Cell 22: Prediction distribution
 print("\n" + "=" * 70)
-print("📊 Cell 22: 预测分布可视化")
+print("📊 Cell 22: Prediction Distribution Visualization")
 print("=" * 70)
 
 predictions_df = pd.DataFrame({
@@ -353,18 +353,18 @@ plt.tight_layout()
 output_path = output_dir / "prediction_distribution.png"
 plt.savefig(output_path, dpi=150, bbox_inches='tight')
 plt.close()
-print(f"✅ 预测分布图已保存: {output_path}")
+print(f"✅ Prediction distribution plot saved: {output_path}")
 
 print("\n" + "=" * 70)
-print("🎉 所有可视化完成！")
+print("🎉 All visualizations complete!")
 print("=" * 70)
-print(f"\n📁 图表保存位置: {output_dir}")
-print("\n📊 生成的图表:")
+print(f"\n📁 Figure save location: {output_dir}")
+print("\n📊 Generated figures:")
 for fig_file in sorted(output_dir.glob("*.png")):
     print(f"   • {fig_file.name} ({fig_file.stat().st_size / 1024:.1f} KB)")
 
-print("\n💡 提示:")
-print("   • 可以在浏览器中打开 Jupyter Notebook 查看交互式可视化")
-print("   • 或在图像查看器中打开生成的 PNG 文件")
+print("\n💡 Tips:")
+print("   • Open Jupyter Notebook in browser to view interactive visualizations")
+print("   • Or open generated PNG files in image viewer")
 print("\n" + "=" * 70)
 

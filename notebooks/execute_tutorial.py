@@ -35,17 +35,17 @@ except OSError:
 sns.set_palette("husl")
 
 print("=" * 70)
-print("🚀 执行 Notebook 教程 - 完整流程")
+print("🚀 Execute Notebook Tutorial - Complete Workflow")
 print("=" * 70)
 
 # Cell 1: Import libraries (already done above)
-print("\n✅ Cell 1: 库导入成功！")
-print(f"📁 项目根目录: {project_root}")
-print(f"🐍 Python 版本: {sys.version.split()[0]}")
+print("\n✅ Cell 1: Libraries imported successfully!")
+print(f"📁 Project root directory: {project_root}")
+print(f"🐍 Python version: {sys.version.split()[0]}")
 
 # Cell 3: Load raw data
 print("\n" + "=" * 70)
-print("📂 Cell 3: 加载原始数据")
+print("📂 Cell 3: Load Raw Data")
 print("=" * 70)
 
 from src.data.loaders import DataLoader
@@ -53,21 +53,21 @@ from src.data.loaders import DataLoader
 data_path = project_root / "data/raw/frost-risk-forecast-challenge/cimis_all_stations.csv.gz"
 
 if not data_path.exists():
-    print(f"❌ 数据文件未找到: {data_path}")
+    print(f"❌ Data file not found: {data_path}")
     sys.exit(1)
 
-print(f"📂 加载数据: {data_path}")
+print(f"📂 Loading data: {data_path}")
 loader = DataLoader()
 df_raw = loader.load_raw_data(data_path)
-print(f"✅ 数据加载成功！")
-print(f"   形状: {df_raw.shape}")
-print(f"   列数: {len(df_raw.columns)}")
-print(f"   时间范围: {df_raw['Date'].min()} 到 {df_raw['Date'].max()}")
-print(f"   站点数: {df_raw['Stn Id'].nunique()}")
+print(f"✅ Data loaded successfully!")
+print(f"   Shape: {df_raw.shape}")
+print(f"   Columns: {len(df_raw.columns)}")
+print(f"   Time range: {df_raw['Date'].min()} to {df_raw['Date'].max()}")
+print(f"   Number of stations: {df_raw['Stn Id'].nunique()}")
 
 # Cell 9: Configure data pipeline
 print("\n" + "=" * 70)
-print("⚙️  Cell 9: 配置数据处理管道")
+print("⚙️  Cell 9: Configure Data Processing Pipeline")
 print("=" * 70)
 
 from src.data import DataPipeline
@@ -90,15 +90,15 @@ config = {
 }
 
 pipeline = DataPipeline(config=config)
-print("✅ 数据管道创建成功！")
+print("✅ Data pipeline created successfully!")
 
 # Cell 10: Process data
 print("\n" + "=" * 70)
-print("🔄 Cell 10: 处理数据（使用采样）")
+print("🔄 Cell 10: Process Data (Using Sampling)")
 print("=" * 70)
 
-print("   ⚠️  注意：为了演示速度，我们使用采样数据（10万行）")
-print("   💡 实际训练时可以移除 sample_size 参数使用全部数据")
+print("   ⚠️  Note: For demonstration speed, we use sampled data (100,000 rows)")
+print("   💡 For actual training, remove sample_size parameter to use full data")
 
 dataset_bundle = pipeline.run(
     data_path=data_path,
@@ -109,21 +109,21 @@ dataset_bundle = pipeline.run(
 )
 
 df_processed = dataset_bundle.data
-print(f"✅ 数据处理完成！")
-print(f"   处理后形状: {df_processed.shape}")
-print(f"   特征数: {len(dataset_bundle.feature_columns)}")
-print(f"   标签数: {len(dataset_bundle.label_columns)}")
+print(f"✅ Data processing complete!")
+print(f"   Processed shape: {df_processed.shape}")
+print(f"   Number of features: {len(dataset_bundle.feature_columns)}")
+print(f"   Number of labels: {len(dataset_bundle.label_columns)}")
 
 # Cell 12: Prepare training data
 print("\n" + "=" * 70)
-print("📊 Cell 12: 准备训练数据")
+print("📊 Cell 12: Prepare Training Data")
 print("=" * 70)
 
 from src.training.data_preparation import prepare_features_and_targets
 from src.evaluation.validators import CrossValidator
 from src.models.registry import get_model_class
 
-print("📊 执行时间序列分割...")
+print("📊 Performing time series split...")
 train_df, val_df, test_df = CrossValidator.time_split(
     df=df_processed,
     train_ratio=0.7,
@@ -131,46 +131,46 @@ train_df, val_df, test_df = CrossValidator.time_split(
     date_col="Date"
 )
 
-print(f"   训练集: {len(train_df)} 样本")
-print(f"   验证集: {len(val_df)} 样本")
-print(f"   测试集: {len(test_df)} 样本")
+print(f"   Training set: {len(train_df)} samples")
+print(f"   Validation set: {len(val_df)} samples")
+print(f"   Test set: {len(test_df)} samples")
 
-print("\n🔧 准备训练集特征和标签...")
+print("\n🔧 Preparing training set features and labels...")
 X_train, y_frost_train, y_temp_train = prepare_features_and_targets(
     df=train_df,
     horizon=12,
     track="top175_features"
 )
 
-print("🔧 准备验证集特征和标签...")
+print("🔧 Preparing validation set features and labels...")
 X_val, y_frost_val, y_temp_val = prepare_features_and_targets(
     df=val_df,
     horizon=12,
     track="top175_features"
 )
 
-print("🔧 准备测试集特征和标签...")
+print("🔧 Preparing test set features and labels...")
 X_test, y_frost_test, y_temp_test = prepare_features_and_targets(
     df=test_df,
     horizon=12,
     track="top175_features"
 )
 
-print("\n✅ 数据准备完成！")
-print(f"   训练集: {X_train.shape[0]} 样本, {X_train.shape[1]} 特征")
-print(f"   验证集: {X_val.shape[0]} 样本")
-print(f"   测试集: {X_test.shape[0]} 样本")
-print(f"   霜冻事件 (训练集): {y_frost_train.sum()} ({y_frost_train.mean()*100:.2f}%)")
-print(f"   平均温度 (训练集): {y_temp_train.mean():.2f}°C")
+print("\n✅ Data preparation complete!")
+print(f"   Training set: {X_train.shape[0]} samples, {X_train.shape[1]} features")
+print(f"   Validation set: {X_val.shape[0]} samples")
+print(f"   Test set: {X_test.shape[0]} samples")
+print(f"   Frost events (training set): {y_frost_train.sum()} ({y_frost_train.mean()*100:.2f}%)")
+print(f"   Average temperature (training set): {y_temp_train.mean():.2f}°C")
 
 # Cell 13: Train models
 print("\n" + "=" * 70)
-print("🤖 Cell 13: 训练模型")
+print("🤖 Cell 13: Train Models")
 print("=" * 70)
 
 ModelClass = get_model_class('lightgbm')
 
-print("🤖 训练霜冻分类模型 (LightGBM)...")
+print("🤖 Training frost classification model (LightGBM)...")
 frost_model = ModelClass(
     config={
         'task_type': 'classification',
@@ -191,9 +191,9 @@ frost_model.fit(
     y=y_frost_train,
     eval_set=[(X_val, y_frost_val)]
 )
-print("✅ 分类模型训练完成！")
+print("✅ Classification model training complete!")
 
-print("🤖 训练温度回归模型 (LightGBM)...")
+print("🤖 Training temperature regression model (LightGBM)...")
 temp_model = ModelClass(
     config={
         'task_type': 'regression',
@@ -214,11 +214,11 @@ temp_model.fit(
     y=y_temp_train,
     eval_set=[(X_val, y_temp_val)]
 )
-print("✅ 回归模型训练完成！")
+print("✅ Regression model training complete!")
 
 # Cell 15: Evaluate classification model
 print("\n" + "=" * 70)
-print("📊 Cell 15: 评估分类模型")
+print("📊 Cell 15: Evaluate Classification Model")
 print("=" * 70)
 
 from src.evaluation.metrics import MetricsCalculator
@@ -233,7 +233,7 @@ class_metrics = metrics_calc.calculate_classification_metrics(
     y_proba=y_frost_proba
 )
 
-print("📊 分类模型性能 (测试集):")
+print("📊 Classification Model Performance (Test Set):")
 print(f"   ROC-AUC: {class_metrics.get('roc_auc', 'N/A'):.4f}" if 'roc_auc' in class_metrics else "   ROC-AUC: N/A")
 print(f"   PR-AUC: {class_metrics.get('pr_auc', 'N/A'):.4f}" if 'pr_auc' in class_metrics else "   PR-AUC: N/A")
 print(f"   Brier Score: {class_metrics.get('brier_score', 'N/A'):.4f}" if 'brier_score' in class_metrics else "   Brier Score: N/A")
@@ -246,7 +246,7 @@ print(f"   F1 Score: {class_metrics.get('f1_score', 'N/A'):.4f}" if 'f1_score' i
 
 # Cell 16: Evaluate regression model
 print("\n" + "=" * 70)
-print("📊 Cell 16: 评估回归模型")
+print("📊 Cell 16: Evaluate Regression Model")
 print("=" * 70)
 
 y_temp_pred = temp_model.predict(X_test)
@@ -256,7 +256,7 @@ reg_metrics = metrics_calc.calculate_regression_metrics(
     y_pred=y_temp_pred
 )
 
-print("📊 回归模型性能 (测试集):")
+print("📊 Regression Model Performance (Test Set):")
 print(f"   MAE: {reg_metrics['mae']:.4f}°C")
 print(f"   RMSE: {reg_metrics['rmse']:.4f}°C")
 print(f"   R²: {reg_metrics['r2']:.4f}")
@@ -264,7 +264,7 @@ print(f"   MAPE: {reg_metrics.get('mape', 'N/A')}")
 
 # Cell 21: Generate predictions
 print("\n" + "=" * 70)
-print("🔮 Cell 21: 生成预测")
+print("🔮 Cell 21: Generate Predictions")
 print("=" * 70)
 
 new_data = X_test[:100].copy()
@@ -278,24 +278,24 @@ predictions_df = pd.DataFrame({
     'Frost_Risk': ['Low' if p < 0.1 else 'Medium' if p < 0.5 else 'High' for p in frost_proba_predictions]
 })
 
-print("📊 预测结果示例 (前 20 个):")
+print("📊 Prediction Results Example (First 20):")
 print(predictions_df.head(20).to_string(index=True))
 
 high_risk = (predictions_df['Frost_Probability'] > 0.5).sum()
-print(f"\n⚠️  高风险预测 (概率 > 0.5): {high_risk} / {len(predictions_df)} ({high_risk/len(predictions_df)*100:.1f}%)")
+print(f"\n⚠️  High-risk predictions (probability > 0.5): {high_risk} / {len(predictions_df)} ({high_risk/len(predictions_df)*100:.1f}%)")
 
 print("\n" + "=" * 70)
-print("🎉 Notebook 教程执行完成！")
+print("🎉 Notebook Tutorial Execution Complete!")
 print("=" * 70)
-print("\n✅ 已完成:")
-print("   • 数据加载和探索")
-print("   • 数据处理管道")
-print("   • 模型训练（分类 + 回归）")
-print("   • 模型评估")
-print("   • 预测生成")
-print("\n📊 模型性能总结:")
-print(f"   • 分类 ROC-AUC: {class_metrics['roc_auc']:.4f}")
-print(f"   • 回归 R²: {reg_metrics['r2']:.4f}")
-print(f"   • 回归 MAE: {reg_metrics['mae']:.4f}°C")
+print("\n✅ Completed:")
+print("   • Data loading and exploration")
+print("   • Data processing pipeline")
+print("   • Model training (classification + regression)")
+print("   • Model evaluation")
+print("   • Prediction generation")
+print("\n📊 Model Performance Summary:")
+print(f"   • Classification ROC-AUC: {class_metrics['roc_auc']:.4f}")
+print(f"   • Regression R²: {reg_metrics['r2']:.4f}")
+print(f"   • Regression MAE: {reg_metrics['mae']:.4f}°C")
 print("\n" + "=" * 70)
 
