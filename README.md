@@ -125,8 +125,32 @@ The data includes:
 
 #### Step 3: Run Commands
 
+> **⭐ Recommended**: Use the unified CLI (`python -m src.cli ...`) for training, evaluation, inference, and analysis.  
+> **Note**: The `scripts/` directory contains additional tool scripts (e.g., `scripts/tools/fetch_station_metadata.py`) that can be used as needed.
+
+**Quick Test (Recommended for first-time users):**
 ```bash
-# Train single model
+# Train with small dataset (100K samples) for quick testing
+python -m src.cli train single \
+    --model-name lightgbm \
+    --matrix-cell B \
+    --track top175_features \
+    --horizon-h 12 \
+    --sample-size 100000 \
+    --output-dir experiments/lightgbm_B_12h_test
+
+# Generate predictions with trained model
+# Note: Use the processed data file from training output, or any CSV with required columns
+python -m src.cli inference predict \
+    --model-dir experiments/lightgbm_B_12h_test \
+    --input data/processed/labeled_data.parquet \
+    --output predictions_test.csv \
+    --horizon-h 12
+```
+
+**Full Training (Production):**
+```bash
+# Train with full dataset
 python -m src.cli train single \
     --model-name lightgbm \
     --matrix-cell B \
@@ -134,9 +158,19 @@ python -m src.cli train single \
     --horizon-h 12 \
     --output-dir experiments/lightgbm_B_12h
 
-# Run matrix experiments (batch training)
+# Run matrix experiments (batch training) - Using CLI
 python -m src.cli train matrix \
     --config config/pipeline/matrix_experiments.yaml
+
+# Batch train multiple models (using script) - Alternative method
+# Train all models (xgboost, catboost, random_forest) on all matrix cells
+bash scripts/experiments/start_batch_training.sh
+
+# Or customize which models to train
+python scripts/experiments/batch_train_all_models.py \
+    --models xgboost catboost \
+    --matrix-cells A B C D \
+    --skip-existing
 
 # Evaluate single model
 python -m src.cli evaluate model \
@@ -155,9 +189,10 @@ python -m src.cli evaluate matrix \
 
 # Generate predictions
 python -m src.cli inference predict \
-    --model-dir experiments/lightgbm_B_12h \
+    --model-dir experiments/lightgbm_B_12h_test \
     --input data/test.csv \
-    --output predictions.csv
+    --output predictions.csv \
+    --horizon-h 12
 
 # Feature analysis
 python -m src.cli analysis full \
@@ -180,16 +215,13 @@ python -m src.cli analysis full \
 
 ### CLI Documentation
 
-- **[Unified CLI](scripts/README.md)**: ⭐ **All commands** - Unified CLI interface
-  - `python -m src.cli train single ...` - Train single model
-  - `python -m src.cli train matrix ...` - Batch matrix experiments
-  - `python -m src.cli evaluate model ...` - Evaluate model
-  - `python -m src.cli evaluate compare ...` - Compare models
-  - `python -m src.cli evaluate matrix ...` - Matrix summary
-  - `python -m src.cli inference predict ...` - Generate predictions
-  - `python -m src.cli analysis full ...` - Feature analysis
-
-See [scripts/README.md](scripts/README.md) for detailed CLI usage.
+- **[Unified CLI](scripts/README.md)**: Complete CLI documentation with all commands and detailed usage examples
+  - **Main operations** (training, evaluation, inference, analysis): Use `python -m src.cli ...`
+  - **Batch training scripts**: For training multiple models, see `scripts/experiments/`:
+    - `batch_train_all_models.py` - Batch train multiple ML models (lightgbm, xgboost, catboost, random_forest)
+    - `batch_train_deep_models.py` - Batch train deep learning models (GRU, LSTM, TCN)
+    - `start_batch_training.sh` - Quick start script for batch training
+  - **Tool scripts**: Additional utilities in `scripts/tools/` (e.g., `fetch_station_metadata.py`, `generate_station_map.py`)
 
 ## 🧾 Project Structure
 
