@@ -131,6 +131,63 @@ The data includes:
 > **📖 CLI Documentation**: See [scripts/README.md](scripts/README.md) for complete CLI usage guide with all commands and detailed examples.  
 > **Note**: The `scripts/` directory contains additional tool scripts (e.g., `scripts/tools/fetch_station_metadata.py`) that can be used as needed.
 
+**General CLI Command Structure:**
+
+```bash
+# Training
+python -m src.cli train single \
+    --model-name <lightgbm|xgboost|catboost|random_forest|gru|lstm|tcn> \
+    --matrix-cell <A|B|C|D|E> \
+    --track <raw|feature_engineering|top175_features|...> \
+    --horizon-h <3|6|12|24> \
+    [--radius-km <float>] \          # For Matrix C/D (spatial aggregation)
+    [--knn-k <int>] \                # For Matrix E (KNN)
+    [--sample-size <int>] \          # Limit data size for quick testing
+    [--output-dir <path>] \          # Custom output directory
+    [--config <yaml_file>]           # YAML config file
+
+# Evaluation
+python -m src.cli evaluate model \
+    --model-dir <path> \
+    [--config <yaml_file>] \
+    [--output-dir <path>]
+
+python -m src.cli evaluate compare \
+    --model-dirs <dir1> <dir2> [<dir3>...] \
+    [--output-dir <path>]
+
+python -m src.cli evaluate matrix \
+    --experiments-dir <path> \
+    [--output-dir <path>]
+
+# Inference
+python -m src.cli inference predict \
+    --model-dir <path> \
+    --input <csv_file> \
+    --output <csv_file> \
+    [--horizon-h <3|6|12|24> [--horizon-h <...>]]  # Can specify multiple
+
+# Analysis
+python -m src.cli analysis full \
+    --data-path <csv_file> \
+    --model-dir <path> \
+    [--output-dir <path>]
+
+# Get help for any command
+python -m src.cli --help
+python -m src.cli train --help
+python -m src.cli evaluate --help
+python -m src.cli inference --help
+python -m src.cli analysis --help
+```
+
+**Key Parameters:**
+- **Model names**: `lightgbm`, `xgboost`, `catboost`, `random_forest`, `gru`, `lstm`, `tcn`
+- **Matrix cells**: `A` (16 dim, single-station + raw), `B` (278 dim, single-station + engineered), `C` (534 dim, multi-station + raw), `D` (818 dim, multi-station + engineered), `E` (KNN-based)
+- **Tracks**: `raw`, `feature_engineering`, `top175_features`, etc.
+- **Horizons**: `3`, `6`, `12`, `24` (hours)
+- **Radius** (for C/D): `0-200` km (typically: 60, 160, 180, 200 km)
+
 **Quick Test (Recommended for first-time users):**
 
 Start with the simplest configuration (Matrix A + LightGBM + 3h) for quick testing:
