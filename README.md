@@ -22,22 +22,17 @@
 
 AgriFrost-AI is an end-to-end machine learning system for frost risk forecasting in California's Central Valley agriculture. The system processes hourly meteorological observations from 18 CIMIS (California Irrigation Management Information System) stations spanning 2010-2025 (~2.37 million records) to predict frost events and temperature drops across multiple forecast horizons (3h, 6h, 12h, 24h).
 
-### Key Features
+### Key Features & Experimental Scale
 
 - **ABCD Feature Matrix Framework**: Systematic evaluation of spatial scope (single-station vs. multi-station) and feature complexity (raw vs. engineered features)
-- **471 Reproducible Experiments**: Comprehensive comparison across 7 model families (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN), 4 feature matrices (A, B, C, D), and 4 forecast horizons
+  - **4 Feature Matrices**: A (16 dim), B (278 dim), C (534 dim), D (818 dim)
+  - **4 Forecast Horizons**: 3h, 6h, 12h, 24h
+  - **Spatial Radius Range**: 0-200 km (20 km step)
+- **471 Reproducible Experiments**: Comprehensive comparison across 7 model families (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN)
 - **Best Performance**: Matrix C + LightGBM achieves ROC-AUC 0.9972 (3h) to 0.9877 (24h) with excellent spatial generalization (LOSO evaluation)
 - **Production-Ready**: Complete pipeline from data processing to model deployment with strict temporal leakage protection and robust validation
 
 ### Experimental Results Summary
-
-#### Experimental Scale
-
-- **Total Experiments**: 471 reproducible experiments
-- **Feature Matrices**: 4 (A, B, C, D)
-- **Forecast Horizons**: 4 (3h, 6h, 12h, 24h)
-- **Model Families**: 7 (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN)
-- **Spatial Radius Range**: 0-200 km (20 km step)
 
 #### Best Performance (Matrix C + LightGBM)
 
@@ -183,11 +178,6 @@ python -m src.cli analysis full \
 - **📊 [Feature Guide](docs/features/FEATURE_GUIDE.md)**: Feature engineering guide
 - **🔬 [Technical Documentation](docs/technical/TECHNICAL_DOCUMENTATION.md)**: Technical details
 
-### Academic Materials
-
-- **[Manuscript](docs/manuscript/frost_risk_progress_cn.pdf)**: Complete academic manuscript - methodology, results, and analysis (471 experiments, ABCD feature matrix framework)
-- **[Supplementary Materials](docs/manuscript/Supplementary/)**: Detailed feature lists, station metadata, and additional analysis
-
 ### CLI Documentation
 
 - **[Unified CLI](scripts/README.md)**: ⭐ **All commands** - Unified CLI interface
@@ -284,22 +274,6 @@ frost-risk-forecast-challenge/
 │   └── evaluation/          # Evaluation tests
 └── README.md                # This file
 ```
-
-## 📦 Project Status
-
-| Item | Status | Location |
-|------|--------|----------|
-| Data acquisition | ✅ Complete | `data/raw/`, `data/external/` |
-| Data pipeline | ✅ Complete | `src/data/pipeline.py`, unified `DataPipeline` with strict validation |
-| Feature engineering | ✅ Complete | 278 features (Matrix B), 534 features (Matrix C), 818 features (Matrix D), modular structure, temporal leakage protection, `src/data/features/` |
-| Spatial aggregation | ✅ Complete | Multi-station features (C/D/E tracks), missing mask features, `src/data/spatial/` |
-| Model training | ✅ Complete | 471 experiments across 7 model families (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN), feature selection (Top-146 for 12h horizon) |
-| LOSO evaluation | ✅ Complete | `src/training/loso_evaluator.py` with temporal leakage protection |
-| Advanced evaluation | ✅ Complete | Multi-horizon, matrix, spatial sensitivity evaluators, `src/evaluation/` |
-| Inference services | ✅ Complete | `python -m src.cli inference predict ...` |
-| Code quality | ✅ Complete | Logging, error handling, input validation, GPU memory management |
-| Configuration system | ✅ Complete | YAML-based configs with CLI overrides |
-| Documentation | ✅ Complete | Module READMEs, API docs, user guides |
 
 ## 🔗 Links
 
