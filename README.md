@@ -17,6 +17,29 @@
 **Affiliation:** TRIC Robotics / UF ABE / F3 Innovate Participant  
 **Last Updated:** 2025-12-06
 
+## 📋 Project Description
+
+AgriFrost-AI is an end-to-end machine learning system for frost risk forecasting in California's Central Valley agriculture. The system processes hourly meteorological observations from 18 CIMIS (California Irrigation Management Information System) stations spanning 2010-2025 (~2.37 million records) to predict frost events and temperature drops across multiple forecast horizons (3h, 6h, 12h, 24h).
+
+### Key Features
+
+- **ABCD Feature Matrix Framework**: Systematic evaluation of spatial scope (single-station vs. multi-station) and feature complexity (raw vs. engineered features)
+- **471 Reproducible Experiments**: Comprehensive comparison across 7 model families (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN), 4 feature matrices (A, B, C, D), and 4 forecast horizons
+- **Best Performance**: Matrix C + LightGBM achieves ROC-AUC 0.9972 (3h) to 0.9877 (24h) with excellent spatial generalization (LOSO evaluation)
+- **Production-Ready**: Complete pipeline from data processing to model deployment with strict temporal leakage protection and robust validation
+
+### Experimental Results Summary
+
+Complete experimental results are available in the Supplementary Materials:
+
+- **[All Experiments](docs/manuscript/Supplementary/supplementary_table_S2_all_experiments.csv)**: Complete performance metrics for all 471 experiment configurations
+- **[Best Configurations](docs/manuscript/Supplementary/supplementary_table_S3_best_configurations.csv)**: Optimal configurations for each feature matrix and horizon
+- **[Matrix Summary](docs/manuscript/Supplementary/supplementary_table_S4_matrix_summary.csv)**: Statistical summary aggregated by matrix and horizon
+- **[Feature Importance](docs/manuscript/Supplementary/supplementary_table_S5_feature_category_importance.csv)**: Cumulative importance of feature categories across horizons
+- **[Top Features](docs/manuscript/Supplementary/supplementary_table_S6_top_features_by_category.csv)**: Importance of top features in each category
+
+See [Supplementary Materials](docs/manuscript/Supplementary/) for complete documentation of all supplementary tables.
+
 ## 🚀 Quick Start
 
 ### ⭐ New Unified CLI (Recommended)
@@ -108,11 +131,12 @@ The data includes:
 - **18 CIMIS station files** (2010–2025, hourly observations)
 - **Combined CSV** (`cimis_all_stations.csv.gz`, ~2.37M rows (2,367,360), 38 MB gzipped)
 
-## 🧰 Environment Setup (CUDA 13.0, PyTorch cu130)
+## 🧰 Environment Setup
 
 ### Prerequisites
 - **Python**: 3.12 (3.10–3.14 supported)
-- **NVIDIA Driver**: r580+ (visible via `nvidia-smi`), optional system CUDA Toolkit 13.0 (recommended if installed)
+- **CUDA & PyTorch**: **Optional** - Only required for deep learning models (GRU, LSTM, TCN). The best-performing model (LightGBM) does **not** require PyTorch or CUDA.
+  - If using deep learning models: NVIDIA Driver r580+ (visible via `nvidia-smi`), optional system CUDA Toolkit 13.0 (recommended if installed)
 
 ### ⚠️ Important: Use Virtual Environment
 
@@ -149,18 +173,32 @@ source .venv/bin/activate
 
 ### Step 3: Install Dependencies
 
+**For LightGBM (best performance model) - No PyTorch/CUDA needed:**
 ```bash
 # Upgrade pip (important for latest package compatibility)
 python -m pip install -U pip
 
-# Install project dependencies (includes cu130 extra-index for PyTorch)
+# Install core dependencies (comment out PyTorch lines in requirements.txt first)
+pip install -r requirements.txt
+```
+
+**For Deep Learning Models (GRU, LSTM, TCN) - PyTorch/CUDA required:**
+```bash
+# Install with PyTorch CUDA support (default in requirements.txt)
 pip install -r requirements.txt
 ```
 
 ### Step 4: Verify Installation
 
+**For LightGBM (recommended):**
 ```bash
-# Verify GPU & capability
+# Verify core packages (no PyTorch needed)
+python -c "import pandas, numpy, lightgbm, xgboost; print('✅ All packages installed!')"
+```
+
+**For Deep Learning Models (optional):**
+```bash
+# Verify GPU & PyTorch capability
 python - << 'PY'
 import torch
 print('torch=', torch.__version__, 'cuda=', torch.version.cuda)
@@ -168,9 +206,6 @@ print('cuda_available=', torch.cuda.is_available())
 if torch.cuda.is_available():
     print('device=', torch.cuda.get_device_name(0), 'cap=', torch.cuda.get_device_capability(0))
 PY
-
-# Verify other key packages
-python -c "import pandas, numpy, lightgbm, xgboost; print('✅ All packages installed!')"
 ```
 
 ### Deactivate Virtual Environment
@@ -182,17 +217,19 @@ deactivate
 
 ### Notes
 
-**Notes:**
-- The `requirements.txt` adds an extra index `https://download.pytorch.org/whl/cu130` and pins:
+**Important:**
+- **Best Performance Model (LightGBM)**: Does **not** require PyTorch or CUDA. You can comment out the three PyTorch lines in `requirements.txt` (lines 47-49) to install only the necessary dependencies.
+- **Deep Learning Models (GRU, LSTM, TCN)**: Require PyTorch. The `requirements.txt` includes CUDA 13.0 support by default:
+  - Extra index: `https://download.pytorch.org/whl/cu130`
   - `torch==2.9.1+cu130`, `torchvision==0.24.1+cu130`, `torchaudio==2.9.1+cu130`
-- For CPU-only installation, comment out the three PyTorch dependency lines in `requirements.txt`, then install separately:
+- **CPU-only PyTorch**: If you need PyTorch but don't have CUDA, comment out the three PyTorch lines in `requirements.txt`, then install separately:
   ```bash
   pip install torch==2.9.1
   ```
-- If encountering unsupported GPU architectures (e.g., sm_120), switch to the cu130 combination above or compile PyTorch from source (set `TORCH_CUDA_ARCH_LIST="12.0"`).
-- Training optimizations:
-  - Both LSTM and LSTM-MT support AMP (mixed precision): enable with `model_params.use_amp: true` (LSTM already supports it, LSTM-MT is aligned and uses `GradScaler`).
-  - Training scripts set `torch.set_float32_matmul_precision('high')` under CUDA to improve matmul performance and print GPU model and cuDNN version to logs at startup.
+- **GPU Architecture Issues**: If encountering unsupported GPU architectures (e.g., sm_120), switch to the cu130 combination above or compile PyTorch from source (set `TORCH_CUDA_ARCH_LIST="12.0"`).
+- **Training Optimizations** (for deep learning models):
+  - Both LSTM and LSTM-MT support AMP (mixed precision): enable with `model_params.use_amp: true`
+  - Training scripts set `torch.set_float32_matmul_precision('high')` under CUDA to improve matmul performance
 
 ## 📊 Results Summary
 
