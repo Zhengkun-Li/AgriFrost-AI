@@ -32,6 +32,28 @@ AgriFrost-AI is an end-to-end machine learning system for frost risk forecasting
 - **Best Performance**: Matrix C + LightGBM achieves ROC-AUC 0.9972 (3h) to 0.9877 (24h) with excellent spatial generalization (LOSO evaluation)
 - **Production-Ready**: Complete pipeline from data processing to model deployment with strict temporal leakage protection and robust validation
 
+### Supported Models
+
+The system supports a wide range of machine learning and deep learning models organized by category:
+
+**Machine Learning Models** (`src/models/ml/`):
+- **Tree-based**: LightGBM, XGBoost, CatBoost, Random Forest, Extra Trees
+- **Linear**: Linear Regression, Ridge, Lasso
+- **Ensemble**: Voting, Stacking
+- **Baseline**: Persistence (naive baseline)
+
+**Deep Learning Models** (`src/models/deep/`):
+- **Sequence Models**: LSTM, LSTM Multitask, GRU, TCN (Temporal Convolutional Network)
+
+**Graph Neural Network Models** (`src/models/graph/`):
+- **Spatial-Temporal**: DCRNN, ST-GCN, GAT-LSTM, GraphWaveNet
+- *Note: Graph models require PyTorch Geometric and are optimized for multi-station spatial aggregation*
+
+**Traditional Time Series Models** (`src/models/traditional/`):
+- **Prophet**: Facebook Prophet (requires Date column)
+
+> **📝 Note**: More models are under active development. See [src/models/README.md](src/models/README.md) for detailed model documentation and implementation details.
+
 ### Experimental Results Summary
 
 #### Best Performance (Matrix C + LightGBM)
@@ -182,7 +204,12 @@ python -m src.cli analysis --help
 ```
 
 **Key Parameters:**
-- **Model names**: `lightgbm`, `xgboost`, `catboost`, `random_forest`, `gru`, `lstm`, `tcn`
+- **Model names**: 
+  - *Machine Learning*: `lightgbm`, `xgboost`, `catboost`, `random_forest`, `extratrees`, `linear`, `ensemble`, `persistence`
+  - *Deep Learning*: `gru`, `lstm`, `lstm_multitask`, `tcn`
+  - *Graph Neural Networks*: `dcrnn`, `st_gcn`, `gat_lstm`, `graphwavenet`
+  - *Traditional*: `prophet`
+  - *Note: More models are under development. See [Supported Models](#supported-models) section above.*
 - **Matrix cells**: `A` (16 dim, single-station + raw), `B` (278 dim, single-station + engineered), `C` (534 dim, multi-station + raw), `D` (818 dim, multi-station + engineered), `E` (KNN-based)
 - **Tracks**: `raw`, `feature_engineering`, `top175_features`, etc.
 - **Horizons**: `3`, `6`, `12`, `24` (hours)
