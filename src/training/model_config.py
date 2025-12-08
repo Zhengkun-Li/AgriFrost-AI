@@ -113,6 +113,9 @@ def get_model_params(
                 "colsample_bytree": 0.8,
                 "reg_alpha": 0.1,
                 "reg_lambda": 0.1,
+                # Handle class imbalance for frost forecasting (positive rate ~0.87%)
+                # is_unbalance automatically balances class weights based on class distribution
+                "is_unbalance": True,
             }
         else:  # regression
             return {
@@ -132,7 +135,7 @@ def get_model_params(
     
     elif model_type == "xgboost":
         objective = "binary:logistic" if task_type == "classification" else "reg:squarederror"
-        return {
+        config = {
             "n_estimators": n_estimators,
             "learning_rate": 0.05,
             "max_depth": max_depth,
@@ -145,9 +148,17 @@ def get_model_params(
             "tree_method": "hist",
             "objective": objective,
         }
+        # Handle class imbalance for frost forecasting (XGBoost uses scale_pos_weight)
+        if task_type == "classification":
+            # scale_pos_weight = negative_samples / positive_samples
+            # For ~0.87% positive rate, this is approximately 114
+            # Will be calculated dynamically based on actual class distribution during training
+            # But we set a reasonable default for extremely imbalanced data
+            config["scale_pos_weight"] = 114.0  # Approximate ratio for 0.87% positive rate
+        return config
     
     elif model_type == "catboost":
-        return {
+        config = {
             "iterations": n_estimators,
             "learning_rate": 0.05,
             "depth": max_depth,
@@ -158,6 +169,12 @@ def get_model_params(
             "l2_leaf_reg": 0.1,
             "verbose": False,
         }
+        # Handle class imbalance for frost forecasting (CatBoost uses class_weights or scale_pos_weight)
+        if task_type == "classification":
+            # CatBoost uses 'auto' for class_weights or scale_pos_weight parameter
+            # For extremely imbalanced data, we use scale_pos_weight
+            config["scale_pos_weight"] = 114.0  # Approximate ratio for 0.87% positive rate
+        return config
     elif model_type == "extratrees":
         return {
             "n_estimators": n_estimators,

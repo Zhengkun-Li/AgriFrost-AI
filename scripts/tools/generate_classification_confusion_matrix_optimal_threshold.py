@@ -23,31 +23,53 @@ configs = [
     (24, 180)
 ]
 
-def find_optimal_threshold(y_true, y_proba, method='f1_recall'):
-    """Find optimal threshold based on F1*Recall for imbalanced data.
+def find_optimal_threshold(y_true, y_proba, method='f2', beta=2):
+    """Find optimal threshold based on F-beta score for imbalanced data.
+    
+    Method 3: Maximize F-beta score (β>1) based on PR curve
+    - F-beta = (1 + β²) × (precision × recall) / (β² × precision + recall)
+    - β=2 (F2): Recall weighted 4× more than Precision
+    - β=3 (F3): Recall weighted 10× more than Precision
     
     Args:
         y_true: True binary labels
         y_proba: Predicted probabilities
-        method: 'f1' for F1 score, 'f1_recall' for F1*Recall (better for imbalanced)
+        method: 'f1', 'f2', 'f3', or 'fbeta' (default: 'f2')
+        beta: Beta parameter for F-beta score (used when method='fbeta')
     
     Returns:
-        optimal_threshold, best_f1, best_precision, best_recall
+        optimal_threshold, best_f1, best_precision, best_recall, best_fbeta
     """
+    from sklearn.metrics import fbeta_score
+    
     precision, recall, thresholds = precision_recall_curve(y_true, y_proba)
     
-    # Calculate F1 for each threshold
-    f1_scores = 2 * (precision * recall) / (precision + recall + 1e-10)
-    
-    if method == 'f1_recall':
-        # For imbalanced data, prioritize both F1 and recall
-        # Use F1*Recall as the optimization metric
-        scores = f1_scores * recall
+    # Determine beta value
+    if method == 'f1':
+        beta_val = 1.0
+    elif method == 'f2':
+        beta_val = 2.0
+    elif method == 'f3':
+        beta_val = 3.0
+    elif method == 'fbeta':
+        beta_val = beta
     else:
-        scores = f1_scores
+        beta_val = 2.0  # Default to F2
     
-    # Find threshold with best score
-    best_idx = np.argmax(scores)
+    # Calculate F-beta for each threshold
+    fbeta_scores = []
+    for i, threshold in enumerate(thresholds):
+        # F-beta formula: (1 + β²) × (P × R) / (β² × P + R)
+        p = precision[i] if i < len(precision) else 0
+        r = recall[i] if i < len(recall) else 0
+        if p + r > 0:
+            fbeta = (1 + beta_val**2) * (p * r) / (beta_val**2 * p + r + 1e-10)
+        else:
+            fbeta = 0
+        fbeta_scores.append(fbeta)
+    
+    # Find threshold with best F-beta score
+    best_idx = np.argmax(fbeta_scores)
     optimal_threshold = thresholds[best_idx] if best_idx < len(thresholds) else 0.5
     
     # Calculate metrics at optimal threshold
@@ -55,8 +77,9 @@ def find_optimal_threshold(y_true, y_proba, method='f1_recall'):
     best_f1 = f1_score(y_true, y_pred_optimal, zero_division=0)
     best_precision = precision[best_idx] if best_idx < len(precision) else 0
     best_recall = recall[best_idx] if best_idx < len(recall) else 0
+    best_fbeta = fbeta_score(y_true, y_pred_optimal, beta=beta_val, zero_division=0)
     
-    return optimal_threshold, best_f1, best_precision, best_recall
+    return optimal_threshold, best_f1, best_precision, best_recall, best_fbeta
 
 print("=" * 70)
 print("📊 Generating Classification Confusion Matrix Plot (Optimal Threshold)")
@@ -84,9 +107,10 @@ for idx, (horizon, radius) in enumerate(configs):
     y_true = np.array(predictions['frost']['y_true'])
     y_proba = np.array(predictions['frost']['y_proba'])
     
-    # Find optimal threshold
-    optimal_threshold, best_f1, best_precision, best_recall = find_optimal_threshold(
-        y_true, y_proba, method='f1_recall'
+    # Find optimal threshold using F2 score (Method 3: F-beta with β=2)
+    # F2 emphasizes recall 4× more than precision, suitable for frost forecasting
+    optimal_threshold, best_f1, best_precision, best_recall, best_f2 = find_optimal_threshold(
+        y_true, y_proba, method='f2'
     )
     optimal_thresholds[horizon] = optimal_threshold
     
@@ -128,11 +152,12 @@ for idx, (horizon, radius) in enumerate(configs):
     accuracy = (tp + tn) / (tp + tn + fp + fn)
     
     ax.set_title(f'{horizon}h Forecast (Radius: {radius}km)\n'
-                 f'Optimal Threshold: {optimal_threshold:.3f}, Accuracy: {accuracy:.4f}\n'
+                 f'Optimal Threshold (F2): {optimal_threshold:.3f}, F2: {best_f2:.3f}, Recall: {best_recall:.3f}, Precision: {best_precision:.3f}\n'
                  f'Precision: {best_precision:.3f}, Recall: {best_recall:.3f}, F1: {best_f1:.3f}',
                  fontsize=11, fontweight='bold', pad=15)
     
-    print(f"   ✅ Optimal threshold: {optimal_threshold:.3f}")
+    print(f"   ✅ Optimal threshold (F2): {optimal_threshold:.3f}")
+    print(f"   📊 F2: {best_f2:.3f}, Recall: {best_recall:.3f}, Precision: {best_precision:.3f}")
     print(f"   📊 TP: {tp:,}, TN: {tn:,}, FP: {fp:,}, FN: {fn:,}")
     print(f"   📊 Accuracy: {accuracy:.4f}, Precision: {best_precision:.3f}, Recall: {best_recall:.3f}, F1: {best_f1:.3f}")
 
