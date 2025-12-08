@@ -342,6 +342,17 @@ python scripts/tools/generate_feature_category_importance_bar.py
     - `start_batch_training.sh` - Quick start script for batch training
   - **Tool scripts**: Additional utilities in `scripts/tools/` (e.g., `fetch_station_metadata.py`, `generate_station_map.py`)
 
+## 📦 Example Experiment
+
+A complete example experiment output is available to demonstrate the structure and content of experiment results:
+
+- **[Example Experiment: LightGBM Matrix A](experiments/lightgbm/raw/A/full_training_example/)**: Complete baseline experiment with LightGBM on Matrix A (12 MB, 200 files)
+  - Includes trained models, metrics, feature importance, reliability diagrams, and LOSO evaluation
+  - Demonstrates the standard output format for all experiments
+  - Large data files excluded to keep repository size manageable
+
+This example helps users understand the experiment structure before running their own training pipelines.
+
 ## 🧾 Project Structure
 
 ```
