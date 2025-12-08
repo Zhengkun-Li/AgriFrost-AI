@@ -1,0 +1,310 @@
+Experiment Log - 2025-11-21 08:57:32
+======================================================================
+Model: lightgbm
+Matrix Cell: A
+Track: raw
+Horizons: [3, 6, 12, 24]
+Output Directory: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training
+======================================================================
+
+
+[Data Loading]
+  ✅ Data loaded successfully
+  📊 Total samples: 2,367,360
+  📊 Total features: 23
+  📊 Feature list: Stn Name, CIMIS Region, Hour (PST), Jul, ETo (mm), qc, Precip (mm), qc.1, Sol Rad (W/sq.m), qc.2, Vap Pres (kPa), qc.3, qc.4, Rel Hum (%), qc.5, Dew Point (C), qc.6, Wind Speed (m/s), qc.7, Wind Dir (0-360), qc.8, Soil Temp (C), qc.9
+  📊 Stations: 18
+  📊 Date range: 2010-09-28 00:00:00 to 2025-09-28 00:00:00
+  📊 Labeled data saved to: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training/labeled_data.parquet
+
+[Label Statistics]
+  3h: 20,703 frost events (0.87%)
+  6h: 20,703 frost events (0.87%)
+  12h: 20,703 frost events (0.87%)
+  24h: 20,703 frost events (0.87%)
+
+[Training]
+
+  Training horizon: 3h
+    📊 Data preparation:
+    Features: 12
+    Samples: 2,367,306
+    Frost events: 20,703.0 (0.87%)
+    Feature list: Hour (PST), Jul, ETo (mm), Precip (mm), Sol Rad (W/sq.m), Vap Pres (kPa), Air Temp (C), Rel Hum (%), Dew Point (C), Wind Speed (m/s), Wind Dir (0-360), Soil Temp (C)
+    📊 Data split:
+    Train: 1,657,114 (70.0%)
+    Val: 355,096 (15.0%)
+    Test: 355,096 (15.0%)
+    ✅ Training completed in 9.83 seconds (0.16 minutes)
+    📊 Frost Metrics:
+       ROC-AUC: 0.9967
+       PR-AUC: 0.7148
+       Brier Score: 0.0027
+    📊 Temp Metrics:
+       MAE: 1.24°C
+       RMSE: 1.63°C
+       R²: 0.9659
+    📁 Model saved to: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training/full_training/horizon_3h
+
+  Training horizon: 6h
+    📊 Data preparation:
+    Features: 12
+    Samples: 2,367,252
+    Frost events: 20,703.0 (0.87%)
+    Feature list: Hour (PST), Jul, ETo (mm), Precip (mm), Sol Rad (W/sq.m), Vap Pres (kPa), Air Temp (C), Rel Hum (%), Dew Point (C), Wind Speed (m/s), Wind Dir (0-360), Soil Temp (C)
+    📊 Data split:
+    Train: 1,657,076 (70.0%)
+    Val: 355,088 (15.0%)
+    Test: 355,088 (15.0%)
+    ✅ Training completed in 8.68 seconds (0.14 minutes)
+    📊 Frost Metrics:
+       ROC-AUC: 0.9923
+       PR-AUC: 0.5397
+       Brier Score: 0.0041
+    📊 Temp Metrics:
+       MAE: 1.73°C
+       RMSE: 2.25°C
+       R²: 0.9354
+    📁 Model saved to: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training/full_training/horizon_6h
+
+  Training horizon: 12h
+    📊 Data preparation:
+    Features: 12
+    Samples: 2,367,144
+    Frost events: 20,703.0 (0.87%)
+    Feature list: Hour (PST), Jul, ETo (mm), Precip (mm), Sol Rad (W/sq.m), Vap Pres (kPa), Air Temp (C), Rel Hum (%), Dew Point (C), Wind Speed (m/s), Wind Dir (0-360), Soil Temp (C)
+    📊 Data split:
+    Train: 1,657,000 (70.0%)
+    Val: 355,072 (15.0%)
+    Test: 355,072 (15.0%)
+    ✅ Training completed in 9.12 seconds (0.15 minutes)
+    📊 Frost Metrics:
+       ROC-AUC: 0.9856
+       PR-AUC: 0.3884
+       Brier Score: 0.0049
+    📊 Temp Metrics:
+       MAE: 2.16°C
+       RMSE: 2.79°C
+       R²: 0.9006
+    📁 Model saved to: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training/full_training/horizon_12h
+
+  Training horizon: 24h
+    📊 Data preparation:
+    Features: 12
+    Samples: 2,366,928
+    Frost events: 20,703.0 (0.87%)
+    Feature list: Hour (PST), Jul, ETo (mm), Precip (mm), Sol Rad (W/sq.m), Vap Pres (kPa), Air Temp (C), Rel Hum (%), Dew Point (C), Wind Speed (m/s), Wind Dir (0-360), Soil Temp (C)
+    📊 Data split:
+    Train: 1,656,849 (70.0%)
+    Val: 355,039 (15.0%)
+    Test: 355,040 (15.0%)
+    ✅ Training completed in 8.66 seconds (0.14 minutes)
+    📊 Frost Metrics:
+       ROC-AUC: 0.9821
+       PR-AUC: 0.3059
+       Brier Score: 0.0052
+    📊 Temp Metrics:
+       MAE: 1.99°C
+       RMSE: 2.59°C
+       R²: 0.9143
+    📁 Model saved to: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training/full_training/horizon_24h
+
+[LOSO Evaluation]
+  Starting LOSO cross-validation...
+  ✅ LOSO evaluation completed in 262.31 seconds (4.37 minutes)
+
+  📊 LOSO Results Summary (across 18 stations):
+
+    Horizon 3h:
+      Frost Metrics:
+        Brier Score: 0.0031 ± 0.0010
+        Expected Calibration Error (ECE): 0.0017 ± 0.0004
+        ROC-AUC (discrimination): 0.9970 ± 0.0019
+        PR-AUC (discrimination): 0.8205 ± 0.0622
+      Temp Metrics:
+        MAE: 1.57 ± 0.10°C
+        RMSE: 2.03 ± 0.13°C
+        R²: 0.9467 ± 0.0067
+
+    Horizon 6h:
+      Frost Metrics:
+        Brier Score: 0.0042 ± 0.0014
+        Expected Calibration Error (ECE): 0.0025 ± 0.0010
+        ROC-AUC (discrimination): 0.9945 ± 0.0034
+        PR-AUC (discrimination): 0.7216 ± 0.0895
+      Temp Metrics:
+        MAE: 2.17 ± 0.12°C
+        RMSE: 2.75 ± 0.16°C
+        R²: 0.9018 ± 0.0138
+
+    Horizon 12h:
+      Frost Metrics:
+        Brier Score: 0.0059 ± 0.0020
+        Expected Calibration Error (ECE): 0.0039 ± 0.0019
+        ROC-AUC (discrimination): 0.9882 ± 0.0065
+        PR-AUC (discrimination): 0.5159 ± 0.1156
+      Temp Metrics:
+        MAE: 2.51 ± 0.16°C
+        RMSE: 3.17 ± 0.20°C
+        R²: 0.8696 ± 0.0162
+
+    Horizon 24h:
+      Frost Metrics:
+        Brier Score: 0.0056 ± 0.0018
+        Expected Calibration Error (ECE): 0.0026 ± 0.0018
+        ROC-AUC (discrimination): 0.9862 ± 0.0057
+        PR-AUC (discrimination): 0.5172 ± 0.1157
+      Temp Metrics:
+        MAE: 2.08 ± 0.09°C
+        RMSE: 2.67 ± 0.11°C
+        R²: 0.9070 ± 0.0114
+
+  📊 Per-Station Metrics (first 10 stations):
+
+    Station 2:
+      3h:
+        Brier: 0.0040, ECE: 0.0020, ROC-AUC: 0.9978, PR-AUC: 0.8606
+        MAE: 1.54°C, RMSE: 1.97°C, R²: 0.9533
+      6h:
+        Brier: 0.0050, ECE: 0.0025, ROC-AUC: 0.9965, PR-AUC: 0.7873
+        MAE: 2.09°C, RMSE: 2.64°C, R²: 0.9163
+      12h:
+        Brier: 0.0075, ECE: 0.0036, ROC-AUC: 0.9924, PR-AUC: 0.6353
+        MAE: 2.47°C, RMSE: 3.07°C, R²: 0.8868
+      24h:
+        Brier: 0.0071, ECE: 0.0023, ROC-AUC: 0.9900, PR-AUC: 0.6125
+        MAE: 2.05°C, RMSE: 2.61°C, R²: 0.9178
+
+    Station 7:
+      3h:
+        Brier: 0.0027, ECE: 0.0016, ROC-AUC: 0.9982, PR-AUC: 0.8308
+        MAE: 1.46°C, RMSE: 1.88°C, R²: 0.9539
+      6h:
+        Brier: 0.0032, ECE: 0.0020, ROC-AUC: 0.9973, PR-AUC: 0.7762
+        MAE: 1.90°C, RMSE: 2.42°C, R²: 0.9232
+      12h:
+        Brier: 0.0045, ECE: 0.0026, ROC-AUC: 0.9930, PR-AUC: 0.5742
+        MAE: 2.20°C, RMSE: 2.77°C, R²: 0.8994
+      24h:
+        Brier: 0.0051, ECE: 0.0017, ROC-AUC: 0.9891, PR-AUC: 0.4936
+        MAE: 2.01°C, RMSE: 2.58°C, R²: 0.9129
+
+    Station 15:
+      3h:
+        Brier: 0.0038, ECE: 0.0023, ROC-AUC: 0.9980, PR-AUC: 0.8730
+        MAE: 1.63°C, RMSE: 2.07°C, R²: 0.9520
+      6h:
+        Brier: 0.0051, ECE: 0.0029, ROC-AUC: 0.9964, PR-AUC: 0.8064
+        MAE: 2.23°C, RMSE: 2.81°C, R²: 0.9115
+      12h:
+        Brier: 0.0076, ECE: 0.0049, ROC-AUC: 0.9905, PR-AUC: 0.6260
+        MAE: 2.66°C, RMSE: 3.30°C, R²: 0.8774
+      24h:
+        Brier: 0.0067, ECE: 0.0022, ROC-AUC: 0.9897, PR-AUC: 0.6021
+        MAE: 2.10°C, RMSE: 2.67°C, R²: 0.9199
+
+    Station 39:
+      3h:
+        Brier: 0.0025, ECE: 0.0015, ROC-AUC: 0.9983, PR-AUC: 0.8485
+        MAE: 1.53°C, RMSE: 1.90°C, R²: 0.9567
+      6h:
+        Brier: 0.0033, ECE: 0.0018, ROC-AUC: 0.9968, PR-AUC: 0.7649
+        MAE: 2.12°C, RMSE: 2.61°C, R²: 0.9185
+      12h:
+        Brier: 0.0051, ECE: 0.0023, ROC-AUC: 0.9906, PR-AUC: 0.4984
+        MAE: 2.46°C, RMSE: 3.04°C, R²: 0.8890
+      24h:
+        Brier: 0.0046, ECE: 0.0021, ROC-AUC: 0.9915, PR-AUC: 0.5649
+        MAE: 2.00°C, RMSE: 2.56°C, R²: 0.9214
+
+    Station 47:
+      3h:
+        Brier: 0.0015, ECE: 0.0015, ROC-AUC: 0.9904, PR-AUC: 0.8203
+        MAE: 1.54°C, RMSE: 2.04°C, R²: 0.9345
+      6h:
+        Brier: 0.0021, ECE: 0.0022, ROC-AUC: 0.9841, PR-AUC: 0.6856
+        MAE: 2.18°C, RMSE: 2.84°C, R²: 0.8724
+      12h:
+        Brier: 0.0033, ECE: 0.0055, ROC-AUC: 0.9815, PR-AUC: 0.4711
+        MAE: 2.48°C, RMSE: 3.21°C, R²: 0.8367
+      24h:
+        Brier: 0.0031, ECE: 0.0038, ROC-AUC: 0.9746, PR-AUC: 0.4632
+        MAE: 2.07°C, RMSE: 2.71°C, R²: 0.8837
+
+    Station 70:
+      3h:
+        Brier: 0.0040, ECE: 0.0015, ROC-AUC: 0.9961, PR-AUC: 0.8232
+        MAE: 1.46°C, RMSE: 1.89°C, R²: 0.9467
+      6h:
+        Brier: 0.0054, ECE: 0.0020, ROC-AUC: 0.9920, PR-AUC: 0.7196
+        MAE: 2.10°C, RMSE: 2.66°C, R²: 0.8945
+      12h:
+        Brier: 0.0073, ECE: 0.0024, ROC-AUC: 0.9887, PR-AUC: 0.5317
+        MAE: 2.35°C, RMSE: 2.98°C, R²: 0.8671
+      24h:
+        Brier: 0.0070, ECE: 0.0024, ROC-AUC: 0.9891, PR-AUC: 0.5710
+        MAE: 2.01°C, RMSE: 2.58°C, R²: 0.9008
+
+    Station 71:
+      3h:
+        Brier: 0.0048, ECE: 0.0014, ROC-AUC: 0.9962, PR-AUC: 0.8631
+        MAE: 1.60°C, RMSE: 2.12°C, R²: 0.9347
+      6h:
+        Brier: 0.0069, ECE: 0.0022, ROC-AUC: 0.9905, PR-AUC: 0.7492
+        MAE: 2.31°C, RMSE: 2.94°C, R²: 0.8743
+      12h:
+        Brier: 0.0104, ECE: 0.0048, ROC-AUC: 0.9819, PR-AUC: 0.5202
+        MAE: 2.56°C, RMSE: 3.27°C, R²: 0.8439
+      24h:
+        Brier: 0.0091, ECE: 0.0023, ROC-AUC: 0.9846, PR-AUC: 0.6045
+        MAE: 2.07°C, RMSE: 2.76°C, R²: 0.8889
+
+    Station 80:
+      3h:
+        Brier: 0.0026, ECE: 0.0024, ROC-AUC: 0.9988, PR-AUC: 0.8819
+        MAE: 1.52°C, RMSE: 1.93°C, R²: 0.9550
+      6h:
+        Brier: 0.0037, ECE: 0.0027, ROC-AUC: 0.9971, PR-AUC: 0.7884
+        MAE: 2.12°C, RMSE: 2.66°C, R²: 0.9148
+      12h:
+        Brier: 0.0055, ECE: 0.0017, ROC-AUC: 0.9879, PR-AUC: 0.5387
+        MAE: 2.51°C, RMSE: 3.14°C, R²: 0.8811
+      24h:
+        Brier: 0.0051, ECE: 0.0026, ROC-AUC: 0.9910, PR-AUC: 0.6151
+        MAE: 2.04°C, RMSE: 2.60°C, R²: 0.9184
+
+    Station 105:
+      3h:
+        Brier: 0.0050, ECE: 0.0017, ROC-AUC: 0.9966, PR-AUC: 0.8692
+        MAE: 1.75°C, RMSE: 2.24°C, R²: 0.9468
+      6h:
+        Brier: 0.0067, ECE: 0.0037, ROC-AUC: 0.9943, PR-AUC: 0.7956
+        MAE: 2.38°C, RMSE: 3.01°C, R²: 0.9034
+      12h:
+        Brier: 0.0099, ECE: 0.0071, ROC-AUC: 0.9897, PR-AUC: 0.6572
+        MAE: 2.81°C, RMSE: 3.50°C, R²: 0.8696
+      24h:
+        Brier: 0.0091, ECE: 0.0023, ROC-AUC: 0.9870, PR-AUC: 0.5888
+        MAE: 2.21°C, RMSE: 2.82°C, R²: 0.9155
+
+    Station 124:
+      3h:
+        Brier: 0.0026, ECE: 0.0014, ROC-AUC: 0.9983, PR-AUC: 0.8588
+        MAE: 1.62°C, RMSE: 2.10°C, R²: 0.9419
+      6h:
+        Brier: 0.0031, ECE: 0.0020, ROC-AUC: 0.9974, PR-AUC: 0.8012
+        MAE: 2.29°C, RMSE: 2.93°C, R²: 0.8862
+      12h:
+        Brier: 0.0046, ECE: 0.0026, ROC-AUC: 0.9934, PR-AUC: 0.6186
+        MAE: 2.63°C, RMSE: 3.37°C, R²: 0.8498
+      24h:
+        Brier: 0.0049, ECE: 0.0019, ROC-AUC: 0.9920, PR-AUC: 0.5831
+        MAE: 2.05°C, RMSE: 2.62°C, R²: 0.9095
+    ... (and 8 more stations, see station_metrics.csv for details)
+
+  📁 Detailed metrics saved to: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training/loso/station_metrics.csv
+
+[Experiment Complete]
+  End time: 2025-11-21 09:02:36
+  Total duration: 304.23 seconds (5.07 minutes)
+  Summary saved to: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training/full_training/summary.json

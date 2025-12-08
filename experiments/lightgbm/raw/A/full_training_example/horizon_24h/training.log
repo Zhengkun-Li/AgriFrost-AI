@@ -1,0 +1,41 @@
+Training Log - 2025-11-21 08:58:05
+======================================================================
+
+
+  📊 Data preparation:
+     Features: 12
+     Samples: 2,366,928
+     Frost events: 20,703.0 (0.87%)
+     Feature list: Hour (PST), Jul, ETo (mm), Precip (mm), Sol Rad (W/sq.m), Vap Pres (kPa), Air Temp (C), Rel Hum (%), Dew Point (C), Wind Speed (m/s), Wind Dir (0-360), Soil Temp (C)
+
+  📊 Data split:
+     Train: 1,656,849 (70.0%)
+     Val: 355,039 (15.0%)
+     Test: 355,040 (15.0%)
+
+  🚀 Starting LightGBM training
+     task_type: classification
+     n_estimators: 200
+     learning_rate: 0.05
+  ✅ Training completed
+
+  🚀 Starting LightGBM training
+     task_type: regression
+     n_estimators: 200
+     learning_rate: 0.05
+  ✅ Training completed
+
+  📊 Evaluation Results:
+     Calibration & Reliability:
+       Brier Score: 0.0052
+       Expected Calibration Error (ECE): 0.0042
+       Reliability Diagram: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training/full_training/horizon_24h/reliability_diagram.png
+     Discrimination Skill:
+       ROC-AUC: 0.9821
+       PR-AUC: 0.3059
+     Temp Metrics:
+       MAE: 1.99°C
+       RMSE: 2.59°C
+       R²: 0.9143
+     Evaluation time: 1.49 seconds
+     Model saved to: /home/zhengkun-li/frost-risk-forecast-challenge/experiments/lightgbm/raw/A/full_training/full_training/horizon_24h

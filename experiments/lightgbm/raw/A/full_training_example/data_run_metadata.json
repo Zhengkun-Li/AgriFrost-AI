@@ -1,0 +1,75 @@
+{
+  "cleaning_config_hash": "1b0176eea0c138faa0af19a0adcbaacb5018c3ce3e0aad8f11cb0afcd8eb6c57",
+  "feature_engineering": {
+    "enabled": false,
+    "config": {
+      "time_features": true,
+      "lag": {
+        "enabled": false,
+        "columns": null,
+        "lags": [
+          1,
+          3,
+          6,
+          12,
+          24
+        ]
+      },
+      "rolling": {
+        "enabled": false,
+        "columns": null,
+        "windows": [
+          3,
+          6,
+          12,
+          24
+        ],
+        "functions": [
+          "mean",
+          "min",
+          "max",
+          "std"
+        ]
+      },
+      "derived_features": true,
+      "radiation_features": false,
+      "wind_features": false,
+      "humidity_features": false,
+      "trend_features": false,
+      "station_features": false,
+      "station_metadata_path": null,
+      "spatial_aggregation": {
+        "enabled": false,
+        "distance_threshold_km": 50.0,
+        "k_neighbors": null,
+        "weight_method": "inverse_distance",
+        "wind_gated": false,
+        "aggregation_methods": [
+          "mean",
+          "max",
+          "min",
+          "std",
+          "median",
+          "weighted_mean",
+          "gradient",
+          "range"
+        ],
+        "impute_missing": "forward_fill",
+        "metadata_path": null
+      }
+    },
+    "config_hash": "56c2d57f33908aeed3a80f7c84834f03d46a3ed4f802d53fad7d12018da8a12b"
+  },
+  "labels": {
+    "generated": true,
+    "horizons": [
+      3,
+      6,
+      12,
+      24
+    ],
+    "threshold": 0.0
+  },
+  "generated_at_utc": "2025-11-21T16:57:36.007811Z",
+  "run_hash": "b104c5c50b28bd870c80a1e88e077724772807121477e4a6ed73aed7a86cf5c9"
+}

@@ -1,0 +1,11 @@
+{
+  "matrix_cell": "A",
+  "track": "raw",
+  "model_name": "lightgbm",
+  "horizon_h": 24,
+  "radius_km": null,
+  "knn_k": null,
+  "training_scope": "full_training",
+  "created_at": "2025-11-21T08:58:14.464002",
+  "is_legacy_run": false
+}

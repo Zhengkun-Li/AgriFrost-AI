@@ -1,0 +1,15 @@
+Detailed Training Log - 2025-11-21 09:00:39
+======================================================================
+
+
+  🚀 Starting LightGBM training
+     task_type: classification
+     n_estimators: 50
+     learning_rate: 0.05
+  ✅ Training completed
+
+  🚀 Starting LightGBM training
+     task_type: regression
+     n_estimators: 50
+     learning_rate: 0.05
+  ✅ Training completed

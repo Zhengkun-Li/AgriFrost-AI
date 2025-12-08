@@ -1,0 +1,13 @@
+feature,importance,importance_pct,cumulative_pct
+Jul,3347,26.99,26.99
+Air Temp (C),1641,13.23,40.22
+Hour (PST),1234,9.95,50.17
+Wind Speed (m/s),1206,9.73,59.900000000000006
+Wind Dir (0-360),990,7.98,67.88000000000001
+Soil Temp (C),830,6.69,74.57000000000001
+Rel Hum (%),739,5.96,80.53
+Sol Rad (W/sq.m),734,5.92,86.45
+Dew Point (C),683,5.51,91.96000000000001
+Vap Pres (kPa),443,3.57,95.53
+ETo (mm),406,3.27,98.8
+Precip (mm),147,1.19,99.99

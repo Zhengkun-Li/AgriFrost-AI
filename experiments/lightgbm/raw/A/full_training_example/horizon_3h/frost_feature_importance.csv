@@ -1,0 +1,13 @@
+feature,importance,importance_pct,cumulative_pct
+Jul,2021,16.98,16.98
+Soil Temp (C),1644,13.81,30.79
+Wind Dir (0-360),1620,13.61,44.4
+Hour (PST),1343,11.28,55.68
+Rel Hum (%),1158,9.73,65.41
+Wind Speed (m/s),1090,9.16,74.57
+Air Temp (C),1077,9.05,83.61999999999999
+Dew Point (C),955,8.02,91.63999999999999
+Vap Pres (kPa),418,3.51,95.14999999999999
+Sol Rad (W/sq.m),259,2.18,97.33
+ETo (mm),253,2.13,99.46
+Precip (mm),66,0.55,100.00999999999999
