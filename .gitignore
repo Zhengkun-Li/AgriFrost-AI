@@ -153,3 +153,9 @@ docs/manuscript/Supplementary/*
 # Exception: keep logo files
 !docs/logo/*.png
 !docs/logo/*.pdf
+
+# Exclude Chinese documentation files
+*_cn.md
+*_CN.md
+docs/**/*_cn.md
+docs/**/*_CN.md
