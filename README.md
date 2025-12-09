@@ -442,7 +442,7 @@ frost-risk-forecast-challenge/
 ## 🔗 Links
 
 - **Data Repository**: https://github.com/CarlSaganPhD/frost-risk-forecast-challenge
-- **Manuscript**: [docs/manuscript/frost_risk_progress_cn.pdf](docs/manuscript/frost_risk_progress_cn.pdf)
+- **Manuscript**: [docs/manuscript/frost-risk-forecast challenge report.pdf](docs/manuscript/frost-risk-forecast%20challenge%20report.pdf)
 - **Supplementary Materials**: [docs/manuscript/Supplementary/](docs/manuscript/Supplementary/)
 - **Experiment Results**: Results are stored in `results/` directory (not tracked in repo). Run `python scripts/tools/update_results.py` to generate summaries.
 
