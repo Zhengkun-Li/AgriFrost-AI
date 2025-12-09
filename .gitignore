@@ -55,6 +55,8 @@ dmypy.json
 # Data files (not tracked)
 data/
 experiments/
+# Exception: keep example experiment directory
+!experiments/lightgbm/raw/A/full_training_example/
 experiments/graph_cache/
 results/
 *.csv
