@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="logo/AgriFrost-AI-transparent.png" alt="AgriFrost-AI Logo" width="150"/>
+<img src="../logo/AgriFrost-AI-transparent.png" alt="AgriFrost-AI Logo" width="150"/>
 
 ## 🌡️ AgriFrost-AI Quick Start
 
