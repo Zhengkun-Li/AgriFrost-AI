@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="logo/AgriFrost-AI-transparent.png" alt="AgriFrost-AI Logo" width="200"/>
+<img src="../logo/AgriFrost-AI-transparent.png" alt="AgriFrost-AI Logo" width="200"/>
 
 ## 加州农业AI驱动的霜冻风险预测系统
 
