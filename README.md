@@ -450,21 +450,12 @@ frost-risk-forecast-challenge/
 
 This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](https://creativecommons.org/licenses/by-nc/4.0/) (CC BY-NC 4.0).
 
-You are free to:
-- **Share** — copy and redistribute the material in any medium or format
-- **Adapt** — remix, transform, and build upon the material
-
-Under the following terms:
-- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made
-- **NonCommercial** — You may not use the material for commercial purposes
-
 See the [LICENSE](LICENSE) file for the full legal text.
 
 ## 📖 Citation
 
 If you use this project in your research, please cite it as follows:
 
-**BibTeX:**
 ```bibtex
 @software{agrifrost_ai_2025,
   author = {Li, Zhengkun},
@@ -475,20 +466,4 @@ If you use this project in your research, please cite it as follows:
   license = {CC-BY-NC-4.0}
 }
 ```
-
-**APA:**
-```
-Li, Z. (2025). AgriFrost-AI: Frost Risk Forecasting Methods and Evaluation for California's Central Valley [Computer software]. 
-GitHub. https://github.com/Zhengkun-Li/AgriFrost-AI
-```
-
-**MLA:**
-```
-Li, Zhengkun. AgriFrost-AI: Frost Risk Forecasting Methods and Evaluation for California's Central Valley. 
-GitHub, 2025, https://github.com/Zhengkun-Li/AgriFrost-AI.
-```
-
-For the complete manuscript and detailed methodology, please refer to:
-- **Manuscript PDF**: [docs/manuscript/frost-risk-forecast challenge report.pdf](docs/manuscript/frost-risk-forecast%20challenge%20report.pdf)
-- **Author Homepage**: [https://zhengkun-li.github.io/](https://zhengkun-li.github.io/)
 
