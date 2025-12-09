@@ -100,6 +100,8 @@ Complete experimental results are available in the Supplementary Materials:
 
 See [Supplementary Materials](docs/manuscript/Supplementary/) for complete documentation of all supplementary tables.
 
+**📦 Complete Experimental Results (OneDrive)**: All experimental results, including model weights, training logs, detailed metrics, and experiment outputs, have been uploaded to a OneDrive folder: [https://uflorida-my.sharepoint.com/:f:/r/personal/zhengkun_li_ufl_edu/Documents/frost-risk-forecast-challenge-2025?csf=1&web=1&e=bXLvog](https://uflorida-my.sharepoint.com/:f:/r/personal/zhengkun_li_ufl_edu/Documents/frost-risk-forecast-challenge-2025?csf=1&web=1&e=bXLvog)
+
 ## 🚀 Quick Start
 
 ### ⭐ New Unified CLI (Recommended)
