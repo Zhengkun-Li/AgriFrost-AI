@@ -58,7 +58,7 @@ The system supports a wide range of machine learning and deep learning models or
 
 #### Best Performance (Matrix C + LightGBM)
 
-<div style="font-size:90%">
+<div style="font-size:85%">
 
 **Matrix C** represents multi-station spatial aggregation with raw features (534 dimensions). It combines single-station raw observations with spatial aggregation statistics (mean, gradient, range, etc.) from neighboring stations within a specified radius, capturing regional climate patterns such as cold air pooling and terrain effects. This configuration achieves the best balance between performance and feature complexity.
 
@@ -71,24 +71,6 @@ The system supports a wide range of machine learning and deep learning models or
 
 </div>
 
-#### LOSO Spatial Generalization (Matrices A & B)
-
-**Note**: LOSO evaluation for Matrix C was not completed due to memory limitations (534 dimensions × 2.36M records). LOSO evaluation for matrices A and B has been fully completed (18 stations × 4 forecast horizons).
-
-<div style="font-size:90%">
-
-| Matrix | Horizon | PR-AUC (LOSO) | ROC-AUC (LOSO) | Recall (LOSO) | Precision (LOSO) | MAE (LOSO) | R² (LOSO) |
-|--------|---------|---------------|----------------|---------------|------------------|------------|-----------|
-| A      | 3h      | 0.47--0.79    | >0.98          | 0.95--0.98    | 0.12--0.28       | 1.57--2.51 | 0.87--0.95 |
-| A      | 6h      | 0.47--0.79    | >0.98          | 0.95--0.98    | 0.12--0.28       | 1.57--2.51 | 0.87--0.95 |
-| A      | 12h     | 0.47--0.79    | >0.98          | 0.95--0.98    | 0.12--0.28       | 1.57--2.51 | 0.87--0.95 |
-| A      | 24h     | 0.47--0.79    | >0.98          | 0.95--0.98    | 0.12--0.28       | 1.57--2.51 | 0.87--0.95 |
-| B      | 3h      | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
-| B      | 6h      | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
-| B      | 12h     | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
-| B      | 24h     | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
-
-</div>
 #### Feature Selection Results (Matrix B, LightGBM, 12h Horizon)
 
 - **90% Cumulative Importance**: 146 features (47.5% compression)
