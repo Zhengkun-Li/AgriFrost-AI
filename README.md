@@ -58,6 +58,8 @@ The system supports a wide range of machine learning and deep learning models or
 
 #### Best Performance (Matrix C + LightGBM)
 
+<div style="font-size:90%">
+
 **Matrix C** represents multi-station spatial aggregation with raw features (534 dimensions). It combines single-station raw observations with spatial aggregation statistics (mean, gradient, range, etc.) from neighboring stations within a specified radius, capturing regional climate patterns such as cold air pooling and terrain effects. This configuration achieves the best balance between performance and feature complexity.
 
 | Horizon | Radius | ROC-AUC ↑ | PR-AUC ↑ | Recall ↑ | Precision ↑ | Brier ↓ | ECE ↓ | MAE ↓ | RMSE ↓ | R² ↑ |
@@ -67,9 +69,13 @@ The system supports a wide range of machine learning and deep learning models or
 | 12h     | 200 km | 0.988     | 0.492    | 0.919    | 0.127       | 0.027   | 0.036 | 1.91  | 2.49   | 0.921 |
 | 24h     | 200 km | 0.988     | 0.474    | 0.908    | 0.118       | 0.027   | 0.039 | 1.86  | 2.43   | 0.925 |
 
+</div>
+
 #### LOSO Spatial Generalization (Matrices A & B)
 
 **Note**: LOSO evaluation for Matrix C was not completed due to memory limitations (534 dimensions × 2.36M records). LOSO evaluation for matrices A and B has been fully completed (18 stations × 4 forecast horizons).
+
+<div style="font-size:90%">
 
 | Matrix | Horizon | PR-AUC (LOSO) | ROC-AUC (LOSO) | Recall (LOSO) | Precision (LOSO) | MAE (LOSO) | R² (LOSO) |
 |--------|---------|---------------|----------------|---------------|------------------|------------|-----------|
@@ -82,6 +88,7 @@ The system supports a wide range of machine learning and deep learning models or
 | B      | 12h     | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
 | B      | 24h     | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
 
+</div>
 #### Feature Selection Results (Matrix B, LightGBM, 12h Horizon)
 
 - **90% Cumulative Importance**: 146 features (47.5% compression)
