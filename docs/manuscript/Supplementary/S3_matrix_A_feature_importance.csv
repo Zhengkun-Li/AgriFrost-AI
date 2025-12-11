@@ -1,0 +1,97 @@
+Matrix,Radius_km,Horizon_h,Training,Task,feature,importance,importance_pct,cumulative_pct
+A,--,3,Balanced,frost_classification,Jul,2022,16.42,16.42
+A,--,3,Balanced,frost_classification,Soil Temp (C),1639,13.31,29.73
+A,--,3,Balanced,frost_classification,Hour (PST),1535,12.47,42.2
+A,--,3,Balanced,frost_classification,Air Temp (C),1488,12.09,54.29
+A,--,3,Balanced,frost_classification,Wind Dir (0-360),1347,10.94,65.23
+A,--,3,Balanced,frost_classification,Rel Hum (%),1258,10.22,75.45
+A,--,3,Balanced,frost_classification,Dew Point (C),1182,9.6,85.05
+A,--,3,Balanced,frost_classification,Wind Speed (m/s),980,7.96,93.01
+A,--,3,Balanced,frost_classification,Vap Pres (kPa),319,2.59,95.6
+A,--,3,Balanced,frost_classification,ETo (mm),253,2.06,97.66
+A,--,3,Balanced,frost_classification,Sol Rad (W/sq.m),218,1.77,99.43
+A,--,3,Balanced,frost_classification,Precip (mm),70,0.57,100.0
+A,--,3,Balanced,temperature_regression,Hour (PST),2801,22.59,22.59
+A,--,3,Balanced,temperature_regression,Air Temp (C),1713,13.81,36.4
+A,--,3,Balanced,temperature_regression,Sol Rad (W/sq.m),1613,13.01,49.41
+A,--,3,Balanced,temperature_regression,Jul,1427,11.51,60.92
+A,--,3,Balanced,temperature_regression,Wind Speed (m/s),998,8.05,68.97
+A,--,3,Balanced,temperature_regression,Soil Temp (C),967,7.8,76.77
+A,--,3,Balanced,temperature_regression,Wind Dir (0-360),647,5.22,81.99
+A,--,3,Balanced,temperature_regression,Rel Hum (%),581,4.69,86.68
+A,--,3,Balanced,temperature_regression,Dew Point (C),570,4.6,91.28
+A,--,3,Balanced,temperature_regression,ETo (mm),537,4.33,95.61
+A,--,3,Balanced,temperature_regression,Vap Pres (kPa),452,3.65,99.26
+A,--,3,Balanced,temperature_regression,Precip (mm),94,0.76,100.02
+A,--,6,Balanced,frost_classification,Jul,2048,16.69,16.69
+A,--,6,Balanced,frost_classification,Soil Temp (C),1628,13.27,29.96
+A,--,6,Balanced,frost_classification,Air Temp (C),1551,12.64,42.6
+A,--,6,Balanced,frost_classification,Hour (PST),1382,11.27,53.87
+A,--,6,Balanced,frost_classification,Dew Point (C),1255,10.23,64.1
+A,--,6,Balanced,frost_classification,Wind Dir (0-360),1173,9.56,73.66
+A,--,6,Balanced,frost_classification,Rel Hum (%),1049,8.55,82.21
+A,--,6,Balanced,frost_classification,Wind Speed (m/s),975,7.95,90.16
+A,--,6,Balanced,frost_classification,Sol Rad (W/sq.m),463,3.77,93.93
+A,--,6,Balanced,frost_classification,Vap Pres (kPa),335,2.73,96.66
+A,--,6,Balanced,frost_classification,ETo (mm),308,2.51,99.17
+A,--,6,Balanced,frost_classification,Precip (mm),101,0.82,99.99
+A,--,6,Balanced,temperature_regression,Hour (PST),2306,18.6,18.6
+A,--,6,Balanced,temperature_regression,Air Temp (C),1968,15.87,34.47
+A,--,6,Balanced,temperature_regression,Jul,1790,14.44,48.91
+A,--,6,Balanced,temperature_regression,Sol Rad (W/sq.m),1227,9.9,58.81
+A,--,6,Balanced,temperature_regression,Soil Temp (C),1111,8.96,67.77
+A,--,6,Balanced,temperature_regression,Wind Speed (m/s),944,7.61,75.38
+A,--,6,Balanced,temperature_regression,Wind Dir (0-360),698,5.63,81.01
+A,--,6,Balanced,temperature_regression,Rel Hum (%),675,5.44,86.45
+A,--,6,Balanced,temperature_regression,Dew Point (C),563,4.54,90.99
+A,--,6,Balanced,temperature_regression,ETo (mm),536,4.32,95.31
+A,--,6,Balanced,temperature_regression,Vap Pres (kPa),459,3.7,99.01
+A,--,6,Balanced,temperature_regression,Precip (mm),123,0.99,100.0
+A,--,12,Balanced,frost_classification,Jul,2223,18.28,18.28
+A,--,12,Balanced,frost_classification,Air Temp (C),1547,12.72,31.0
+A,--,12,Balanced,frost_classification,Soil Temp (C),1442,11.86,42.86
+A,--,12,Balanced,frost_classification,Hour (PST),1320,10.85,53.71
+A,--,12,Balanced,frost_classification,Dew Point (C),1022,8.4,62.11
+A,--,12,Balanced,frost_classification,Rel Hum (%),948,7.79,69.9
+A,--,12,Balanced,frost_classification,Wind Speed (m/s),930,7.65,77.55
+A,--,12,Balanced,frost_classification,Wind Dir (0-360),924,7.6,85.15
+A,--,12,Balanced,frost_classification,Sol Rad (W/sq.m),921,7.57,92.72
+A,--,12,Balanced,frost_classification,ETo (mm),440,3.62,96.34
+A,--,12,Balanced,frost_classification,Vap Pres (kPa),359,2.95,99.29
+A,--,12,Balanced,frost_classification,Precip (mm),87,0.72,100.01
+A,--,12,Balanced,temperature_regression,Hour (PST),2367,19.09,19.09
+A,--,12,Balanced,temperature_regression,Jul,1961,15.81,34.9
+A,--,12,Balanced,temperature_regression,Air Temp (C),1743,14.06,48.96
+A,--,12,Balanced,temperature_regression,Soil Temp (C),1169,9.43,58.39
+A,--,12,Balanced,temperature_regression,Wind Speed (m/s),1046,8.44,66.83
+A,--,12,Balanced,temperature_regression,Sol Rad (W/sq.m),851,6.86,73.69
+A,--,12,Balanced,temperature_regression,Wind Dir (0-360),830,6.69,80.38
+A,--,12,Balanced,temperature_regression,Rel Hum (%),731,5.9,86.28
+A,--,12,Balanced,temperature_regression,ETo (mm),535,4.31,90.59
+A,--,12,Balanced,temperature_regression,Dew Point (C),508,4.1,94.69
+A,--,12,Balanced,temperature_regression,Vap Pres (kPa),478,3.85,98.54
+A,--,12,Balanced,temperature_regression,Precip (mm),181,1.46,100.0
+A,--,24,Balanced,frost_classification,Jul,2663,21.59,21.59
+A,--,24,Balanced,frost_classification,Soil Temp (C),1557,12.63,34.22
+A,--,24,Balanced,frost_classification,Air Temp (C),1431,11.6,45.82
+A,--,24,Balanced,frost_classification,Dew Point (C),1233,10.0,55.82
+A,--,24,Balanced,frost_classification,Wind Dir (0-360),1220,9.89,65.71
+A,--,24,Balanced,frost_classification,Hour (PST),1058,8.58,74.29
+A,--,24,Balanced,frost_classification,Rel Hum (%),1044,8.47,82.76
+A,--,24,Balanced,frost_classification,Wind Speed (m/s),1019,8.26,91.02
+A,--,24,Balanced,frost_classification,Sol Rad (W/sq.m),407,3.3,94.32
+A,--,24,Balanced,frost_classification,Vap Pres (kPa),342,2.77,97.09
+A,--,24,Balanced,frost_classification,ETo (mm),233,1.89,98.98
+A,--,24,Balanced,frost_classification,Precip (mm),125,1.01,99.99
+A,--,24,Balanced,temperature_regression,Jul,3347,26.99,26.99
+A,--,24,Balanced,temperature_regression,Air Temp (C),1641,13.23,40.22
+A,--,24,Balanced,temperature_regression,Hour (PST),1234,9.95,50.17
+A,--,24,Balanced,temperature_regression,Wind Speed (m/s),1206,9.73,59.9
+A,--,24,Balanced,temperature_regression,Wind Dir (0-360),990,7.98,67.88
+A,--,24,Balanced,temperature_regression,Soil Temp (C),830,6.69,74.57
+A,--,24,Balanced,temperature_regression,Rel Hum (%),739,5.96,80.53
+A,--,24,Balanced,temperature_regression,Sol Rad (W/sq.m),734,5.92,86.45
+A,--,24,Balanced,temperature_regression,Dew Point (C),683,5.51,91.96
+A,--,24,Balanced,temperature_regression,Vap Pres (kPa),443,3.57,95.53
+A,--,24,Balanced,temperature_regression,ETo (mm),406,3.27,98.8
+A,--,24,Balanced,temperature_regression,Precip (mm),147,1.19,99.99
