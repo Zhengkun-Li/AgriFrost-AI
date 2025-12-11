@@ -34,36 +34,27 @@ Tips:
 - To limit to LightGBM only, edit `MODELS=("lightgbm")` in the script.
 - To restrict to A/B/C, comment/remove Matrix D blocks (C already sweeps radii 20–200 km).
 
-### 3.2 Baseline / no-balance runs
-Use the CLI to launch an unbalanced run (example: Matrix A, 3h):
+### 3.2 Baseline / no-balance runs (not default)
+LightGBM defaults to class-balanced training (`is_unbalance=True` in `src/training/model_config.py`). If you truly need unbalanced runs, you must **override `is_unbalance` to `False` in a custom config** before running. A simple way:
+1) Copy `config/pipeline/matrix_a.yaml` (or `matrix_b.yaml`, `matrix_c.yaml`) to a new file, e.g. `config/pipeline/matrix_a_unbalance.yaml`.
+2) Add under `training:`:
+```
+training:
+  model_params:
+    classification:
+      is_unbalance: false
+```
+3) Run with the custom config (example: Matrix A, 3h):
 ```bash
 python -m src.cli train single \
   --model-name lightgbm \
   --matrix-cell A \
   --track raw \
   --horizon-h 3 \
+  --config config/pipeline/matrix_a_unbalance.yaml \
   --output-dir experiments/lightgbm/raw/A/full_training_unbalance
 ```
-For Matrix B:
-```bash
-python -m src.cli train single \
-  --model-name lightgbm \
-  --matrix-cell B \
-  --track feature_engineering \
-  --horizon-h 3 \
-  --output-dir experiments/lightgbm/feature_engineering/B/full_training_unbalance
-```
-For Matrix C (set radius):
-```bash
-python -m src.cli train single \
-  --model-name lightgbm \
-  --matrix-cell C \
-  --track raw \
-  --horizon-h 3 \
-  --radius-km 60 \
-  --output-dir experiments/lightgbm/raw/C/full_training_unbalance_60km
-```
-Adjust `--horizon-h {3,6,12,24}` and radius (C) as needed.
+Repeat similarly for Matrix B/C, adjusting `matrix_cell`, `track`, `radius-km` (for C), and output dir. Recommendation: keep class-balanced training for manuscript reproduction.
 
 ## 4. Feature importance (A/B/C)
 Assumes training outputs are under `experiments/` as above.
