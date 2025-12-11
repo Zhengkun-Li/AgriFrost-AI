@@ -24,12 +24,12 @@ AgriFrost-AI is an end-to-end machine learning system for frost risk forecasting
 
 ### Key Features & Experimental Scale
 
-- **ABCD Feature Matrix Framework**: Systematic evaluation of spatial scope (single-station vs. multi-station) and feature complexity (raw vs. engineered features)
-  - **4 Feature Matrices**: A (16 dim), B (278 dim), C (534 dim), D (818 dim)
+- **ABC Feature Matrix Framework**: Systematic evaluation of spatial scope (single-station vs. multi-station) and feature complexity (raw vs. engineered features)
+  - **3 Feature Matrices**: A (12 dim), B (278 dim), C (534 dim)
   - **4 Forecast Horizons**: 3h, 6h, 12h, 24h
   - **Spatial Radius Range**: 0-200 km (20 km step)
 - **Comprehensive Model Comparison**: Systematic evaluation across 7 model families (LightGBM, XGBoost, CatBoost, Random Forest, GRU, LSTM, TCN) with reproducible experimental configurations
-- **Best Performance**: Matrix C + LightGBM achieves ROC-AUC 0.9972 (3h) to 0.9877 (24h) with excellent spatial generalization (LOSO evaluation)
+- **Best Performance**: Matrix B + LightGBM achieves PR-AUC 0.735 (3h) and 0.402 (24h), Matrix C achieves PR-AUC 0.718 (3h) and 0.474 (24h), with excellent spatial generalization (LOSO evaluation for A & B)
 - **Production-Ready**: Complete pipeline from data processing to model deployment with strict temporal leakage protection and robust validation
 
 ### Supported Models
@@ -60,21 +60,27 @@ The system supports a wide range of machine learning and deep learning models or
 
 **Matrix C** represents multi-station spatial aggregation with raw features (534 dimensions). It combines single-station raw observations with spatial aggregation statistics (mean, gradient, range, etc.) from neighboring stations within a specified radius, capturing regional climate patterns such as cold air pooling and terrain effects. This configuration achieves the best balance between performance and feature complexity.
 
-| Horizon | Radius | ROC-AUC ↑ | PR-AUC ↑ | Brier ↓ | ECE ↓ | MAE ↓ | RMSE ↓ |
-|---------|--------|-----------|----------|---------|-------|-------|--------|
-| 3h      | 60 km  | 0.9972    | 0.7242   | 0.0027  | 0.0012| 1.16   | 1.58    |
-| 6h      | 160 km | 0.9943    | 0.5871   | 0.0039  | 0.0021| 1.60   | 2.05    |
-| 12h     | 200 km | 0.9901    | 0.4914   | 0.0043  | 0.0032| 1.85   | 2.42    |
-| 24h     | 180 km | 0.9877    | 0.4671   | 0.0045  | 0.0034| 1.85   | 2.39    |
+| Horizon | Radius | ROC-AUC ↑ | PR-AUC ↑ | Recall ↑ | Precision ↑ | Brier ↓ | ECE ↓ | MAE ↓ | RMSE ↓ | R² ↑ |
+|---------|--------|-----------|----------|----------|-------------|---------|-------|-------|--------|------|
+| 3h      | 60 km  | 0.997     | 0.718    | 0.933    | 0.342       | 0.008   | 0.010 | 1.19  | 1.58   | 0.968 |
+| 6h      | 100 km | 0.994     | 0.583    | 0.932    | 0.202       | 0.016   | 0.021 | 1.65  | 2.16   | 0.941 |
+| 12h     | 200 km | 0.988     | 0.492    | 0.919    | 0.127       | 0.027   | 0.036 | 1.91  | 2.49   | 0.921 |
+| 24h     | 200 km | 0.988     | 0.474    | 0.908    | 0.118       | 0.027   | 0.039 | 1.86  | 2.43   | 0.925 |
 
-#### LOSO Spatial Generalization (Matrix C + LightGBM)
+#### LOSO Spatial Generalization (Matrices A & B)
 
-| Horizon | ROC-AUC (Standard) | ROC-AUC (LOSO) | Change | MAE (LOSO) |
-|---------|---------------------|----------------|--------|------------|
-| 3h      | 0.9965              | 0.9974         | +0.09  | 1.14       |
-| 6h      | 0.9926              | 0.9938         | +0.12  | 1.55       |
-| 12h     | 0.9892              | 0.9905         | +0.13  | 1.79       |
-| 24h     | 0.9843              | 0.9878         | +0.35  | 1.93       |
+**Note**: LOSO evaluation for Matrix C was not completed due to memory limitations (534 dimensions × 2.36M records). LOSO evaluation for matrices A and B has been fully completed (18 stations × 4 forecast horizons).
+
+| Matrix | Horizon | PR-AUC (LOSO) | ROC-AUC (LOSO) | Recall (LOSO) | Precision (LOSO) | MAE (LOSO) | R² (LOSO) |
+|--------|---------|---------------|----------------|---------------|------------------|------------|-----------|
+| A      | 3h      | 0.47--0.79    | >0.98          | 0.95--0.98    | 0.12--0.28       | 1.57--2.51 | 0.87--0.95 |
+| A      | 6h      | 0.47--0.79    | >0.98          | 0.95--0.98    | 0.12--0.28       | 1.57--2.51 | 0.87--0.95 |
+| A      | 12h     | 0.47--0.79    | >0.98          | 0.95--0.98    | 0.12--0.28       | 1.57--2.51 | 0.87--0.95 |
+| A      | 24h     | 0.47--0.79    | >0.98          | 0.95--0.98    | 0.12--0.28       | 1.57--2.51 | 0.87--0.95 |
+| B      | 3h      | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
+| B      | 6h      | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
+| B      | 12h     | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
+| B      | 24h     | 0.48--0.78    | >0.98          | 0.95--0.98    | 0.13--0.30       | 1.39--2.02 | 0.91--0.96 |
 
 #### Feature Selection Results (Matrix B, LightGBM, 12h Horizon)
 
