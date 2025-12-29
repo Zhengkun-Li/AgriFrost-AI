@@ -12,7 +12,7 @@
 
 ---
 
-**Author:** [Zhengkun Li](https://zhengkun-li.github.io/) & [Wenting Li](wwee0706@gmail.com)
+**Author:** [Zhengkun Li](https://zhengkun-li.github.io/) & [Wenting Li](wwee0706@gmail.com)  
 **Email:** zhengkun.li3969@gmail.com  
 **Affiliation:** TRIC Robotics / UF ABE / F3 Innovate Participant  
 **Last Updated:** 2025-12-06  
